@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/imageinput_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.hyperana.kindleimagekeyboard.ImageInputIME"
+    android:tag="imageinput_content">
+
+
+    <!-- container for all normal input parts -->
+    <LinearLayout
+        android:id="@+id/imageinput_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        style="@style/ime_container"
+        android:orientation="horizontal"
+        android:padding="5dp"
+        android:tag="imageinput_container">
+
+
+        <!-- left nav -->
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent">
+
+            <!-- Home -->
+            <ImageButton
+                android:id="@+id/home_button"
+                style="@style/ime_btn_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/home_desc"
+                android:src="@drawable/ic_home" />
+
+            <!-- switch keyboards -->
+            <ImageButton
+                android:id="@+id/switchkeyboard_button"
+                style="@style/ime_btn_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:contentDescription="@string/switch_keyboards_desc"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_switch_keyboards"
+                android:visibility="gone" />
+
+            <!-- settings first click -->
+            <ImageButton
+                android:id="@+id/preferences_button"
+                style="@style/ime_btn_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_gravity="start"
+                android:contentDescription="@string/settings_1_desc"
+                android:gravity="end"
+                android:onClick="doClickPreferences"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_preferences"  />
+        </RelativeLayout>
+
+        <!-- center content -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:weightSum="100">
+
+            <LinearLayout
+                android:id="@+id/imageinput_header"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="7"
+                android:orientation="vertical"
+                android:tag="imageinput_header">
+
+                <!-- Icon Grid Page Title -->
+                <TextView
+                    android:id="@+id/inputpage_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:paddingLeft="5dp"
+                    android:paddingRight="5dp"
+                    android:hint="@string/page_title_desc"
+                    android:singleLine="true"
+                    android:text="@string/image_input_label"
+                    style="@style/ime_title_style"
+                    android:textAlignment="center"
+                    android:textColor="@android:color/white" />
+
+            </LinearLayout>
+
+            <!-- input page view container -->
+
+            <com.hyperana.kindleimagekeyboard.SwipePagerView
+                android:id="@+id/pager"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="93"
+                android:clipChildren="true"
+                android:isScrollContainer="true"
+                android:orientation="horizontal"
+                android:scrollbars="horizontal"
+                android:tag="pager">
+
+            </com.hyperana.kindleimagekeyboard.SwipePagerView>
+
+        </LinearLayout>
+
+
+        <!-- right nav -->
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="fill_vertical">
+
+            <!-- Backspace -->
+            <ImageButton
+                android:id="@+id/backspace_button"
+                style="@style/ime_btn_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/backspace_desc"
+                android:src="@drawable/ic_backspace" />
+
+            <!-- Forward Delete -->
+            <ImageButton
+                android:id="@+id/forwarddel_button"
+                style="@style/ime_btn_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/backspace_button"
+                android:contentDescription="@string/forward_delete_desc"
+                android:src="@drawable/ic_forward_delete"
+                android:visibility="gone"/>
+
+            <!-- done button -->
+            <ImageButton
+                android:id="@+id/done_button"
+                style="@style/ime_btn_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:contentDescription="@string/done_desc"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_action_done" />
+        </RelativeLayout>
+
+
+    </LinearLayout>
+
+
+    <!-- container for temporary UI's and flair -->
+    <RelativeLayout
+        android:id="@+id/imageinput_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="visible">
+
+        <!-- error view -->
+        <TextView
+            android:id="@+id/errorview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_gravity="center"
+            android:layout_margin="30dp"
+            android:background="@color/colorAccent"
+            android:hint="@string/error_desc"
+            android:onClick="doClickError"
+            android:padding="50dp"
+            android:text="@string/default_error_message"
+            android:textAlignment="center"
+            android:visibility="gone" />
+
+        <!-- settings 2nd click -->
+        <Button
+            android:id="@+id/settings_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/settings_btn_style"
+            android:contentDescription="@string/settings_2_desc"
+            android:layout_centerInParent="true"
+            android:layout_gravity="center"
+            android:text="@string/button_goto_settings"
+            android:visibility="gone" />
+
+        <!-- highlights go here -->
+
+    </RelativeLayout>
+</FrameLayout>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:text="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="20dp"
+    android:weightSum="100">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="20"
+        android:gravity="left|bottom"
+        style="@style/TextAppearance.AppCompat.Headline"
+        android:textColor="@color/colorNeutralDark"
+        android:text="@string/title_manage_directories"/>
+
+    <!-- list of recent previously loaded keyboard directories from app data -->
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="60"
+        android:padding="10dp"
+        android:background="@color/colorNeutralDark">
+        <ListView
+            android:id="@android:id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:choiceMode="singleChoice"
+            android:background="@color/colorNeutralLight"
+            ></ListView>
+
+        <TextView
+            android:id="@android:id/empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/colorNeutralLight"
+            android:layout_gravity="center"
+            android:text="@string/no_homepage_options"/>
+    </FrameLayout>
+
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="20"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/button_add_directory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/colorAction"
+            android:contentDescription="@string/add_directory_desc"
+            android:text="@string/button_create_keyboard" />
+    </LinearLayout>
+</LinearLayout>

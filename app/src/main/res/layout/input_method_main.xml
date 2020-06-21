@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/imageinput_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:tag="imageinput_content"
+    tools:context="com.hyperana.kindleimagekeyboard.ImageInputIME">
+
+
+    <!-- container for all normal input parts -->
+    <LinearLayout
+        android:id="@+id/imageinput_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        style="@style/ime_container"
+        android:tag="imageinput_container">
+
+
+        <!-- Icon Grid Page Header/Nav -->
+        <LinearLayout
+            android:id="@+id/imageinput_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:tag="imageinput_header">
+
+            <!-- Home -->
+            <ImageButton
+                android:id="@+id/home_button"
+                style="@style/ime_btn_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/home_desc"
+                android:src="@drawable/ic_home" />
+
+            <!-- Icon Grid Page Title -->
+            <TextView
+                android:id="@+id/inputpage_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:contentDescription="@string/page_title_desc"
+                style="@style/ime_title_style"
+                android:text="@string/image_input_label"/>
+
+            <!-- Backspace -->
+            <ImageButton
+                android:id="@+id/backspace_button"
+                style="@style/ime_btn_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/backspace_desc"
+                android:src="@drawable/ic_backspace" />
+
+            <!-- Forward Delete -->
+            <ImageButton
+                android:id="@+id/forwarddel_button"
+                style="@style/ime_btn_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/forward_delete_desc"
+                android:src="@drawable/ic_forward_delete"
+                android:visibility="gone"/>
+
+        </LinearLayout>
+
+        <!-- input page view container -->
+        <com.hyperana.kindleimagekeyboard.SwipePagerView
+            android:id="@+id/pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clipChildren="true"
+            android:isScrollContainer="true"
+            android:orientation="horizontal"
+            android:scrollbars="horizontal"
+            android:tag="pager"></com.hyperana.kindleimagekeyboard.SwipePagerView>
+
+        <!-- footer nav -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="fill_horizontal">
+
+            <!-- settings first click -->
+            <ImageButton
+                android:id="@+id/preferences_button"
+                style="@style/ime_btn_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_gravity="start"
+                android:contentDescription="@string/settings_1_desc"
+                android:gravity="start"
+                android:onClick="doClickPreferences"
+                android:src="@drawable/ic_preferences" />
+
+            <!-- switch keyboards -->
+            <ImageButton
+                android:id="@+id/switchkeyboard_button"
+                style="@style/ime_btn_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:contentDescription="@string/switch_keyboards_desc"
+                android:src="@drawable/ic_switch_keyboards"
+                android:visibility="gone" />
+
+            <!-- Done -->
+            <ImageButton
+                android:id="@+id/done_button"
+                style="@style/ime_btn_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_gravity="end"
+                android:background="@color/transparent"
+                android:contentDescription="@string/done_desc"
+                android:gravity="end"
+                android:src="@drawable/ic_action_done" />
+        </RelativeLayout>
+
+
+    </LinearLayout>
+
+
+    <!-- container for temporary UI's and flair -->
+    <RelativeLayout
+        android:id="@+id/imageinput_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- error view -->
+        <TextView
+            android:id="@+id/errorview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_gravity="center"
+            android:layout_margin="30dp"
+            android:background="@color/colorAccent"
+            android:hint="@string/error_desc"
+            android:onClick="doClickError"
+            android:padding="50dp"
+            android:text="error..."
+            android:textAlignment="center"
+            android:visibility="gone" />
+
+        <!-- settings 2nd click -->
+        <Button
+            android:id="@+id/settings_button"
+            style="@style/settings_btn_style"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_gravity="center"
+            android:contentDescription="@string/settings_2_desc"
+            android:text="@string/button_goto_settings"
+            android:visibility="gone" />
+
+        <!-- highlights go here -->
+
+    </RelativeLayout>
+</FrameLayout>

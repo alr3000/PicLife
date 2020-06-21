@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Content -->
+    <!-- Keyboards home directory -->
+    <PreferenceCategory
+        android:title="@string/pref_cat_directory"
+        android:key="pref_cat_directory">
+
+       <ListPreference
+            android:key="currentKeyboard"
+            android:title="@string/pref_choose_directory"
+           android:summary="%s"
+            android:defaultValue="@string/default_keyboard_name">
+        </ListPreference>
+
+        <Preference
+            android:key="addKeyboard"
+            android:title="@string/pref_add_directory_title">
+        </Preference>
+      </PreferenceCategory>
+
+    <!-- Page Layout -->
+    <PreferenceCategory
+        android:key="pref_cat_layout"
+        android:title="@string/pref_cat_layout_title">
+      <!--  <ListPreference
+            android:key="gridSize"
+            android:title="@string/pref_grid_size_title"
+            android:entries="@array/pref_grid_size_entries"
+            android:entryValues="@array/pref_grid_size_entries"
+            android:defaultValue="5 x 3" />-->
+        <ListPreference
+            android:key="columns"
+            android:title="@string/pref_grid_columns_title"
+            android:summary="%s"
+            android:entries="@array/pref_grid_columns_entries"
+            android:entryValues="@array/pref_grid_columns_entries"
+            android:defaultValue="5" />
+       <ListPreference
+            android:key="iconMargin"
+            android:title="@string/pref_icon_density_title"
+           android:summary="%s"
+            android:entries="@array/pref_icon_density_entries"
+            android:entryValues="@array/pref_icon_density_values"
+            android:defaultValue="8" />
+    </PreferenceCategory>
+
+
+    <!-- Touch -->
+    <PreferenceCategory
+        android:key="pref_cat_touch"
+        android:title="@string/pref_cat_touch" >
+
+        <ListPreference
+            android:key="touchAction"
+            android:title="@string/pref_touch_action_title"
+            android:summary="%s"
+            android:entries="@array/pref_touch_action_entries"
+            android:entryValues="@array/pref_touch_action_values"
+            android:defaultValue="touchActionUp" />
+
+    </PreferenceCategory>
+
+    <!-- Paging -->
+    <PreferenceCategory
+        android:title="@string/pref_cat_paging_title"
+        android:key="pref_cat_paging">
+        <!-- Home Button -->
+        <CheckBoxPreference
+            android:key="doHomeButton"
+            android:title="@string/pref_home_button_title"
+            android:defaultValue="true" />
+
+        <!-- Swiping -->
+        <CheckBoxPreference
+            android:key="doSwipe"
+            android:title="@string/pref_swipe_title"
+            android:summary="@string/pref_swipe_description"
+            android:defaultValue="true" />
+        <ListPreference
+            android:dependency="doSwipe"
+            android:key="swipeType"
+            android:title="@string/pref_swipe_type_title"
+            android:dialogTitle="@string/pref_swipe_type_title"
+            android:entries="@array/pref_swipe_type_entries"
+            android:entryValues="@array/pref_swipe_type_entries"
+            android:summary="%s"
+            android:defaultValue="@string/pref_swipe_type_default" />
+
+        <!-- Linking -->
+        <ListPreference
+            android:key="createLinks"
+            android:title="@string/pref_create_links_title"
+            android:entries="@array/pref_create_links_entries"
+            android:entryValues="@array/pref_create_links_values"
+            android:summary="%s"
+            android:defaultValue="createLinksMatching" />
+        <CheckBoxPreference
+            android:key="doTypeLinks"
+            android:title="@string/pref_type_links_title"
+            android:defaultValue="false" />
+
+        <!-- Home -->
+    </PreferenceCategory>
+
+    <!-- Visual Effects -->
+    <PreferenceCategory
+        android:title="@string/pref_cat_visual_title"
+        android:key="pref_cat_visual" >
+
+        <CheckBoxPreference
+            android:key="doActionHighlight"
+            android:title="@string/pref_action_highlight_title"
+            android:summary="@string/pref_action_highlight_desc"
+            android:defaultValue="true" />
+
+        <!-- Icon Highlights -->
+        <CheckBoxPreference
+            android:key="doIconHighlight"
+            android:title="@string/pref_icon_highlight_title"
+            android:defaultValue="true" />
+        <ListPreference
+            android:key="highlightPlace"
+            android:title="@string/pref_icon_highlight_place"
+            android:summary="%s"
+            android:entries="@array/pref_icon_highlight_place"
+            android:entryValues="@array/pref_icon_highlight_place"
+            android:dependency="doIconHighlight"
+            android:defaultValue="in place"/>
+       <ListPreference
+            android:key="highlightZoom"
+            android:dependency="doIconHighlight"
+           android:summary="%s"
+            android:title="@string/pref_icon_highlight_zoom"
+            android:entries="@array/pref_icon_highlight_zoom"
+            android:entryValues="@array/pref_icon_highlight_zoom"
+            android:defaultValue="150"
+           />
+        <ListPreference
+            android:key="highlightTime"
+            android:dependency="doIconHighlight"
+            android:summary="%s"
+            android:title="@string/pref_icon_highlight_time"
+            android:entries="@array/pref_icon_highlight_time_entries"
+            android:entryValues="@array/pref_icon_highlight_time_values"
+            android:defaultValue="500"
+            />
+
+
+
+    </PreferenceCategory>
+
+    <!-- Sound Effects -->
+    <PreferenceCategory
+        android:title="@string/pref_cat_speech"
+        android:key="pref_cat_speech" >
+
+        <CheckBoxPreference
+            android:key="doSpeak"
+            android:title="@string/pref_speak_title"
+            android:defaultValue="true"/>
+        <ListPreference
+            android:key="speakWords"
+            android:dependency="doSpeak"
+            android:title="@string/pref_speak_words_title"
+            android:summary="%s"
+            android:entries="@array/pref_speak_words_entries"
+            android:entryValues="@array/pref_speak_words_values"
+            android:defaultValue="speakWordEntry" />
+        <CheckBoxPreference
+            android:key="speakLinks"
+            android:dependency="doSpeak"
+            android:title="@string/pref_speak_links_title"
+            android:defaultValue="true" />
+        <ListPreference
+            android:key="speakText"
+            android:dependency="doSpeak"
+            android:title="@string/pref_speak_text_title"
+            android:summary="%s"
+            android:entries="@array/pref_speak_text_entries"
+            android:entryValues="@array/pref_speak_text_values"
+            android:defaultValue="speakTextAction" />
+
+    </PreferenceCategory>
+
+    <!-- colors -->
+    <PreferenceCategory
+        android:title="@string/pref_cat_colors"
+        android:key="pref_cat_colors">
+
+        <ListPreference
+            android:key="highlightColor"
+            android:title="@string/pref_icon_highlight_color_title"
+            android:summary="%s"
+            android:entries="@array/pref_icon_highlight_color_entries"
+            android:entryValues="@array/pref_icon_highlight_color_values"
+            android:defaultValue="#FFFF00"
+            />
+        <ListPreference
+            android:key="backgroundColor"
+            android:title="@string/pref_background_color_title"
+            android:summary="%s"
+            android:entries="@array/pref_background_color_entries"
+            android:entryValues="@array/pref_background_color_values"
+            android:defaultValue="#000000" />
+
+
+    </PreferenceCategory>
+</PreferenceScreen>

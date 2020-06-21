@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.hyperana.kindleimagekeyboard.CreateKeyboardActivity"
+    tools:showIn="@layout/activity_create_keyboard">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorAlert"
+        android:padding="20dp"
+        android:text="@string/create_keyboard_help"/>
+
+    <!-- keyboard name -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:padding="20dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/title_keyboard_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_keyboard_name_title"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+        <TextView
+            android:id="@+id/error_keyboard_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_keyboard_name_error"
+            android:visibility="invisible"
+            android:background="@color/colorAccent" />
+        <EditText
+            android:id="@+id/edit_keyboard_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="@dimen/abc_action_button_min_height_material"
+            android:hint="@string/dialog_keyboard_name_hint"
+            android:inputType="textUri" />
+    </LinearLayout>
+
+    <!-- keyboard path: click for dialog input -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+        <TextView
+            android:id="@+id/title_keyboard_path"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_keyboard_path_title"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+        <TextView
+            android:id="@+id/error_keyboard_path"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_keyboard_path_error"
+            android:visibility="invisible"
+            android:background="@color/colorAccent" />
+        <EditText
+            android:id="@+id/edit_keyboard_path"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="@dimen/abc_action_button_min_height_material"
+            android:hint="@string/dialog_keyboard_path_hint"
+            android:inputType="none"
+            android:focusable="false"/>
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="40dp"
+        android:visibility="invisible"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"/>
+
+    <!-- save button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:orientation="vertical"
+        android:padding="20dp">
+        <Button
+            android:id="@+id/button_save_keyboard"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_save"
+            android:background="@color/colorAccent"/>
+    </LinearLayout>
+
+
+
+</LinearLayout>

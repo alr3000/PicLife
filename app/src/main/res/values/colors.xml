@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--<color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>-->
+    <color name="yellow">#FFFF00</color>
+    <color name="red">#FF0000</color>
+    <color name="blue">#0000ff</color>
+    <color name="grey">#BBBBBB</color>
+    <color name="cyan">#00FFFF</color>
+    <color name="pink">#FF44CC</color>
+
+    <!-- autumn mist: 247ba0-70c1b3-ffe066-cabac8-ff8360 -->
+    <color name="colorForwardDelete">#CABAC8</color>
+    <color name="colorAction">#70c1b3</color>
+    <color name="colorHome">#FFE006</color>
+    <color name="colorBackspace">#FF8360</color>
+    <color name="colorSettings">#247BA0</color>
+    <!-- theme colors -->
+    <color name="colorAccent">#ff8360</color>
+    <color name="colorPrimaryDark">#247BA0</color>
+    <color name="colorAlert">#FFE006</color>
+    <color name="colorPrimary">#70C1B3</color>
+    <!-- text and backgrounds -->
+    <color name="colorNeutralDark">#50514f</color>
+    <color name="colorNeutralLight">#EDEEED</color>
+
+    <!-- fire and ice: #17BEBB, #FAD8D6, #2E282A, #EDB88B, #CD5334 -->
+
+
+    <color name="transparent">#00000000</color>
+</resources>

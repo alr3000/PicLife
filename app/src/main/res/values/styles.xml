@@ -1,0 +1,56 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light">
+        <!-- Customize your theme here. -->
+        <!-- colorForeground, etc not available -->
+        <item name="windowActionBarOverlay">true</item>
+        <item name="windowActionModeOverlay">false</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColor">@color/colorNeutralDark</item>
+        <item name="android:colorBackground">@color/colorNeutralLight</item>
+
+    </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBarOverlay">false</item>
+        <item name="windowActionModeOverlay">false</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="ime_container">
+        <item name="android:background">@color/colorNeutralDark</item>
+        <item name="android:padding">5dp</item>
+    </style>
+
+    <style name="ime_btn_style">
+        <item name="android:background">@color/transparent</item>
+        <item name="android:layout_height">50dp</item>
+        <item name="android:layout_width">60dp</item>
+        <item name="android:scaleType">fitXY</item>
+        <item name="android:padding">5dp</item>
+    </style>
+
+    <style name="settings_btn_style">
+        <item name="android:background">@color/colorSettings</item>
+        <item name="android:textColor">@color/colorNeutralLight</item>
+    </style>
+
+    <style name="ime_title_style">
+        <item name="android:textColor">@color/colorNeutralLight</item>
+        <item name="android:paddingLeft">5dp</item>
+        <item name="android:paddingRight">5dp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+
+    -->
+</resources>
