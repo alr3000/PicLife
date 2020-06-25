@@ -29,17 +29,19 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.core:core-ktx:1.2.0'
+    implementation 'androidx.core:core-ktx:1.3.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
-   /* androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
+    /* androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })*/
-     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'com.google.android.material:material:1.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.preference:preference:1.1.1'
 
     // file picker: https://github.com/spacecowboy/NoNonsense-FilePicker
     // implementation 'com.nononsenseapps:filepicker:4.1.0' -- material theme would not build
@@ -47,7 +49,5 @@ dependencies {
     // file picker: https://github.com/Angads25/android-filepicker/wiki/Integration
     implementation 'com.github.angads25:filepicker:1.1.1'
 
-    // added with auto-generated activity (createKeyboardActivity)
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
 
 }

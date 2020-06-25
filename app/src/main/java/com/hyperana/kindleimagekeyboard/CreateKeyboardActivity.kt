@@ -119,7 +119,7 @@ class CreateKeyboardActivity : AppCompatActivity() {
     }
 
     fun isNameExists(name: String?) : Boolean {
-        return getDir(APP_KEYBOARD_PATH, Context.MODE_PRIVATE).list().contains(name)
+        return getDir(APP_KEYBOARD_PATH, Context.MODE_PRIVATE).list()?.contains(name) == true
     }
 
     fun validatePath(path: String?) : Boolean {

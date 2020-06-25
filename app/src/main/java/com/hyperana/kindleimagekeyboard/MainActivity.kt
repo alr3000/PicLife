@@ -101,12 +101,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // todo: move keyboard tester to status fragment
     fun doClickHelp(v: View? = null) {
         Log.d(TAG, "doClickHelp")
         try {
             supportFragmentManager
                     .beginTransaction()
-                    .replace(R.id.main_content, StatusFragment())
+                    .add(R.id.main_content, StatusFragment(), "keyboardStatus")
+                    .addToBackStack(null)
                     .commit()
         }
         catch (e: Exception) {

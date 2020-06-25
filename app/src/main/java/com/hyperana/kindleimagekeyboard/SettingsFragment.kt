@@ -1,13 +1,11 @@
 package com.hyperana.kindleimagekeyboard
 
-import android.app.Service
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.preference.ListPreference
-import android.preference.PreferenceFragment
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceFragmentCompat
 import android.util.Log
-import androidx.core.content.ContextCompat.getSystemService
+import androidx.preference.ListPreference
+import androidx.preference.Preference
 
 
 /**
@@ -18,46 +16,37 @@ import androidx.core.content.ContextCompat.getSystemService
  *
  * SETTINGS: createLinks, homeDirectory, customKeyboard,
  */
-class SettingsFragment: PreferenceFragment(),
+class SettingsFragment: PreferenceFragmentCompat(),
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     val TAG = "SettingsFragment"
-    val reloadingChanges = listOf("createLinks", "customKeyboard")
-    var sharedPreferences: SharedPreferences? = null
+    val RELOAD_AFTER_CHANGE = listOf("createLinks", "customKeyboard")
+    var mSharedPreferences: SharedPreferences? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         Log.d(TAG, "onCreate")
 
+
+    }
+
+
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        Log.d(TAG, "onCreateSettings")
         try {
             // Load the preferences from an XML resource
             addPreferencesFromResource(R.xml.settings)
 
-            // Set summaries to show initial choices
-            sharedPreferences = this.preferenceManager.sharedPreferences
+            mSharedPreferences = this.preferenceManager.sharedPreferences
 
 
-            // Set click listener for directory picker
-             findPreference("addKeyboard").setOnPreferenceClickListener( {
-                preference ->
+            // Set pref's associated fragments:
+            findPreference<Preference>("addKeyboard")!!.fragment = ManageKeyboardsFragment::class.java.name
 
-                try {
-                    Log.d(TAG, "onPreferenceClick: keyboardDataFile")
-                    // Display the fragment as the main content.
-                     /* fragmentManager.beginTransaction()
-                            .replace(android.R.id.content, ManageKeyboardsFragment())
-                            .addToBackStack(null)
-                            .commit()*/
-                    true
 
-                } catch (e: Exception) {
-                    displayError("could not open managekeyboards fragment", e)
-                    true
-                }
-            })
 
-       } catch (e: Exception) {
+        } catch (e: Exception) {
             displayError("problem loading settings", e)
         }
     }
@@ -67,17 +56,18 @@ class SettingsFragment: PreferenceFragment(),
             Log.d(TAG, "onResume")
             super.onResume()
 
-            sharedPreferences?.all?.keys?.onEach {
+            // Set summaries to show initial choices
+            mSharedPreferences?.all?.keys?.onEach {
                 updateSummary(it)
             }
             // register listeners
-            getPreferenceScreen().getSharedPreferences()
+            mSharedPreferences!!
                     .registerOnSharedPreferenceChangeListener(this)
 
 
             // set keyboard picker file list
-            val keyboardList = getKeyboardsDirectory(activity).list()
-            val keyboardPref = (findPreference("currentKeyboard") as ListPreference)
+            val keyboardList = getKeyboardsDirectory(requireActivity()).list()
+            val keyboardPref = (findPreference<ListPreference>("currentKeyboard") as ListPreference)
             keyboardPref.entries = keyboardList
             keyboardPref.entryValues = keyboardList
 
@@ -91,7 +81,7 @@ class SettingsFragment: PreferenceFragment(),
         try {
             Log.d(TAG, "onPause")
             super.onPause()
-            preferenceScreen.sharedPreferences
+            mSharedPreferences!!
                     .unregisterOnSharedPreferenceChangeListener(this)
         }catch(e: Exception) {
             displayError("pause fail", e)
@@ -104,7 +94,7 @@ class SettingsFragment: PreferenceFragment(),
             Log.d(TAG, "sharedPreferenceChanged: " + key)
 
              // update summary for list preferences
-             updateSummary(key)
+             key?.also { updateSummary(it) }
 
 
         } catch (e: Exception) {
@@ -112,19 +102,19 @@ class SettingsFragment: PreferenceFragment(),
         }
     }
 
-    fun updateSummary(key: String?) {
-        val value = sharedPreferences?.all?.get(key)?.toString()
-        val pref = findPreference(key)
+    fun updateSummary(key: String) {
+        val value = mSharedPreferences?.all?.get(key)?.toString()
+        val pref = findPreference<Preference>(key)
         pref?.summary = value ?: "--not specified--"
     }
 
     fun isKeyRequiresReload(key: String?) : Boolean {
-        return ((key != null) && reloadingChanges.contains(key))
+        return ((key != null) && RELOAD_AFTER_CHANGE.contains(key))
     }
 
     fun displayError(text: String?, e: Exception?) {
         Log.e(TAG, text, e)
-        displayInfo(activity, text?:resources.getString(R.string.default_error_message))
+        displayInfo(requireActivity(), text?:resources.getString(R.string.default_error_message))
     }
 
 }

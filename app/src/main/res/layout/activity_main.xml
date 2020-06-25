@@ -17,11 +17,8 @@
             android:orientation="vertical"
             android:id="@+id/main_content"></LinearLayout>
 
-        <EditText
-            android:id="@+id/test_message"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/test_edit_desc"
-            android:inputType="text|textShortMessage|textMultiLine" />
+
+
+        <View android:id="@+id/keyboard_container" android:layout_height="0dp" android:layout_width="match_parent" android:layout_weight="1"/>
     </LinearLayout>
 </ScrollView>

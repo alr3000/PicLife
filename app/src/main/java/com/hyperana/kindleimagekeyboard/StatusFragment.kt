@@ -47,19 +47,19 @@ class StatusFragment: Fragment(), ViewTreeObserver.OnGlobalLayoutListener {
 
             // views:
             enabledView = StatusTextView(
-                    context = activity!!,
+                    context = requireActivity(),
                     okTextId = R.string.status_keyboard_enabled,
                     nokTextId = R.string.status_keyboard_disabled,
                     helpTextId = R.string.enable_keyboard_help
             )
             loadedView = StatusTextView(
-                    context = activity!!,
+                    context = requireActivity(),
                     okTextId = R.string.status_keyboard_loaded,
                     nokTextId = R.string.status_keyboard_not_found,
                     helpTextId = R.string.load_keyboard_help
             )
             chosenView = StatusTextView(
-                    context = activity!!,
+                    context = requireActivity(),
                     okTextId = R.string.status_keyboard_chosen,
                     nokTextId = R.string.status_keyboard_notchosen,
                     helpTextId = R.string.choose_keyboard_help
@@ -72,6 +72,9 @@ class StatusFragment: Fragment(), ViewTreeObserver.OnGlobalLayoutListener {
 
                 chosenView!!.setOk(checkIsChosen()).createIn(infoBox)
 
+            view.findViewById<View>(R.id.button_done)?.setOnClickListener{
+                activity?.onBackPressed()
+            }
             return view
         }
         catch (e: Exception) {
@@ -91,7 +94,7 @@ class StatusFragment: Fragment(), ViewTreeObserver.OnGlobalLayoutListener {
         super.onPause()
 
         try {
-            view!!.findViewById<View>(R.id.content)
+            requireView().findViewById<View>(R.id.content)
                 .viewTreeObserver
                 .removeOnGlobalLayoutListener(this)
         }
@@ -180,7 +183,8 @@ class StatusFragment: Fragment(), ViewTreeObserver.OnGlobalLayoutListener {
         b.setText(R.string.button_manage_keyboards)
         b.setOnClickListener{
             try {
-                fragmentManager!!.beginTransaction()
+
+                requireFragmentManager().beginTransaction()
                         .replace(R.id.main_content, ManageKeyboardsFragment(), "Keyboards")
                         .addToBackStack(null)
                         .commit()

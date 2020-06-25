@@ -1,10 +1,10 @@
 package com.hyperana.kindleimagekeyboard
 
+import android.app.Activity
 import android.os.Bundle
 import android.content.Context
 import android.content.Intent
 import android.os.FileObserver
-import android.preference.PreferenceManager
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.*
 import android.widget.Adapter.NO_SELECTION
 import androidx.fragment.app.ListFragment
+import androidx.preference.PreferenceManager
 import java.io.File
 
 /**
@@ -41,17 +42,17 @@ class ManageKeyboardsFragment : ListFragment() {
         try {
 
             Log.d(TAG, "onCreateView")
-            val view = inflater!!.inflate(R.layout.fragment_manage_directories, container!!, false)
+            val view = inflater.inflate(R.layout.fragment_manage_directories, container!!, false)
 
             // watch for delete events. create events happen while observer is paused.
-            initializeFileObserver()
+            initializeFileObserver(requireActivity(),  File(requireActivity().getDir (APP_KEYBOARD_PATH, Context.MODE_PRIVATE).absolutePath))
 
             // set add button listener -> CreateKeyboardActivity:
             view.findViewById<Button>(R.id.button_add_directory).setOnClickListener {
                 try {
                     Log.d(TAG, "onClick add directory")
                     startActivity(Intent(
-                            activity!!.applicationContext,
+                            requireActivity().applicationContext,
                             com.hyperana.kindleimagekeyboard.CreateKeyboardActivity::class.java
                     ))
                 }
@@ -75,7 +76,7 @@ class ManageKeyboardsFragment : ListFragment() {
         Log.d(TAG, "onItemClick:" + position)
         super.onListItemClick(l, v, position, id)
         try {
-            val name = (listAdapter!!.getItem(position) as Map<String, String>)["name"].toString()
+            val name = (listAdapter!!.getItem(position) as Map<*,*>)["name"] as String
             saveKeyboardPreference(name)
             //fragmentManager.popBackStack()
         } catch (e: Exception) {
@@ -99,11 +100,10 @@ class ManageKeyboardsFragment : ListFragment() {
     }
 
     //************************* MANAGE DATA FILE LIST *********************************************
-    fun initializeFileObserver() {
-        activity?.also { a ->
-            dataFilesObserver = object : FileObserver(
-                File(a.getDir (APP_KEYBOARD_PATH, Context.MODE_PRIVATE).absolutePath)
-            ) {
+    fun initializeFileObserver(activity: Activity, file: File) {
+
+            dataFilesObserver = object : FileObserver(file.path) {
+
             override fun onEvent(event: Int, path: String?) {
                 Log.d(TAG, "dataFileObserver onEvent: " + event + " on " + path)
 
@@ -113,13 +113,13 @@ class ManageKeyboardsFragment : ListFragment() {
                 ) {
 
                     // fileObserver is in a different thread
-                    a.runOnUiThread {
+                    activity.runOnUiThread {
                         setListViewData()
                     }
                 }
             }
         }
-        }
+
     }
 
     fun setListViewData() {
@@ -127,18 +127,20 @@ class ManageKeyboardsFragment : ListFragment() {
         activity?.also { a ->
             defaultKeyboard = a.resources.getString(R.string.default_keyboard_name)
 
+            //todo: make dataclass instead of string map
             val data = a.getDir(APP_KEYBOARD_PATH, Context.MODE_PRIVATE).listFiles()
-                .filter { ((it.isDirectory) && (it.name != defaultKeyboard!!)) }
-                .map {
+                ?.filter { ((it.isDirectory) && (it.name != defaultKeyboard!!)) }
+                ?.map {
                     mapOf(
                         Pair("path", it.path),
                         Pair("name", it.name),
                         Pair("date", it.lastModified())
                     )
                 }
-                .sortedByDescending {
+                ?.sortedByDescending {
                     (it["date"] as? Long) ?: 0
                 }
+                ?: emptyList()
 
             listAdapter = object : SimpleAdapter(
                 a,
@@ -155,16 +157,16 @@ class ManageKeyboardsFragment : ListFragment() {
                         view = inflater.inflate(R.layout.directory_item, null)
                     }
 
-                    val item = (this.getItem(position) as Map<String, String>)
+                    val name = (this.getItem(position) as? Map<*,*>)?.get("name") as? String
 
                     //Handle TextView and display string from your list
                     val listItemText = view?.findViewById(R.id.directory_item_path) as? TextView
-                    listItemText?.setText(item.get("name"))
+                    listItemText?.setText(name ?: "NO NAME")
 
                     //Can't delete default keyboard
-                    view?.findViewById<ImageButton>(R.id.directory_item_delete)?.apply {
+                    view?.findViewById<ImageView>(R.id.directory_item_delete)?.apply {
                         setOnClickListener {
-                            doClickDeleteKeyboard(item["name"]!!)
+                            name?.also { doClickDeleteKeyboard(name)}
                         }
                     }
 
@@ -181,8 +183,8 @@ class ManageKeyboardsFragment : ListFragment() {
 
             val selectedPosition = listAdapter
                 ?.let { adapter ->
-                    (0..adapter.count - 1).find {
-                        (adapter.getItem(it) as? Map<String, String>)?.get("name") == currentKeyboard
+                    (0 until adapter.count).find {
+                        ((adapter.getItem(it) as? Map<*,*>)?.get("name") as? String)?.equals(currentKeyboard) == true
                     }
                 }
                 ?: NO_SELECTION
@@ -195,9 +197,9 @@ class ManageKeyboardsFragment : ListFragment() {
 
     fun doClickDeleteKeyboard(name: String) {
         try {
-            Log.d(TAG, "directory item onClick: " + name)
+            Log.d(TAG, "directory item onClick:  $name")
             if (!File(
-                    activity!!.getDir(APP_KEYBOARD_PATH, Context.MODE_PRIVATE),
+                    requireActivity().getDir(APP_KEYBOARD_PATH, Context.MODE_PRIVATE),
                     name
             ).deleteRecursively()) {
                 throw Exception("directory not deleted")
@@ -207,7 +209,7 @@ class ManageKeyboardsFragment : ListFragment() {
             }
         }
         catch (e: Exception) {
-            Log.e(TAG, "click delete directory failed: " + name, e)
+            Log.e(TAG, "click delete directory failed: $name", e)
         }
     }
 
