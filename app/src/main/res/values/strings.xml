@@ -90,7 +90,7 @@
     <string name="pref_use_custom_directory">Use custom keyboard</string>
     <string name="pref_add_directory_title">Manage custom keyboards</string>
     <string name="pref_choose_directory">Change Keyboard</string>
-    <string name="default_keyboard_name">standard</string>
+    <string name="default_keyboard_name">example</string>
     <string name="pref_default_directory">default</string>
     <string name="pref_create_links_title">Links to subpages are</string>
     <string-array name="pref_create_links_entries">

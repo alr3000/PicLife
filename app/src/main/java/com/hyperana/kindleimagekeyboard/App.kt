@@ -27,7 +27,6 @@ class App: Application(), SharedPreferences.OnSharedPreferenceChangeListener{
 
     var icons: List<IconData>? = null
 
-    val bmpCache: LruCache<String, Bitmap> = LruCache(400) // max bitmaps in memory
 
     override fun onCreate() {
         super.onCreate()
@@ -50,9 +49,9 @@ class App: Application(), SharedPreferences.OnSharedPreferenceChangeListener{
            sharedPreferences!!.registerOnSharedPreferenceChangeListener(this)
 
 
-            // add in defaults
+          /*  // add in defaults
             put("currentKeyboard", resources.getString(R.string.default_keyboard_name))
-            put("backgroundColor", "#FF00FF")
+            put("backgroundColor", "#FF00FF")*/
         }
         catch (e: Exception) {
             Log.e(TAG, "failed create app", e)
@@ -117,27 +116,31 @@ class App: Application(), SharedPreferences.OnSharedPreferenceChangeListener{
 
     }
 
-    fun asyncSetImageBitmap(img: ImageView, path: String) {
-         val bmp = bmpCache.get(path)
-        if (bmp != null) {
-            img.setImageBitmap(bmp)
-            return
-        }
-        Log.d("IconData", "loading bitmap: " + path)
-        val uiHandler = Handler()
-        Thread({
-            try {
-                val bitmap = BitmapFactory.decodeFile(path)
-                uiHandler.post {
-                    Log.d("IconData", "bitmap loaded: " + path)
-                    img.setImageBitmap(bitmap)
-                    bmpCache.put(path, bitmap)
-                }
-            } catch (e: Exception) {
-                Log.w("IconData", "set bitmap failed: " + path, e)
-            }
-        }).start()
-    }
+    companion object {
+        val bmpCache: LruCache<String, Bitmap> = LruCache(400) // max bitmaps in memory
 
+
+        fun asyncSetImageBitmap(img: ImageView, path: String) {
+            val bmp = bmpCache.get(path)
+            if (bmp != null) {
+                img.setImageBitmap(bmp)
+                return
+            }
+            Log.d("IconData", "loading bitmap: " + path)
+            val uiHandler = Handler()
+            Thread(){
+                try {
+                    val bitmap = BitmapFactory.decodeFile(path)
+                    uiHandler.post {
+                        Log.d("IconData", "bitmap loaded: " + path)
+                        img.setImageBitmap(bitmap)
+                        bmpCache.put(path, bitmap)
+                    }
+                } catch (e: Exception) {
+                    Log.w("IconData", "set bitmap failed: " + path, e)
+                }
+            }.start()
+        }
+    }
 
 }

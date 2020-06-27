@@ -1,18 +1,19 @@
 package com.hyperana.kindleimagekeyboard
 
-import android.util.Log
-import android.view.inputmethod.ExtractedText
-import android.view.inputmethod.ExtractedTextRequest
-import android.view.inputmethod.InputConnection
-
 /**
  * Created by alr on 9/15/17.
  */
-class WordInputter {
+abstract class WordInputter () {
 
     val TAG = "WordInputter"
     val wordbreak = Regex("\\W")
     val word = Regex("[^\\W]+")
+
+    var textListener: InputListener? = null
+    interface InputListener {
+        fun onTextChanged(text: String)
+    }
+
 
     data class RelativeWord(var text: String = "", var start: Int = 0, var endInclusive: Int = 0) {
         override fun toString() : String {
@@ -20,121 +21,25 @@ class WordInputter {
         }
     }
 
+    // subclasses should call this function any time text is changed or action taken and on start
+    fun update() {
+        textListener?.onTextChanged(getAllText())
+    }
+
     fun splitWords(text: CharSequence) : List<String> {
         return wordbreak.split(text, 0)
     }
-
-    // limit=0 allows trailing empty strings to represent end-of-string split
-    fun getWordBeforeCursor(ic: InputConnection) : String {
-        val arr = splitWords(ic.getTextBeforeCursor(255, 0))
-        Log.d(TAG, "words before: " + arr.joinToString(","))
-        return if (arr.isEmpty()) "" else arr.last()
-    }
-
-    fun getWordAfterCursor(ic: InputConnection) : String {
-        val arr = splitWords(ic.getTextAfterCursor(255, 0))
-        Log.d(TAG, "words after: " + arr.joinToString(","))
-        return if (arr.isEmpty()) "" else arr.first()
-    }
-
-    fun getNextWord(ic: InputConnection) : RelativeWord? {
-        val t =  word.find(ic.getTextAfterCursor(255, 0), 0)
-        return if (t == null) null
-        else RelativeWord(t.value, t.range.start, t.range.endInclusive)
-    }
-
-    fun getPreviousWord(ic: InputConnection) : RelativeWord? {
-        val text = ic.getTextBeforeCursor(255, 0)
-        val t =  word.findAll(text, 0).lastOrNull()
-        return if (t==null) null
-        else RelativeWord(t.value, 0 - (text.length - t.range.start), 0 - (text.length - t.range.endInclusive))
-    }
-
-    fun getCurrentWord(ic: InputConnection) : RelativeWord? {
-        val forward = getNextWord(ic)
-        val backward = getPreviousWord(ic)
-
-        Log.d(TAG, "currentWord finds " + backward.toString() + forward.toString())
-        val out = RelativeWord()
-        if ((backward == null) || (backward.endInclusive < -1)) {
-            return null
-        }
-        else {
-            out.start = backward.start
-            out.text = backward.text
-        }
-
-        if ((forward == null) || (forward.start > 0)) {
-            return null
-        }
-        else {
-            out.endInclusive = forward.endInclusive
-            out.text += forward.text
-        }
-        Log.d(TAG, "currentWord returns " + out.toString())
-       return out
-    }
-
-    fun getCursorPosition(ic: InputConnection) : Int {
-        val extracted: ExtractedText = ic.getExtractedText(ExtractedTextRequest(), 0);
-        return extracted.startOffset + extracted.selectionStart;
-    }
-
-    fun input(ic: InputConnection, text: String) {
-        try {
-            val backward = getWordBeforeCursor(ic)
-            val forward = getWordAfterCursor(ic)
-
-            Log.d(TAG, "cursor position: " + getCursorPosition(ic))
-            Log.d(TAG, "found adjacent text: [" + backward + "_" + forward + "]")
-
-            // if in the middle of a word, delete it
-            if (forward.isNotEmpty() && backward.isNotEmpty()) {
-                //editor may not respond to this call
-                //ic.commitCorrection(CorrectionInfo(getCursorPosition()-backward.length, backward + forward, icon.text))
-                ic.deleteSurroundingText(backward.length, forward.length)
-                ic.commitText(text, 1)
-            } else {
-                // add word with spaces if necessary
-                val text = (if (backward.isNotEmpty()) " " else "") +
-                        text + (if (forward.isNotEmpty()) " " else "")
-                Log.d(TAG, "commit text: [" + text + "]")
-                ic.commitText(text, 1)
-            }
-        } catch(e: Exception) {
-            Log.e(TAG, "input problem: " + e.message)
-        }
-    }
-
     // todo: delete selection if any
 
-    fun forwardDelete(ic: InputConnection) {
-        val nextWord = getCurrentWord(ic) ?: getNextWord(ic)
-        Log.d(TAG, "forwardDelete word: " + nextWord.toString())
-        if (nextWord == null) {
-            return
-        }
-        if (nextWord.start >= 0) {
-            ic.deleteSurroundingText(0, nextWord.endInclusive + 1)
-        }
-        else {
-            ic.deleteSurroundingText(Math.abs(nextWord.start), nextWord.endInclusive + 1)
-        }
-    }
+    abstract fun input(text: String)
 
-    fun backwardDelete(ic: InputConnection) {
-        val prevWord = getCurrentWord(ic) ?: getPreviousWord(ic)
-        Log.d(TAG, "backwardDelete word: " + prevWord.toString())
-        if (prevWord == null) {
-            return
-        }
-        if (prevWord.endInclusive < 0) {
-            ic.deleteSurroundingText(Math.abs(prevWord.start), 0)
-        }
-        else {
-            ic.deleteSurroundingText(Math.abs(prevWord.start), prevWord.endInclusive + 1)
-        }
-    }
+    abstract fun forwardDelete()
+
+    abstract fun backwardDelete()
+
+    abstract fun getAllText() : String
+
+    abstract fun action()
 
 
 

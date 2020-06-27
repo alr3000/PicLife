@@ -144,7 +144,7 @@ class SwipePagerView : LinearLayout {
             // data and discard the view if we fail. After ListView source code.
             if (childCount > 0) {
                 val convertibleView = getChildAt(0)
-                val updatedView = adapter?.getView(position, convertibleView, null);
+                val updatedView = adapter?.getView(position, convertibleView, this);
 
                 // If we failed to re-use the convertible view, remove it
                 if (updatedView != convertibleView) {
@@ -153,7 +153,7 @@ class SwipePagerView : LinearLayout {
                 }
             }
             else {
-                addView(adapter?.getView(position, null, null))
+                addView(adapter?.getView(position, null, this))
             }
             currentPageIndex = position
 

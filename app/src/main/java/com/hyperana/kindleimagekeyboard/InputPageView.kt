@@ -37,15 +37,15 @@ import java.util.regex.Pattern
 class InputPageView(
         context: Context,
         var page: PageData,
-        val app: App,
-        val iconListener: IconListener) : LinearLayout(context) {
+        val color: Int,
+        val touchAction: String,
+        val iconListener: IconListener) : LinearLayout(context){
     val TAG = "InputPageView - " + page.id
 
     var views: List<ViewGroup> = listOf()
     var items: List<IconData> = page.icons
 
     var margins = 10 // percent of cellwidth
-    var color = Color.BLUE
     var rows: Int = 3
     var cols: Int = 5
 
@@ -57,12 +57,13 @@ class InputPageView(
     // touch listener
     var startTouchView: View? = null
 
+
+
     init {
+
         // prepare page styles todo: cascading from app, then page overrides
         margins = page.get("margins")?.toIntOrNull() ?: margins
-        val colorOpt = app.get("backgroundColor")?.toString()
-        color = if (colorOpt == null) color else Color.parseColor(colorOpt)
-        cols = page.get("cols")!!.toInt()
+         cols = page.get("cols")!!.toInt()
         rows = page.get("rows")!!.toInt()
 
         // set page features
@@ -130,7 +131,7 @@ class InputPageView(
         if (icon.path != null) {
             ImageView(context).also {
                 cell.addView(it)
-                app.asyncSetImageBitmap(it, icon.path!!)
+                App.asyncSetImageBitmap(it, icon.path!!)
                 it.scaleType = ImageView.ScaleType.FIT_XY
             }
         }
@@ -190,7 +191,7 @@ class InputPageView(
     // todo: -L- touch handler is separately defined, added on by IME
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         try {
-            return when (app.get("touchAction")?.toString() ?: "touchActionClick") {
+            return when (touchAction) {
                 "touchActionDown" -> touchIconHandler(event)
                 "touchActionClick" -> clickIconHandler(event)
                 "touchActionUp" -> releaseIconHandler(event)
