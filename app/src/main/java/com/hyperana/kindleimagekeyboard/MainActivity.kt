@@ -2,48 +2,119 @@ package com.hyperana.kindleimagekeyboard
 
 import android.app.TaskStackBuilder
 import android.content.*
-import android.content.res.Configuration
 import android.os.Bundle
-import android.os.FileObserver
 import android.util.Log
-import android.preference.PreferenceManager
-import android.provider.Settings
-import androidx.core.view.MenuItemCompat
 import android.view.*
-import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputConnection
-import android.view.inputmethod.InputMethodManager
-import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import java.io.*
-class MainActivity : AppCompatActivity() {
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.preference.PreferenceManager
+
+class MainActivity : AppCompatActivity(), FragmentListener {
 
     val TAG = "MainActivity"
     val context = this
 
     // Options Menu:
-    val SETTINGS_ID = 1243
-    val DONE_ID = 3544
-    val HELP_ID = 2657
+    val SETTINGS_ID = Menu.FIRST + 1
+    val HELP_ID = Menu.FIRST + 2
+
+
+    var aacManager: AACManager? = null
+    val wordInputter: WordInputter? = null
+
+
+    override fun closeFragment(fragment: Fragment) {
+       removeFragment(fragment)
+    }
+
+    fun removeFragment(fragment: Fragment) {
+        Log.d(TAG, "remove fragment: $fragment")
+        if (supportFragmentManager.fragments.contains(fragment))
+            supportFragmentManager.beginTransaction()
+                .remove(fragment)
+                .commit()
+    }
+
+    class FragmentChainListener (
+        val containerId: Int,
+        val manager: FragmentManager)
+        : FragmentListener {
+
+        private var fragments = mutableListOf<Fragment>()
+
+        fun start(fragmentList: List<Fragment>) {
+            fragments = fragmentList.toMutableList()
+        }
+
+        private fun nextFragment() : Boolean{
+            if (fragments.isNotEmpty())
+                fragments.removeAt(0).also {
+                    manager.beginTransaction()
+                        .replace(containerId, it)
+                        .commit()
+                    return true
+                }
+            else return false
+        }
+
+        override fun closeFragment(fragment: Fragment) {
+            try {
+                if (!nextFragment()) {
+                    manager.beginTransaction()
+                        .remove(fragment)
+                        .commit()
+                }
+            }
+            catch (e: Exception) {
+                Log.e("FragmentChainListener", "failed close chain fragment", e)
+            }
+        }
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate")
         try {
             super.onCreate(savedInstanceState)
-           setContentView(R.layout.activity_main)
-
+            setContentView(R.layout.activity_main)
 
             // load default settings -- false means this will not execute twice
             PreferenceManager.setDefaultValues(this, R.xml.settings, false)
 
-            supportFragmentManager.beginTransaction().apply {
-                replace(R.id.main_content, StartingFragment(), "Starting")
-                addToBackStack(null)
-                commit()
+            FragmentChainListener(R.id.loading_fragment_view, supportFragmentManager).also { chain ->
+                val startup = mutableListOf<Fragment>()
+                if (getKeyboardsNotLoaded(this).isNotEmpty())
+                    startup.add(LoadAssetsFragment.create(chain))
+                //todo: add fragment to load images for current aac keyboard/page
+                chain.start(startup)
             }
+
+            aacManager = AACManager(
+                App.getInstance(applicationContext),
+                overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
+                //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
+                pager = findViewById<SwipePagerView>(R.id.pager),
+                input = InputViewController(
+                    inputter = wordInputter,
+                    backspaceView = findViewById(R.id.backspace_button),
+                    forwardDeleteView = findViewById(R.id.forwarddel_button),
+                    inputActionView = findViewById(R.id.done_button)
+                ),
+                accessSettings = AccessSettingsController(
+                    requestSettingsView = findViewById(R.id.preferences_button),
+                    gotoSettingsView = findViewById(R.id.settings_button),
+                    overlay = findViewById<ViewGroup>(R.id.imageinput_overlay)
+                ),
+                gotoHomeView = findViewById(R.id.home_button),
+                titleView = findViewById<TextView>(R.id.inputpage_name)
+
+                //todo: -?- settings could be accessed through notification instead while service is running
+            ).apply {
+                setPages(app.getProjectedPages())
+                setCurrentPage( app.get("currentPageId")?.toString())
+            }.also { wordInputter?.textListener = it }
 
 
 
@@ -62,9 +133,6 @@ class MainActivity : AppCompatActivity() {
         //add settings button
         menu?.add(Menu.NONE, SETTINGS_ID, 0, R.string.button_goto_settings) // 0 = first item
         menu?.add(Menu.NONE, HELP_ID, 1, R.string.button_goto_help)
-       /* menu?.add(Menu.NONE, DONE_ID, 2, R.string.abc_action_mode_done).also {
-            MenuItemCompat.setShowAsAction(it, MenuItem.SHOW_AS_ACTION_IF_ROOM)
-        }*/
 
         return super.onCreateOptionsMenu(menu)
     }
@@ -72,7 +140,6 @@ class MainActivity : AppCompatActivity() {
   override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         when (item?.itemId)  {
             SETTINGS_ID -> doClickGotoSettings()
-            DONE_ID -> doClickDone()
             HELP_ID -> doClickHelp()
             else -> {
                 Log.w(TAG, "unhandled context menu item: " + item?.title)
@@ -82,8 +149,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if (fragmentManager.backStackEntryCount > 0) {
-            fragmentManager.popBackStack()
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            supportFragmentManager.popBackStack()
         } else {
             super.onBackPressed()
         }
@@ -101,13 +168,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // todo: move keyboard tester to status fragment
     fun doClickHelp(v: View? = null) {
         Log.d(TAG, "doClickHelp")
         try {
             supportFragmentManager
                     .beginTransaction()
-                    .add(R.id.main_content, StatusFragment(), "keyboardStatus")
+                    .add(R.id.loading_fragment_view, StatusFragment(), "keyboardStatus")
                     .addToBackStack(null)
                     .commit()
         }
@@ -116,16 +182,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // same as back navigation
-    fun doClickDone(v: View? = null) {
-        Log.d(TAG, "doClickDone")
-        try {
-          onBackPressed()
-        }
-        catch (e: Exception) {
-            displayError("Could not end activity", e)
-        }
-    }
 
     // logs full error, displays message in errorview or as final if view is not set
     fun displayError(text: String?, e:Exception?) {

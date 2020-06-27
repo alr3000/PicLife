@@ -217,18 +217,6 @@ class ImageInputIME(): InputMethodService() {
             aspectRatio = if (isFullscreenMode) 0.8f else 0.5f
         )
 
-        val pages = (app?.getPageList() ?: listOf())
-            .let {
-                LinkedPagesProjection(app!!.get("createLinks").toString()).project(it)
-            }
-            .let {
-                FittedGridProjection(
-                    cols = app!!.get("columns").toString().toInt(),
-                    rows = null,
-                    margins = app!!.get("iconMargin").toString().toIntOrNull()
-                ).project(it)
-            }
-
         aacManager = AACManager(
             app = app!!,
             overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay),
@@ -250,15 +238,12 @@ class ImageInputIME(): InputMethodService() {
 
             //todo: -?- settings could be accessed through notification instead while service is running
         ).apply {
-            setPages(pages)
+            setPages(app.getProjectedPages())
             setCurrentPage( app.get("currentPageId")?.toString())
         }.also { wordInputter.textListener = it }
 
 
-        view?.findViewById<View>(R.id.home_button)?.visibility =
-            if (app?.get("doHomeButton")?.toString()?.toBoolean() ?: true) View.VISIBLE
-            else View.INVISIBLE
-
+       
 
         return view!!
 

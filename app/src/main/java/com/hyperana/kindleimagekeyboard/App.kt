@@ -18,8 +18,9 @@ import android.widget.ImageView
 /**
  * Created by alr on 11/17/17.
  */
-class App: Application(), SharedPreferences.OnSharedPreferenceChangeListener{
+class App private constructor(val appContext: Context): SharedPreferences.OnSharedPreferenceChangeListener{
     val TAG = "App"
+
 
     var mData: MutableMap<String, Any?>? = null
     var sharedPreferences: SharedPreferences? = null
@@ -28,8 +29,7 @@ class App: Application(), SharedPreferences.OnSharedPreferenceChangeListener{
     var icons: List<IconData>? = null
 
 
-    override fun onCreate() {
-        super.onCreate()
+    init {
         Log.d(TAG, "onCreate")
 
         try {
@@ -37,13 +37,13 @@ class App: Application(), SharedPreferences.OnSharedPreferenceChangeListener{
             mData = hashMapOf()
 
             val mem = ActivityManager.MemoryInfo()
-            (getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)?.getMemoryInfo(mem)
+            (appContext.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)?.getMemoryInfo(mem)
             Log.d(TAG, "memory: available=" + mem.availMem + " threshold=" + mem.threshold + " low=" + mem.lowMemory)
 
             // load default settings -- false means this will not execute twice
-            PreferenceManager.setDefaultValues(this, R.xml.settings, false)
+            PreferenceManager.setDefaultValues(appContext, R.xml.settings, false)
 
-            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(appContext)
 
             // register listeners
            sharedPreferences!!.registerOnSharedPreferenceChangeListener(this)
@@ -72,6 +72,20 @@ class App: Application(), SharedPreferences.OnSharedPreferenceChangeListener{
         return get("pageList") as? List<PageData> ?: updatePageList()
     }
 
+    fun getProjectedPages() : List<PageData> {
+        return getPageList()
+        .let {
+            LinkedPagesProjection(get("createLinks").toString()).project(it)
+        }
+            .let {
+                FittedGridProjection(
+                    cols = get("columns").toString().toInt(),
+                    rows = null,
+                    margins = get("iconMargin").toString().toIntOrNull()
+                ).project(it)
+            }
+    }
+
     // loads stored data
     //todo: -?- page list is map by id
     fun updatePageList() : List<PageData> {
@@ -82,7 +96,7 @@ class App: Application(), SharedPreferences.OnSharedPreferenceChangeListener{
         val newPages = jsonStringToPageDataArray(
                 loadString(
                         getKeyboardConfigFile(
-                                this,
+                                appContext,
                                 keyboardName
                         ).inputStream()
                 )
@@ -109,14 +123,7 @@ class App: Application(), SharedPreferences.OnSharedPreferenceChangeListener{
 
     }
 
-    override fun onTerminate() {
-        super.onTerminate()
-        // unregister listeners
-        sharedPreferences!!.unregisterOnSharedPreferenceChangeListener(this)
-
-    }
-
-    companion object {
+    companion object : SingletonHolder<App, Context>(::App) {
         val bmpCache: LruCache<String, Bitmap> = LruCache(400) // max bitmaps in memory
 
 
@@ -141,6 +148,8 @@ class App: Application(), SharedPreferences.OnSharedPreferenceChangeListener{
                 }
             }.start()
         }
+
+
     }
 
 }

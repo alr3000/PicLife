@@ -15,10 +15,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:id="@+id/main_content"></LinearLayout>
+            android:id="@+id/loading_fragment_view"></LinearLayout>
 
 
 
-        <View android:id="@+id/keyboard_container" android:layout_height="0dp" android:layout_width="match_parent" android:layout_weight="1"/>
+        <include layout="@layout/input_method_main" android:layout_height="0dp" android:layout_width="match_parent" android:layout_weight="1"/>
     </LinearLayout>
 </ScrollView>

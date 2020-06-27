@@ -31,6 +31,7 @@ class AACManager (
 
     val TAG = "AACManager"
     var TTS: TextToSpeech? = null
+
     fun speak(text: String) {
 
         fun doSpeak(text: String) {
@@ -45,7 +46,7 @@ class AACManager (
 
         // initialize TTS:
         TTS = TTS?.also { doSpeak(text) }
-         ?: TextToSpeech(app.applicationContext) { status ->
+         ?: TextToSpeech(app.appContext) { status ->
             if (status != TextToSpeech.SUCCESS) TTS = null
             else doSpeak(text)
         }
@@ -53,7 +54,13 @@ class AACManager (
     }
 
     init {
-        gotoHomeView?.setOnClickListener { v -> doClickHome(v) }
+        gotoHomeView?.apply {
+            visibility =
+                if (app.get("doHomeButton")?.toString()?.toBoolean() ?: true) View.VISIBLE
+                else View.INVISIBLE
+
+            setOnClickListener { v -> doClickHome(v) }
+        }
     }
 
 

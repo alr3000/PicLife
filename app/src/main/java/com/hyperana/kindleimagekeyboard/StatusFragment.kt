@@ -1,6 +1,5 @@
 package com.hyperana.kindleimagekeyboard
 
-import android.content.Context
 import android.content.Context.INPUT_METHOD_SERVICE
 import android.content.Intent
 import android.os.Bundle
@@ -11,7 +10,6 @@ import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import androidx.fragment.app.Fragment
-import java.io.File
 
 /**
  * Created by alr on 11/10/17.
@@ -185,7 +183,7 @@ class StatusFragment: Fragment(), ViewTreeObserver.OnGlobalLayoutListener {
             try {
 
                 requireFragmentManager().beginTransaction()
-                        .replace(R.id.main_content, ManageKeyboardsFragment(), "Keyboards")
+                        .replace(R.id.loading_fragment_view, ManageKeyboardsFragment(), "Keyboards")
                         .addToBackStack(null)
                         .commit()
             } catch (e: Exception) {
