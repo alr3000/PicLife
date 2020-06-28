@@ -15,21 +15,20 @@ import android.util.Log
  *
  *
  * todo: -L- arrange icons to fill grid, retaining their relative positions
+ * todo: insert pages to hold leftover icons in small grids -- related ids
  *
  */
-class FittedGridProjection(val cols: Int, var rows: Int?, var margins: Int? = 10) : KeyboardProjection() {
+class FittedGridProjection(val cols: Int, val rows: Int, var margins: Int? = 10) : KeyboardProjection() {
     val TAG = "FixedKeyboardProjection"
-    val colsToRows: List<Int> = listOf(1,1,2,2,3,3,4,5,5,6,6,7)
-   val MAX_ROWS = 7
+
 
 
     override fun project(pages: List<PageData>): List<PageData> {
-        rows = colsToRows.getOrNull(cols) ?: MAX_ROWS
         pages.onEach {
             it.set("rows", rows.toString())
             it.set("cols", cols.toString())
             it.set("margins", margins.toString())
-            mapPageIcons(it.icons, rows!! * cols)
+            mapPageIcons(it.icons, rows * cols)
         }
         return pages
     }

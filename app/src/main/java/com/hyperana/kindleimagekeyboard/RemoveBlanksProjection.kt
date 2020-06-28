@@ -15,9 +15,10 @@ class RemoveBlanksProjection (val removeIfText: String? = null) : KeyboardProjec
         pages.onEach {
             val p = it
             p.icons = p.icons.filter {
-                (((it.text != removeIfText) &&
-                        ((it.path != null) && !File(it.path).exists())) &&
-                        ( true )) //
+                (
+                        (it.text != removeIfText)  //text other than specified
+                        && (it.path?.let { path -> File(path).exists()} ?: false) // and has icon file
+                )
             }.toMutableList()
         }
 

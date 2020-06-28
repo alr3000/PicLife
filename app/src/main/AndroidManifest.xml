@@ -7,7 +7,7 @@
         android:icon="@mipmap/ic_launcher_input"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme.NoActionBar">
 
         <!-- singleTask means only one instance in system tasklist -->
         <activity

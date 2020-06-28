@@ -72,19 +72,7 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
         return get("pageList") as? List<PageData> ?: updatePageList()
     }
 
-    fun getProjectedPages() : List<PageData> {
-        return getPageList()
-        .let {
-            LinkedPagesProjection(get("createLinks").toString()).project(it)
-        }
-            .let {
-                FittedGridProjection(
-                    cols = get("columns").toString().toInt(),
-                    rows = null,
-                    margins = get("iconMargin").toString().toIntOrNull()
-                ).project(it)
-            }
-    }
+
 
     // loads stored data
     //todo: -?- page list is map by id

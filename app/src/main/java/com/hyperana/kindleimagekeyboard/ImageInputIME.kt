@@ -34,7 +34,6 @@ class ImageInputIME(): InputMethodService() {
     // Logger:
     val TAG = "ImageInputIME"
 
-    var app: App? = null
 
 
     // Icon Page Variables:
@@ -92,7 +91,7 @@ class ImageInputIME(): InputMethodService() {
         Log.d(TAG, "onWindowShown")
         super.onWindowShown()
         try {
-            if (app!!.preferenceChangeTime > preferenceCheckTime) {
+            if (App.getInstance(applicationContext).preferenceChangeTime > preferenceCheckTime) {
                 Log.d(TAG, "preferences changed!")
                 preferenceCheckTime = Date().time
                 setInputView(createInputView())
@@ -143,13 +142,6 @@ class ImageInputIME(): InputMethodService() {
     override fun onCreate() {
         Log.d(TAG, "onCreate")
         super.onCreate()
-        try {
-            app = application as App
-
-        }
-        catch(e: Exception) {
-            displayError("Failed to create keyboard", e)
-        }
     }
 
     override fun onTrimMemory(level: Int) {
@@ -218,7 +210,7 @@ class ImageInputIME(): InputMethodService() {
         )
 
         aacManager = AACManager(
-            app = app!!,
+            app = App.getInstance(applicationContext),
             overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay),
             //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
             pager = view!!.findViewById<SwipePagerView>(R.id.pager),
@@ -238,17 +230,36 @@ class ImageInputIME(): InputMethodService() {
 
             //todo: -?- settings could be accessed through notification instead while service is running
         ).apply {
-            setPages(app.getProjectedPages())
+            setPages(getProjectedPages())
             setCurrentPage( app.get("currentPageId")?.toString())
         }.also { wordInputter.textListener = it }
 
 
-       
+
 
         return view!!
 
     }
 
+    fun getProjectedPages() : List<PageData> {
+        val app = App.getInstance(applicationContext)
+        return app.getPageList()
+            .let {
+                LinkedPagesProjection(app.get("createLinks").toString()).project(it)
+            }
+            .let {
+
+                val cols = app.get("columns").toString().toInt()
+                val colsToRows: List<Int> = listOf(1,1,2,2,3,3,4,5,5,6,6,7)
+                val MAX_ROWS = 7
+
+                FittedGridProjection(
+                    cols = cols,
+                    rows = colsToRows.getOrNull(cols) ?: MAX_ROWS,
+                    margins = app.get("iconMargin").toString().toIntOrNull()
+                ).project(it)
+            }
+    }
 
 
     fun resizeView(view: View?, aspectRatio: Float) {

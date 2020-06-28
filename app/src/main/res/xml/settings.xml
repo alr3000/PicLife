@@ -17,6 +17,12 @@
             android:key="addKeyboard"
             android:title="@string/pref_add_directory_title">
         </androidx.preference.Preference>
+        <androidx.preference.Preference
+            android:key="embeddedHelp"
+            android:title="@string/button_goto_help"
+            android:fragment="com.hyperana.kindleimagekeyboard.StatusFragment">
+        </androidx.preference.Preference>
+
       </androidx.preference.PreferenceCategory>
 
     <!-- Page Layout -->

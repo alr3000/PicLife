@@ -2,6 +2,8 @@ package com.hyperana.kindleimagekeyboard
 
 import android.app.TaskStackBuilder
 import android.content.*
+import android.content.res.Configuration
+import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -10,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.preference.PreferenceManager
+import java.lang.Math.floor
 
 class MainActivity : AppCompatActivity(), FragmentListener {
 
@@ -112,7 +115,7 @@ class MainActivity : AppCompatActivity(), FragmentListener {
 
                 //todo: -?- settings could be accessed through notification instead while service is running
             ).apply {
-                setPages(app.getProjectedPages())
+                setPages(getProjectedPages())
                 setCurrentPage( app.get("currentPageId")?.toString())
             }.also { wordInputter?.textListener = it }
 
@@ -121,6 +124,30 @@ class MainActivity : AppCompatActivity(), FragmentListener {
         }catch (e: Exception) {
             displayError("failed to create activity", e)
         }
+    }
+
+    fun getProjectedPages() : List<PageData> {
+        val app = App.getInstance(applicationContext)
+        return app.getPageList()
+            .let {
+                RemoveBlanksProjection("icon").project(it)
+            }
+            .let {
+                LinkedPagesProjection(app.get("createLinks").toString()).project(it)
+            }
+            .let {
+                val cols = app.get("columns").toString().toInt()
+                val rows = (if (getResources().getConfiguration().orientation == ORIENTATION_LANDSCAPE)
+                    0.5 else 2.0).let { rToC ->
+                    kotlin.math.round(cols.toDouble() * rToC).toInt()
+                }
+
+                FittedGridProjection(
+                    cols = cols,
+                    rows = rows,
+                    margins = app.get("iconMargin").toString().toIntOrNull()
+                ).project(it)
+            }
     }
 
     override fun onCreateNavigateUpTaskStack(builder: TaskStackBuilder?) {
@@ -134,9 +161,10 @@ class MainActivity : AppCompatActivity(), FragmentListener {
         menu?.add(Menu.NONE, SETTINGS_ID, 0, R.string.button_goto_settings) // 0 = first item
         menu?.add(Menu.NONE, HELP_ID, 1, R.string.button_goto_help)
 
-        return super.onCreateOptionsMenu(menu)
+        return false
     }
-
+//todo: get rid of options menu and toolbar
+    /*
   override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         when (item?.itemId)  {
             SETTINGS_ID -> doClickGotoSettings()
@@ -146,7 +174,7 @@ class MainActivity : AppCompatActivity(), FragmentListener {
             }
         }
         return super.onOptionsItemSelected(item)
-    }
+    }*/
 
     override fun onBackPressed() {
         if (supportFragmentManager.backStackEntryCount > 0) {
