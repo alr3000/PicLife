@@ -123,11 +123,15 @@ class MainActivity : AppCompatActivity(), FragmentListener {
             //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
             pager = findViewById<SwipePagerView>(R.id.pager),
             input = InputViewController(
+                app = App.getInstance(applicationContext),
+                lifecycleOwner = this,
                 inputter = messageViewModel,
+                overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
                 backspaceView = findViewById(R.id.backspace_button),
                 forwardDeleteView = findViewById(R.id.forwarddel_button),
                 inputActionView = findViewById(R.id.done_button)
             ),
+            speaker = speaker,
             accessSettings = AccessSettingsController(
                 requestSettingsView = findViewById(R.id.preferences_button),
                 gotoSettingsView = findViewById(R.id.settings_button),

@@ -5,36 +5,35 @@ package com.hyperana.kindleimagekeyboard
  *
  *
  */
+import android.content.Context
 import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
-import android.os.Build
-import android.os.Handler
-import android.speech.tts.TextToSpeech
-import android.speech.tts.TextToSpeech.QUEUE_FLUSH
-import android.speech.tts.TextToSpeech.SUCCESS
-import android.content.*
-import android.graphics.drawable.Icon
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Printer
-import android.view.*
-import android.view.animation.Animation
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodSubtype
-import android.widget.*
+import android.widget.TextView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
 import java.util.*
-import android.view.animation.AlphaAnimation
 
 
 //todo: -L- input as emoji (image instead of text) mode
 // Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler(this)) logs - todo
 // only top (outside call method) level displays error - todo
 
-class ImageInputIME(): InputMethodService() {
+class ImageInputIME(): InputMethodService(), LifecycleOwner {
 
     // Logger:
     val TAG = "ImageInputIME"
 
+    // make service "lifecycle":
+    private val lifecycleRegistry = LifecycleRegistry(this)
 
 
     // Icon Page Variables:
@@ -58,7 +57,9 @@ class ImageInputIME(): InputMethodService() {
 
 
     // TTS:
-    val speaker = Speaker(App.getInstance(this.applicationContext))
+    val speaker = Speaker(App.getInstance(this.applicationContext)).also {
+        lifecycleRegistry.addObserver(it)
+    }
 
 
     //********************************** InputMethod Overrides: ********************************
@@ -72,7 +73,7 @@ class ImageInputIME(): InputMethodService() {
         // then update with cursor position (word index) and listen for changes
         //wordInputter.update()
 
-        speaker.startTTS()
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
         super.onStartInputView(info, restarting)
     }
 
@@ -133,20 +134,24 @@ class ImageInputIME(): InputMethodService() {
     override fun onFinishInputView(finishingInput: Boolean) {
         super.onFinishInputView(finishingInput)
         Log.d(TAG, "onFinishInputView: $finishingInput")
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     }
 
     override fun onDestroy() {
         Log.d(TAG, "onDestroy")
 
-        // release tts
-        speaker.stopTTS()
-
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         super.onDestroy()
     }
 
     override fun onCreate() {
         Log.d(TAG, "onCreate")
         super.onCreate()
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+    }
+
+    override fun getLifecycle(): Lifecycle {
+        return lifecycleRegistry
     }
 
     override fun onTrimMemory(level: Int) {
@@ -214,13 +219,19 @@ class ImageInputIME(): InputMethodService() {
             aspectRatio = if (isFullscreenMode) 0.8f else 0.5f
         )
 
+        val app = App.getInstance(applicationContext)
+
         aacManager = AACManager(
-            app = App.getInstance(applicationContext),
+            app = app,
+            speaker = speaker,
             overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay),
             //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
             pager = view!!.findViewById<SwipePagerView>(R.id.pager),
             input = InputViewController(
+                app = app,
+                lifecycleOwner = this,
                 inputter = wordInputter,
+                overlay = view!!.findViewById<ViewGroup>(R.id.imageinput_overlay),
                 backspaceView = view!!.findViewById(R.id.backspace_button),
                 forwardDeleteView = view!!.findViewById(R.id.forwarddel_button),
                 inputActionView = view!!.findViewById(R.id.done_button)
