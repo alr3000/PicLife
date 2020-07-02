@@ -11,6 +11,7 @@ import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.preference.PreferenceManager
 import com.github.angads25.filepicker.controller.DialogSelectionListener
 import com.github.angads25.filepicker.model.DialogConfigs
 import com.github.angads25.filepicker.model.DialogProperties
@@ -25,6 +26,9 @@ class CreateKeyboardActivity : AppCompatActivity() {
             super.onCreate(savedInstanceState)
             setContentView(R.layout.activity_create_keyboard)
 
+
+            //DropBox:
+            Log.d(TAG, "DropBox Auth: ${BuildConfig.CONSUMER_KEY}")
             /* val toolbar = findViewById(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
 
@@ -39,6 +43,16 @@ class CreateKeyboardActivity : AppCompatActivity() {
             val saveButton = findViewById(R.id.button_save_keyboard) as Button
             val nameInput = findViewById(R.id.edit_keyboard_name) as EditText
             val nameError = findViewById<TextView>(R.id.error_keyboard_name)
+            val dropboxUI = findViewById<View>(R.id.dropbox_container)
+            val enableDBButton = findViewById<View>(R.id.button_enable_dropbox).apply {
+                visibility = if (PreferenceManager
+                        .getDefaultSharedPreferences(this@CreateKeyboardActivity)
+                        .getBoolean(PREF_DROPBOX_ENABLED, false)) View.GONE else View.VISIBLE
+                setOnClickListener {
+                    Log.d(TAG, "start enableDropboxactivity for result...")
+                }
+            }
+
 
             // set listener for keyboard path
             (pathInput).setOnClickListener { v ->
@@ -112,6 +126,12 @@ class CreateKeyboardActivity : AppCompatActivity() {
             Log.e(TAG, "failed create", e)
         }
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        Log.d(TAG, "onActivityResult: $requestCode, $resultCode, ${data?.data}")
+    }
+    
 
     fun validateName(name: String?) : Boolean {
         val list: List<String?> = listOf(null, "") // and all the existing names

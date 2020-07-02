@@ -71,6 +71,58 @@
             android:focusable="false"/>
     </LinearLayout>
 
+    <!-- Dropbox keyboard path: click for dialog input -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/dropbox_container">
+
+    <LinearLayout
+       android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+        <Button
+            android:id="@+id/button_disable_dropbox"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:padding="@dimen/checkbox_margin"
+            android:text="@string/disable_dropbox"/>
+        <TextView
+            android:id="@+id/title_dropbox_path"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true"
+            android:text="@string/dialog_keyboard_path_title"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <TextView
+            android:id="@+id/error_dropbox_path"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorAccent"
+            android:duplicateParentState="true"
+            android:text="@string/dialog_keyboard_path_error"
+            android:visibility="invisible" />
+
+        <EditText
+            android:id="@+id/edit_dropbox_path"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true"
+            android:focusable="false"
+            android:hint="@string/dialog_keyboard_path_hint"
+            android:inputType="none"
+            android:minHeight="@dimen/abc_action_button_min_height_material" />
+    </LinearLayout>
+        <Button
+            android:id="@+id/button_enable_dropbox"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:padding="@dimen/checkbox_margin"
+            android:text="@string/enable_dropbox"/>
+    </FrameLayout>
+
     <ProgressBar
         android:id="@+id/progress_bar"
         android:layout_width="match_parent"

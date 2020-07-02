@@ -9,10 +9,24 @@ import android.view.inputmethod.ExtractedTextRequest
 import android.view.inputmethod.InputConnection
 
 class IMEWordInputter (val ime: InputMethodService)
-    : WordInputter() {
+    : WordInputter {
 
+    val TAG = "IMEWordInputter"
 
     var editorActionId = null
+    val wordbreak = Regex("\\W")
+    val word = Regex("[^\\W]+")
+
+
+    data class RelativeWord(var text: String = "", var start: Int = 0, var endInclusive: Int = 0) {
+        override fun toString() : String {
+            return "RelativeWord (text: " + text + ", start: " + start.toString() + ", endInclusive: " + endInclusive.toString()
+        }
+    }
+
+    fun splitWords(text: CharSequence) : List<String> {
+        return wordbreak.split(text, 0)
+    }
 
     // limit=0 allows trailing empty strings to represent end-of-string split
     fun getWordBeforeCursor(ic: InputConnection) : String {
@@ -75,6 +89,9 @@ class IMEWordInputter (val ime: InputMethodService)
             .plus(ime.currentInputConnection?.getTextAfterCursor(9999, 0)?.trim() ?: "")
     }
 
+    override fun input(icon: IconData) {
+        icon.text?.also { input(it) }
+    }
 
     override fun input(text: String) {
         try {
@@ -99,7 +116,7 @@ class IMEWordInputter (val ime: InputMethodService)
                 ic.commitText(text, 1)
             }
 
-            update()
+            //model.updateText(splitWords(getAllText()))
         } catch(e: Exception) {
             Log.e(TAG, "input problem: " + e.message)
         }
@@ -119,7 +136,7 @@ class IMEWordInputter (val ime: InputMethodService)
             } else {
                 ic.deleteSurroundingText(Math.abs(nextWord.start), nextWord.endInclusive + 1)
             }
-            update()
+           // model.updateText(splitWords(getAllText()))
         }
         catch(e: Exception) {
             Log.e(TAG, "input problem: " + e.message)
@@ -141,7 +158,6 @@ class IMEWordInputter (val ime: InputMethodService)
             else {
                 ic.deleteSurroundingText(Math.abs(prevWord.start), prevWord.endInclusive + 1)
             }
-            update()
         }
         catch(e: Exception) {
             Log.e(TAG, "input problem: " + e.message)
@@ -149,10 +165,9 @@ class IMEWordInputter (val ime: InputMethodService)
     }
 
     override fun action() {
-            Log.d(TAG, "call performEditorAction "+ editorActionId+" on DONE")
+        Log.d(TAG, "call performEditorAction "+ editorActionId+" on DONE")
 
-            update()
-            //currentEditorInfo?.imeOptions?.and(EditorInfo.IME_FLAG_NO_ENTER_ACTION)
-            ime.currentInputConnection.performEditorAction(editorActionId ?: 0)
+        //currentEditorInfo?.imeOptions?.and(EditorInfo.IME_FLAG_NO_ENTER_ACTION)
+        ime.currentInputConnection.performEditorAction(editorActionId ?: 0)
     }
 }

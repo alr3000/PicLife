@@ -15,6 +15,8 @@ import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Observer
 import java.util.*
 
 class AACManager (
@@ -26,11 +28,32 @@ class AACManager (
     val gotoHomeView: View?,
     val titleView: TextView?
 )
-    : InputPageView.IconListener, WordInputter.InputListener, SwipePagerView.PageListener
+    : InputPageView.IconListener, SwipePagerView.PageListener
 {
 
     val TAG = "AACManager"
     var TTS: TextToSpeech? = null
+
+    val messageTextObserver = object: Observer<List<String>> {
+        override fun onChanged(t: List<String>?) {
+            try {
+                val isNotEmpty = t?.isNotEmpty() ?: false
+                // highlight done button if text not empty
+                if (app.get("doActionHighlight")?.toString()?.toBoolean() ?: true) {
+                    highlightActionButton(isNotEmpty)
+                }
+
+                if (isNotEmpty) {
+                    //speak message if speakMessageEach
+                    if (app.get("speakTextEach")?.toString()?.toBoolean() ?: false) {
+                        speak(t!!.joinToString(" "))
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "failed done button highlight", e)
+            }
+        }
+    }
 
     fun speak(text: String) {
 
@@ -203,25 +226,6 @@ class AACManager (
 
         //set app var:
         app.put("currentPageId", page?.id)
-    }
-
-
-    override fun onTextChanged(text: String) {
-        try {
-            // highlight done button if text not empty
-            if (app.get("doActionHighlight")?.toString()?.toBoolean() ?: true) {
-                highlightActionButton(!text.isEmpty())
-            }
-
-            if (!text.isEmpty()) {
-                //speak message if speakMessageEach
-                if (app.get("speakTextEach")?.toString()?.toBoolean() ?: false) {
-                    speak(text)
-                }
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "failed done button highlight", e)
-        }
     }
 
 

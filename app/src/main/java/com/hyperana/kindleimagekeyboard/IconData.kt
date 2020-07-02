@@ -1,10 +1,15 @@
 package com.hyperana.kindleimagekeyboard
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Handler
 import android.util.Log
+import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.TextView
 import org.json.JSONObject
 import java.lang.ref.SoftReference
 import java.lang.ref.WeakReference
@@ -60,4 +65,22 @@ class IconData(val id: String = createIconId(),
 
 
     // var appdataFilename: String? = null
+
+    companion object {
+        fun createView(icon: IconData, context: Context, withImage: Boolean = true) : View {
+            val cell = FrameLayout(context)
+            TextView(context).also {
+                cell.addView(it)
+                it.text = icon.text
+            }
+            if (withImage && icon.path != null) {
+                ImageView(context).also {
+                    cell.addView(it)
+                    App.asyncSetImageBitmap(it, icon.path!!)
+                    it.scaleType = ImageView.ScaleType.FIT_XY
+                }
+            }
+            return cell
+        }
+    }
 }

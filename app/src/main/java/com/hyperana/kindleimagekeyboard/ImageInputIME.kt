@@ -48,7 +48,7 @@ class ImageInputIME(): InputMethodService() {
        var pager: SwipePagerView? = null
    */
     // inputter helper:
-    val wordInputter = IMEWordInputter(this)
+    val wordInputter: WordInputter = IMEWordInputter(this)
 
 
 
@@ -64,8 +64,10 @@ class ImageInputIME(): InputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         Log.d(TAG, "onStartInputView")
 
-        // do things that must be done when text changed
-        wordInputter.update()
+        // capture any initial text:
+        // todo: create new icon list model with current text.
+        // then update with cursor position (word index) and listen for changes
+        //wordInputter.update()
 
         super.onStartInputView(info, restarting)
     }
@@ -232,7 +234,7 @@ class ImageInputIME(): InputMethodService() {
         ).apply {
             setPages(getProjectedPages())
             setCurrentPage( app.get("currentPageId")?.toString())
-        }.also { wordInputter.textListener = it }
+        }//.also { wordInputter.textListener = it }
 
 
 

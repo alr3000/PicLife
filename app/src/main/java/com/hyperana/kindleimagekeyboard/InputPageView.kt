@@ -121,20 +121,9 @@ class InputPageView(
     }
 
     // reuse views if possible
-    // todo: this should be inflated from xml
-    // todo: -L- use Glide
+
     fun setIconInCell(icon: IconData, cell: ViewGroup) {
-        TextView(context).also {
-            cell.addView(it)
-            it.text = icon.text
-        }
-        if (icon.path != null) {
-            ImageView(context).also {
-                cell.addView(it)
-                App.asyncSetImageBitmap(it, icon.path!!)
-                it.scaleType = ImageView.ScaleType.FIT_XY
-            }
-        }
+        cell.addView(IconData.createView(icon, context, true))
         cell.tag = icon
     }
 

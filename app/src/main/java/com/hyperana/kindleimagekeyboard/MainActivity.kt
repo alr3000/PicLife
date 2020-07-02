@@ -7,7 +7,9 @@ import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.EditText
 import android.widget.TextView
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -19,13 +21,11 @@ class MainActivity : AppCompatActivity(), FragmentListener {
     val TAG = "MainActivity"
     val context = this
 
-    // Options Menu:
-    val SETTINGS_ID = Menu.FIRST + 1
-    val HELP_ID = Menu.FIRST + 2
-
-
     var aacManager: AACManager? = null
-    val wordInputter: WordInputter? = null
+    var wordInputter: WordInputter? = null
+
+    val messageViewModel: IconListModel by viewModels()
+    var preferenceCheckTime = 0L
 
 
     override fun closeFragment(fragment: Fragment) {
@@ -81,7 +81,8 @@ class MainActivity : AppCompatActivity(), FragmentListener {
         Log.d(TAG, "onCreate")
         try {
             super.onCreate(savedInstanceState)
-            setContentView(R.layout.activity_main)
+
+            wordInputter = AACWordInputter(messageViewModel)
 
             // load default settings -- false means this will not execute twice
             PreferenceManager.setDefaultValues(this, R.xml.settings, false)
@@ -90,40 +91,60 @@ class MainActivity : AppCompatActivity(), FragmentListener {
                 val startup = mutableListOf<Fragment>()
                 if (getKeyboardsNotLoaded(this).isNotEmpty())
                     startup.add(LoadAssetsFragment.create(chain))
-                //todo: add fragment to load images for current aac keyboard/page
+                //todo: -?- add fragment to load images for current aac keyboard/page
                 chain.start(startup)
             }
+            setContentView(R.layout.activity_main)
 
-            aacManager = AACManager(
-                App.getInstance(applicationContext),
-                overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
-                //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
-                pager = findViewById<SwipePagerView>(R.id.pager),
-                input = InputViewController(
-                    inputter = wordInputter,
-                    backspaceView = findViewById(R.id.backspace_button),
-                    forwardDeleteView = findViewById(R.id.forwarddel_button),
-                    inputActionView = findViewById(R.id.done_button)
-                ),
-                accessSettings = AccessSettingsController(
-                    requestSettingsView = findViewById(R.id.preferences_button),
-                    gotoSettingsView = findViewById(R.id.settings_button),
-                    overlay = findViewById<ViewGroup>(R.id.imageinput_overlay)
-                ),
-                gotoHomeView = findViewById(R.id.home_button),
-                titleView = findViewById<TextView>(R.id.inputpage_name)
-
-                //todo: -?- settings could be accessed through notification instead while service is running
-            ).apply {
-                setPages(getProjectedPages())
-                setCurrentPage( app.get("currentPageId")?.toString())
-            }.also { wordInputter?.textListener = it }
-
-
-
+           /* messageViewModel.getText()
+                .observe(this, MessageBox(findViewById<EditText>(R.id.message_text), messageViewModel ))
+*/
         }catch (e: Exception) {
             displayError("failed to create activity", e)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        App.getInstance(applicationContext).preferenceChangeTime.also { change ->
+            if (preferenceCheckTime < change) {
+                initializeAAC()
+            }
+            preferenceCheckTime = change
+        }
+    }
+
+    fun initializeAAC() {
+
+        aacManager = AACManager(
+            App.getInstance(applicationContext),
+            overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
+            //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
+            pager = findViewById<SwipePagerView>(R.id.pager),
+            input = InputViewController(
+                inputter = wordInputter,
+                backspaceView = findViewById(R.id.backspace_button),
+                forwardDeleteView = findViewById(R.id.forwarddel_button),
+                inputActionView = findViewById(R.id.done_button)
+            ),
+            accessSettings = AccessSettingsController(
+                requestSettingsView = findViewById(R.id.preferences_button),
+                gotoSettingsView = findViewById(R.id.settings_button),
+                overlay = findViewById<ViewGroup>(R.id.imageinput_overlay)
+            ),
+            gotoHomeView = findViewById(R.id.home_button),
+            titleView = findViewById<TextView>(R.id.inputpage_name)
+
+            //todo: -?- settings could be accessed through notification instead while service is running
+        ).apply {
+            setPages(getProjectedPages())
+            setCurrentPage( app.get("currentPageId")?.toString())
+            //messageViewModel.getText().observe(this@MainActivity, messageTextObserver)
+        }
+
+
+
     }
 
     fun getProjectedPages() : List<PageData> {
@@ -154,27 +175,10 @@ class MainActivity : AppCompatActivity(), FragmentListener {
         super.onCreateNavigateUpTaskStack(builder)
     }
 
-    //put settings access in context menu
+    //no context menu
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-
-        //add settings button
-        menu?.add(Menu.NONE, SETTINGS_ID, 0, R.string.button_goto_settings) // 0 = first item
-        menu?.add(Menu.NONE, HELP_ID, 1, R.string.button_goto_help)
-
         return false
     }
-//todo: get rid of options menu and toolbar
-    /*
-  override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when (item?.itemId)  {
-            SETTINGS_ID -> doClickGotoSettings()
-            HELP_ID -> doClickHelp()
-            else -> {
-                Log.w(TAG, "unhandled context menu item: " + item?.title)
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }*/
 
     override fun onBackPressed() {
         if (supportFragmentManager.backStackEntryCount > 0) {
@@ -185,30 +189,6 @@ class MainActivity : AppCompatActivity(), FragmentListener {
     }
 
 
-    fun doClickGotoSettings(v: View? = null) {
-        Log.d(TAG, "doClickGotoSettings")
-        try {
-            val intent = Intent(context, com.hyperana.kindleimagekeyboard.SettingsActivity::class.java)
-            startActivity(intent)
-        }
-        catch (e: Exception) {
-            displayError("Could not open settings", e)
-        }
-    }
-
-    fun doClickHelp(v: View? = null) {
-        Log.d(TAG, "doClickHelp")
-        try {
-            supportFragmentManager
-                    .beginTransaction()
-                    .add(R.id.loading_fragment_view, StatusFragment(), "keyboardStatus")
-                    .addToBackStack(null)
-                    .commit()
-        }
-        catch (e: Exception) {
-            displayError("Could not open help/status", e)
-        }
-    }
 
 
     // logs full error, displays message in errorview or as final if view is not set

@@ -50,6 +50,8 @@
     <string name="button_save">Save</string>
     <string name="button_overwrite">Overwrite</string>
     <string name="button_done">Done</string>
+    <string name="enable_dropbox">Enable Dropbox</string>
+    <string name="disable_dropbox">Disable Dropbox</string>
 
 
     <!-- UI descriptions -->
