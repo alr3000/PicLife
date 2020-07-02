@@ -8,6 +8,7 @@ import android.view.inputmethod.ExtractedText
 import android.view.inputmethod.ExtractedTextRequest
 import android.view.inputmethod.InputConnection
 
+// todo: calls super to keep model updated, text set by model, cursor set by model observation
 class IMEWordInputter (val ime: InputMethodService)
     : WordInputter {
 
@@ -82,6 +83,14 @@ class IMEWordInputter (val ime: InputMethodService)
     fun getCursorPosition(ic: InputConnection) : Int {
         val extracted: ExtractedText = ic.getExtractedText(ExtractedTextRequest(), 0);
         return extracted.startOffset + extracted.selectionStart;
+    }
+
+    override fun setIndex(i: Int?) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun moveIndex(num: Int) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun getAllText() : String {

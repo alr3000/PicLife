@@ -22,9 +22,11 @@ class MainActivity : AppCompatActivity(), FragmentListener {
     val context = this
 
     var aacManager: AACManager? = null
-    var wordInputter: WordInputter? = null
-
     val messageViewModel: IconListModel by viewModels()
+    val speaker = Speaker(App.getInstance(this.applicationContext)).also {
+        lifecycle.addObserver(it)
+    }
+
     var preferenceCheckTime = 0L
 
 
@@ -82,8 +84,6 @@ class MainActivity : AppCompatActivity(), FragmentListener {
         try {
             super.onCreate(savedInstanceState)
 
-            wordInputter = AACWordInputter(messageViewModel)
-
             // load default settings -- false means this will not execute twice
             PreferenceManager.setDefaultValues(this, R.xml.settings, false)
 
@@ -123,7 +123,7 @@ class MainActivity : AppCompatActivity(), FragmentListener {
             //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
             pager = findViewById<SwipePagerView>(R.id.pager),
             input = InputViewController(
-                inputter = wordInputter,
+                inputter = messageViewModel,
                 backspaceView = findViewById(R.id.backspace_button),
                 forwardDeleteView = findViewById(R.id.forwarddel_button),
                 inputActionView = findViewById(R.id.done_button)

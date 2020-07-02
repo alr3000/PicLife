@@ -13,6 +13,7 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.TextToSpeech.QUEUE_FLUSH
 import android.speech.tts.TextToSpeech.SUCCESS
 import android.content.*
+import android.graphics.drawable.Icon
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Printer
@@ -47,6 +48,8 @@ class ImageInputIME(): InputMethodService() {
        var keyboardView: ViewGroup? = null
        var pager: SwipePagerView? = null
    */
+    val messageModel = IconListModel()
+
     // inputter helper:
     val wordInputter: WordInputter = IMEWordInputter(this)
 
@@ -55,7 +58,7 @@ class ImageInputIME(): InputMethodService() {
 
 
     // TTS:
-    var TTS: TextToSpeech? = null
+    val speaker = Speaker(App.getInstance(this.applicationContext))
 
 
     //********************************** InputMethod Overrides: ********************************
@@ -69,6 +72,7 @@ class ImageInputIME(): InputMethodService() {
         // then update with cursor position (word index) and listen for changes
         //wordInputter.update()
 
+        speaker.startTTS()
         super.onStartInputView(info, restarting)
     }
 
@@ -135,8 +139,7 @@ class ImageInputIME(): InputMethodService() {
         Log.d(TAG, "onDestroy")
 
         // release tts
-        TTS?.shutdown()
-        TTS = null
+        speaker.stopTTS()
 
         super.onDestroy()
     }

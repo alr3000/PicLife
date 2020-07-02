@@ -33,6 +33,10 @@ import java.util.regex.Pattern
  *
  *
  */
+interface IconListener {
+    fun execute(icon: IconData?, v:View?)
+    fun preview(icon: IconData?, v:View?)
+}
 
 class InputPageView(
         context: Context,
@@ -48,11 +52,6 @@ class InputPageView(
     var margins = 10 // percent of cellwidth
     var rows: Int = 3
     var cols: Int = 5
-
-    interface IconListener {
-        fun execute(icon: IconData?, v:View?)
-        fun preview(icon: IconData?, v:View?)
-    }
 
     // touch listener
     var startTouchView: View? = null

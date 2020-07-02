@@ -24,57 +24,15 @@ class AACManager (
     val overlay: ViewGroup?,
     val pager: SwipePagerView?,
     val input: InputViewController?,
+    val speaker: Speaker?,
     val accessSettings: AccessSettingsController?,
     val gotoHomeView: View?,
     val titleView: TextView?
 )
-    : InputPageView.IconListener, SwipePagerView.PageListener
+    : IconListener, SwipePagerView.PageListener
 {
 
     val TAG = "AACManager"
-    var TTS: TextToSpeech? = null
-
-    val messageTextObserver = object: Observer<List<String>> {
-        override fun onChanged(t: List<String>?) {
-            try {
-                val isNotEmpty = t?.isNotEmpty() ?: false
-                // highlight done button if text not empty
-                if (app.get("doActionHighlight")?.toString()?.toBoolean() ?: true) {
-                    highlightActionButton(isNotEmpty)
-                }
-
-                if (isNotEmpty) {
-                    //speak message if speakMessageEach
-                    if (app.get("speakTextEach")?.toString()?.toBoolean() ?: false) {
-                        speak(t!!.joinToString(" "))
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "failed done button highlight", e)
-            }
-        }
-    }
-
-    fun speak(text: String) {
-
-        fun doSpeak(text: String) {
-            if (app.get("doSpeak")?.toString()?.toBoolean() ?: false) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    TTS?.speak(text, TextToSpeech.QUEUE_FLUSH, null, UUID.randomUUID().toString())
-                } else {
-                    TTS?.speak(text, TextToSpeech.QUEUE_FLUSH, null)
-                }
-            }
-        }
-
-        // initialize TTS:
-        TTS = TTS?.also { doSpeak(text) }
-         ?: TextToSpeech(app.appContext) { status ->
-            if (status != TextToSpeech.SUCCESS) TTS = null
-            else doSpeak(text)
-        }
-
-    }
 
     init {
         gotoHomeView?.apply {
@@ -106,15 +64,10 @@ class AACManager (
 
 
     // icon interface:
-
     override fun preview(icon: IconData?, v: View?) {
         Log.d(TAG, "preview icon")
         if (((icon != null) && (v != null))  && (icon.text != DEFAULT_ICON_TEXT)) {
             highlightIcon(v, icon)
-
-            if (app.get("speakWords").toString() == "speakIconTouch") {
-                speakIcon(icon)
-            }
         }
     }
 
@@ -122,9 +75,6 @@ class AACManager (
         Log.d(TAG, "execute icon")
         if ((icon != null) && (icon.text != DEFAULT_ICON_TEXT)) {
             typeIcon(icon)
-            if (app.get("speakWords").toString() == "speakIconEntry") {
-                speakIcon(icon)
-            }
             gotoLinkIcon(icon)
         }
     }
@@ -175,20 +125,6 @@ class AACManager (
     }
 
 
-
-    // if it's not a link, or if set to speak links, speak icon text
-    fun speakIcon(icon:IconData) {
-        if ((icon.linkToPageId == null) ||
-            (app.get("speakLinks")?.toString()?.toBoolean() ?: false)
-        ) {
-            speak(icon.text ?: "")
-        }
-    }
-
-
-
-
-
     fun doClickHome(view: View): Boolean {
         Log.d(TAG, "doClickHome")
         gotoPage(0)
@@ -229,35 +165,5 @@ class AACManager (
     }
 
 
-    fun highlightActionButton(start: Boolean) {
-        val VIEW_TAG = "actionHighlight"
-        val v = overlay?.findViewWithTag(VIEW_TAG) as? View
-        Log.d(TAG, "highlightActionButton: " + start + " v=" + v.toString())
 
-        if (start && (v == null) && input?.inputActionView != null) {
-            val highlight = HighlightView(input.inputActionView, null, app)
-            highlight.tag = VIEW_TAG
-            overlay?.addView(highlight)
-
-            val fadeIn = AlphaAnimation(0.0f, 1.0f)
-            val fadeOut = AlphaAnimation(1.0f, 0.0f)
-            fadeIn.duration = 500
-            fadeOut.duration = 600
-            fadeOut.startOffset = 600 + fadeIn.startOffset + 600
-            fadeIn.repeatCount = Animation.INFINITE
-            fadeOut.repeatCount = Animation.INFINITE
-
-            highlight.startAnimation(fadeIn)
-            highlight.startAnimation(fadeOut)
-        }
-        else if (!start && (v != null)) {
-            v.clearAnimation()
-            (v.parent as? ViewGroup)?.removeView(v)
-            assert(
-                (overlay?.findViewWithTag<View>(VIEW_TAG) == null),
-                {"highlight view remaining. " + v.toString()}
-            )
-        }
-
-    }
 }

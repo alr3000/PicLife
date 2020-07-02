@@ -1,4 +1,4 @@
-package com.dropbox.core.examples.android.internal;
+package com.hyperana.kindleimagekeyboard.dropbox.internal;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,8 +16,8 @@ import com.dropbox.core.android.Auth;
 import com.dropbox.core.android.DbxOfficialAppConnector;
 import com.dropbox.core.android.DropboxParseException;
 import com.dropbox.core.android.DropboxUidNotInitializedException;
-import com.dropbox.core.examples.android.DropboxActivity;
-import com.dropbox.core.examples.android.R;
+import com.hyperana.kindleimagekeyboard.R;
+import com.hyperana.kindleimagekeyboard.dropbox.DropboxActivity;
 
 /**
  * This example is only for 3rd party apps who registered OpenWith feature at our server side who use
