@@ -10,7 +10,7 @@ import android.view.animation.Animation
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 
-class InputViewController (
+class MessageViewController (
     val app: App,
     val lifecycleOwner: LifecycleOwner,
     val model: IconListModel? = null,

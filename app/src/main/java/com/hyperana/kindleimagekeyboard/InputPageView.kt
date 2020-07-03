@@ -33,18 +33,15 @@ import java.util.regex.Pattern
  *
  *
  */
-interface IconListener {
-    fun execute(icon: IconData?, v:View?)
-    fun preview(icon: IconData?, v:View?)
-}
+
 
 class InputPageView(
         context: Context,
         var page: PageData,
-        val color: Int,
-        val touchAction: String,
-        val iconListener: IconListener) : LinearLayout(context){
+        val color: Int) : LinearLayout(context){
     val TAG = "InputPageView - " + page.id
+
+    val app = App.getInstance(context.applicationContext)
 
     var views: List<ViewGroup> = listOf()
     var items: List<IconData> = page.icons
@@ -52,11 +49,13 @@ class InputPageView(
     var margins = 10 // percent of cellwidth
     var rows: Int = 3
     var cols: Int = 5
+    val touchHandler = IconPageTouchHandler(app.iconEventLiveData)
+    val touchAction = app.get("touchAction") as? String
 
-    // touch listener
-    var startTouchView: View? = null
-
-
+    interface PageListener {
+        fun preview(icon: IconData?, view: View?)
+        fun execute(icon: IconData?, view: View?)
+    }
 
     init {
 
@@ -146,148 +145,20 @@ class InputPageView(
     //************************************* TOUCH HANDLERS ***************************************
     // settings: touchAction (touchActionDown, touchActionUp, touchActionClick)
 
-    fun findIconCellByCoordinate(x: Float, y: Float) : View? {
-        //logViewCoordinates(this)
-        val windowCoords = intArrayOf(0,0)
-        getLocationInWindow(windowCoords)
-
-        return views.filter { it.tag is IconData}.find {
-            isInView(x + windowCoords[0], y + windowCoords[1], it)
-        }
-    }
-
-    fun isInIconCell(x: Float, y: Float, v: View) : Boolean {
-        val windowCoords = intArrayOf(0,0)
-        getLocationInWindow(windowCoords)
-
-        return isInView(x + windowCoords[0], y + windowCoords[1], v)
-    }
-
-    // coords relative to rootView
-    fun isInView(x: Float, y: Float, v: View) : Boolean {
-
-        val rect = Rect()
-        v.getGlobalVisibleRect(rect)
-        val vX = rect.left
-        val vY = rect.top
-        Log.v(TAG, "isInView" + "(" + x + "," + y + "): " + rect.toString())
-        return (vX < x) && (vY < y) && (vX + v.width > x) && (vY + v.height > y)
-    }
-
-    // depending on selected icon activation type,
-    // returns whether event is of interested in future events
-    // todo: -L- touch handler is separately defined, added on by IME
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         try {
-            return when (touchAction) {
-                "touchActionDown" -> touchIconHandler(event)
-                "touchActionClick" -> clickIconHandler(event)
-                "touchActionUp" -> releaseIconHandler(event)
-                else -> {
-                    Log.w(TAG, "onTouchEvent ignores unknown touchAction")
-                    false
-                }
-            }
+        return touchHandler.onTouchEvent(this, views, event, touchAction)
         } catch (e: Exception) {
             Log.e(TAG, "problem with icon touch handler: ", e)
             return false
         }
     }
 
-    fun touchIconHandler(event: MotionEvent?) : Boolean {
-        //executes on down
-        if (event?.action == MotionEvent.ACTION_DOWN) {
 
-             // which icon, if any?
-             val cell = findIconCellByCoordinate(event.x, event.y)
-            Log.v(TAG, "touchIconHandler: " +
-                    views.indexOf(cell).toString() +
-                    (cell?.tag as? IconData)?.text + " -- "  + event )
-            if (cell != null) {
 
-                //do all
-                iconListener.preview(cell.tag as? IconData, cell)
-                iconListener.execute(cell.tag as? IconData, cell)
-
-                return true
-            }
-        }
-        return false
-    }
-
-    fun clickIconHandler(event: MotionEvent?) : Boolean {
-        // executes on up if you're still on the original icon
-        when (event?.action) {
-            MotionEvent.ACTION_DOWN -> {
-                val cell = findIconCellByCoordinate(event.x, event.y)
-                if (cell != null) {
-                    iconListener.preview(cell.tag as? IconData, cell)
-                }
-                startTouchView = cell
-            }
-            MotionEvent.ACTION_MOVE -> {
-                // if don't know where it started or moved out of starting cell, forget it
-                if ((startTouchView != null) &&
-                        (!isInIconCell(event.x, event.y, startTouchView!!))) {
-                    startTouchView = null
-                }
-            }
-            MotionEvent.ACTION_CANCEL -> {
-                startTouchView = null
-            }
-            MotionEvent.ACTION_UP -> {
-                if ((startTouchView != null) && isInIconCell(event.x, event.y, startTouchView!!)) {
-                    iconListener.execute(startTouchView?.tag as? IconData,  startTouchView)
-                }
-                startTouchView = null
-            }
-        }
-        Log.d(TAG, "clickIconHandler -- " +
-                (startTouchView?.tag as? IconData)?.text + ": " + event.toString())
-
-        return (startTouchView != null)
-    }
-
-    fun releaseIconHandler(event: MotionEvent?) : Boolean {
-        // executes on up for icon cursor is currently in, previews icons as it moves through
-        if (event == null) { return false }
-        val cell = findIconCellByCoordinate(event.x, event.y)
-        Log.d(TAG, "releaseIconHandler -- " +
-                views.indexOf(cell).toString() +
-                (cell?.tag as? IconData)?.text + ": " + event.toString())
-        when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                startTouchView = cell
-                iconListener.preview(cell?.tag as? IconData, cell)
-                return true
-            }
-            MotionEvent.ACTION_MOVE -> {
-                if ((cell != null) && (cell != startTouchView)) {
-                    iconListener.preview(cell.tag as? IconData, cell)
-                }
-                startTouchView = cell
-                return true
-            }
-        // should receive canceled events after swipe has consumed them:
-        // return true to pick up if swipe drops? It doesn't.
-            MotionEvent.ACTION_CANCEL -> {
-                startTouchView = null
-                return true
-            }
-            MotionEvent.ACTION_UP -> {
-                if (cell != null) {
-                    if (cell != startTouchView) {
-                        iconListener.preview(cell.tag as? IconData, cell)
-                    }
-                    iconListener.execute(cell.tag as? IconData, cell)
-                    startTouchView = null
-                }
-                return false
-            }
-        }
-        return false
-    }
-
+    // depending on selected icon activation type,
+    // returns whether event is of interested in future events
+    // todo: touch handler is separately defined, takes getResolveIcon(x, y) function
 
     //*************************************** CREATE EMPTY FULL-WIDTH GRID ****************************
 fun createGrid(table: LinearLayout, rows: Int, cols: Int) : List<ViewGroup> {

@@ -8,7 +8,6 @@ package com.hyperana.kindleimagekeyboard
 import android.content.Context
 import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
-import android.renderscript.ScriptGroup
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Printer
@@ -21,6 +20,7 @@ import android.widget.TextView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.Observer
 import java.util.*
 
 //todo: -?- settings could be accessed through notification instead while service is running
@@ -44,13 +44,9 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
 
     // views:
     var view: ViewGroup? = null
-    var aacManager: AACManager? = null
-    var inputViewController: InputViewController? = null
-    var accessSettingsController: AccessSettingsController? = null
-    /*   var overlay: ViewGroup? = null
-       var keyboardView: ViewGroup? = null
-       var pager: SwipePagerView? = null
-   */
+    var iconListeners: List<IconListener> = listOf()
+
+
     val wordInputter: WordInputter = IMEWordInputter(this)
 
 
@@ -223,36 +219,46 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
 
         val app = App.getInstance(applicationContext)
 
-        //todo: -?- register speaker and inputview for icon localbroadcasts
-        inputViewController = InputViewController(
-            app = app,
-            lifecycleOwner = this,
-            inputter = wordInputter,
-            overlay = view!!.findViewById<ViewGroup>(R.id.imageinput_overlay),
-            backspaceView = view!!.findViewById(R.id.backspace_button),
-            forwardDeleteView = view!!.findViewById(R.id.forwarddel_button),
-            inputActionView = view!!.findViewById(R.id.done_button)
-        )
-
-        accessSettingsController = AccessSettingsController(
+        AccessSettingsController(
             requestSettingsView = view!!.findViewById(R.id.preferences_button),
             gotoSettingsView = view!!.findViewById(R.id.settings_button),
             overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay)
         )
 
-        aacManager = AACManager(
-            app = app,
-            overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay),
-            //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
-            pager = view!!.findViewById<SwipePagerView>(R.id.pager),
-            gotoHomeView = view!!.findViewById(R.id.home_button),
-            titleView = view!!.findViewById<TextView>(R.id.inputpage_name)
-        ).apply {
-            setPages(getProjectedPages())
-            setCurrentPage( app.get("currentPageId")?.toString())
-        }
+        //todo: -?- register speaker and inputview for icon localbroadcasts
+        iconListeners = listOf(
+            Speaker(app).also {
+                lifecycle.addObserver(it)
+            },
+            MessageViewController(
+                app = app,
+                lifecycleOwner = this,
+                inputter = wordInputter,
+                overlay = view!!.findViewById<ViewGroup>(R.id.imageinput_overlay),
+                backspaceView = view!!.findViewById(R.id.backspace_button),
+                forwardDeleteView = view!!.findViewById(R.id.forwarddel_button),
+                inputActionView = view!!.findViewById(R.id.done_button)
+            ),
+            AACManager(
+                app = app,
+                overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay),
+                //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
+                pager = view!!.findViewById<SwipePagerView>(R.id.pager),
+                gotoHomeView = view!!.findViewById(R.id.home_button),
+                titleView = view!!.findViewById<TextView>(R.id.inputpage_name)
+            ).apply {
+                setPages(getProjectedPages())
+                setCurrentPage( app.get("currentPageId")?.toString())
+            }
+        )
 
-
+        app.iconEventLiveData.observe(this, object: Observer<IconEvent?> {
+            override fun onChanged(t: IconEvent?) {
+                iconListeners.forEach {
+                    it.onIconEvent(t?.icon, t?.action, t?.view)
+                }
+            }
+        })
 
 
         return view!!

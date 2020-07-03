@@ -1,23 +1,12 @@
 package com.hyperana.kindleimagekeyboard
 
-import android.content.Context
-import android.content.Intent
-import android.media.AudioManager
-import android.os.Build
 import android.os.Handler
-import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AlphaAnimation
-import android.view.animation.Animation
-import android.widget.BaseAdapter
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
-import java.util.*
+import androidx.lifecycle.MutableLiveData
 
 class AACManager (
     val app: App,
@@ -26,7 +15,7 @@ class AACManager (
     val gotoHomeView: View?,
     val titleView: TextView?
 )
-    : IconListener, SwipePagerView.PageListener
+    :  SwipePagerView.PageListener, IconListener
 {
 
     val TAG = "AACManager"
@@ -61,14 +50,21 @@ class AACManager (
 
 
     // icon interface:
-    override fun preview(icon: IconData?, v: View?) {
+    override fun onIconEvent(icon: IconData?, action: AACAction?, view: View?) {
+        when (action) {
+            AACAction.ICON_PREVIEW -> preview(icon, view)
+            AACAction.ICON_EXECUTE -> execute(icon, view)
+        }
+    }
+
+    fun preview(icon: IconData?, v: View?) {
         Log.d(TAG, "preview icon")
         if (((icon != null) && (v != null))  && (icon.text != DEFAULT_ICON_TEXT)) {
             highlightIcon(v, icon)
         }
     }
 
-    override fun execute(icon: IconData?, v: View?) {
+    fun execute(icon: IconData?, v: View?) {
         Log.d(TAG, "execute icon")
         if ((icon != null) && (icon.text != DEFAULT_ICON_TEXT)) {
             gotoLinkIcon(icon)

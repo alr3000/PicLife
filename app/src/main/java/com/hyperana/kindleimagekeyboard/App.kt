@@ -13,6 +13,7 @@ import android.graphics.BitmapFactory
 import android.os.Handler
 import android.util.LruCache
 import android.widget.ImageView
+import androidx.lifecycle.MutableLiveData
 
 
 /**
@@ -28,6 +29,7 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
 
     var icons: List<IconData>? = null
 
+    val iconEventLiveData = MutableLiveData<IconEvent?>(null)
 
     init {
         Log.d(TAG, "onCreate")
