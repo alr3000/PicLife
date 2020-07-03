@@ -39,6 +39,8 @@ val DEFAULT_ICON_TEXT = "icon" // todo: -L- change this to be less probable
 
 val MAX_ICON_INCH = 1.5 // inches wide
 val PREF_DROPBOX_ENABLED = "dropbox_enabled"
+val EXTRA_ICON_ID = "icon_id"
+val EXTRA_ICON_ACTION = "icon_action"
 
 
 //******************************* LOAD/STORE ICON and PAGE DATA **************************************

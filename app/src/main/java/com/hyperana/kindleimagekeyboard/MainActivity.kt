@@ -13,8 +13,10 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import java.lang.Math.floor
+import java.util.*
 
 class MainActivity : AppCompatActivity(), FragmentListener {
 
@@ -22,10 +24,14 @@ class MainActivity : AppCompatActivity(), FragmentListener {
     val context = this
 
     var aacManager: AACManager? = null
+    var accessSettingsController: AccessSettingsController? = null
+
     val messageViewModel: IconListModel by viewModels()
     val speaker = Speaker(App.getInstance(this.applicationContext)).also {
         lifecycle.addObserver(it)
     }
+    var inputViewController: InputViewController? = null
+
 
     var preferenceCheckTime = 0L
 
@@ -96,9 +102,8 @@ class MainActivity : AppCompatActivity(), FragmentListener {
             }
             setContentView(R.layout.activity_main)
 
-           /* messageViewModel.getText()
-                .observe(this, MessageBox(findViewById<EditText>(R.id.message_text), messageViewModel ))
-*/
+
+
         }catch (e: Exception) {
             displayError("failed to create activity", e)
         }
@@ -113,42 +118,61 @@ class MainActivity : AppCompatActivity(), FragmentListener {
             }
             preferenceCheckTime = change
         }
+
+        registerIconListeners(listOf(
+            speaker,
+            inputViewController
+        ).filterNotNull())
     }
 
     fun initializeAAC() {
 
+        inputViewController = InputViewController(
+            app = App.getInstance(applicationContext),
+            lifecycleOwner = this,
+            inputter = messageViewModel,
+            overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
+            backspaceView = findViewById(R.id.backspace_button),
+            forwardDeleteView = findViewById(R.id.forwarddel_button),
+            inputActionView = findViewById(R.id.done_button)
+        )
+
+        accessSettingsController = AccessSettingsController(
+            requestSettingsView = findViewById(R.id.preferences_button),
+            gotoSettingsView = findViewById(R.id.settings_button),
+            overlay = findViewById<ViewGroup>(R.id.imageinput_overlay)
+        )
+
         aacManager = AACManager(
             App.getInstance(applicationContext),
             overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
-            //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
             pager = findViewById<SwipePagerView>(R.id.pager),
-            input = InputViewController(
-                app = App.getInstance(applicationContext),
-                lifecycleOwner = this,
-                inputter = messageViewModel,
-                overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
-                backspaceView = findViewById(R.id.backspace_button),
-                forwardDeleteView = findViewById(R.id.forwarddel_button),
-                inputActionView = findViewById(R.id.done_button)
-            ),
-            speaker = speaker,
-            accessSettings = AccessSettingsController(
-                requestSettingsView = findViewById(R.id.preferences_button),
-                gotoSettingsView = findViewById(R.id.settings_button),
-                overlay = findViewById<ViewGroup>(R.id.imageinput_overlay)
-            ),
             gotoHomeView = findViewById(R.id.home_button),
             titleView = findViewById<TextView>(R.id.inputpage_name)
-
-            //todo: -?- settings could be accessed through notification instead while service is running
         ).apply {
             setPages(getProjectedPages())
             setCurrentPage( app.get("currentPageId")?.toString())
-            //messageViewModel.getText().observe(this@MainActivity, messageTextObserver)
         }
+    }
 
-
-
+    fun registerIconListeners(listeners: List<IconListener>) {
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            object: BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    val action = intent?.getStringExtra(EXTRA_ICON_ACTION)
+                    intent?.getStringExtra(EXTRA_ICON_ID)
+                        ?.let { dictionary?.get(it) }
+                        ?.also { icon -> listeners.forEach {
+                            when (action) {
+                                ICON_ACTION_EXECUTE -> it.execute(icon, null)
+                                else -> it.preview(icon, null)
+                            }
+                        }
+                        }
+                }
+            },
+            IntentFilter()
+        )
     }
 
     fun getProjectedPages() : List<PageData> {

@@ -8,6 +8,7 @@ package com.hyperana.kindleimagekeyboard
 import android.content.Context
 import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
+import android.renderscript.ScriptGroup
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Printer
@@ -22,6 +23,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import java.util.*
 
+//todo: -?- settings could be accessed through notification instead while service is running
 
 //todo: -L- input as emoji (image instead of text) mode
 // Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler(this)) logs - todo
@@ -43,17 +45,13 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
     // views:
     var view: ViewGroup? = null
     var aacManager: AACManager? = null
+    var inputViewController: InputViewController? = null
+    var accessSettingsController: AccessSettingsController? = null
     /*   var overlay: ViewGroup? = null
        var keyboardView: ViewGroup? = null
        var pager: SwipePagerView? = null
    */
-    val messageModel = IconListModel()
-
-    // inputter helper:
     val wordInputter: WordInputter = IMEWordInputter(this)
-
-
-
 
 
     // TTS:
@@ -121,8 +119,12 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
         // get Editor Info
         Log.d(TAG, "EditorInfo: " + attribute?.fieldName + " ACTION: "+attribute?.actionLabel +
                 " OPTIONS: " + attribute?.imeOptions?.and(EditorInfo.IME_MASK_ACTION))
-        currentEditorInfo = attribute
         currentInputEditorInfo.dump(Printer { Log.d(TAG, "editorInfo: " + it) }, "")
+        currentEditorInfo = attribute
+
+
+
+
 
     }
 
@@ -221,34 +223,34 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
 
         val app = App.getInstance(applicationContext)
 
+        //todo: -?- register speaker and inputview for icon localbroadcasts
+        inputViewController = InputViewController(
+            app = app,
+            lifecycleOwner = this,
+            inputter = wordInputter,
+            overlay = view!!.findViewById<ViewGroup>(R.id.imageinput_overlay),
+            backspaceView = view!!.findViewById(R.id.backspace_button),
+            forwardDeleteView = view!!.findViewById(R.id.forwarddel_button),
+            inputActionView = view!!.findViewById(R.id.done_button)
+        )
+
+        accessSettingsController = AccessSettingsController(
+            requestSettingsView = view!!.findViewById(R.id.preferences_button),
+            gotoSettingsView = view!!.findViewById(R.id.settings_button),
+            overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay)
+        )
+
         aacManager = AACManager(
             app = app,
-            speaker = speaker,
             overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay),
             //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
             pager = view!!.findViewById<SwipePagerView>(R.id.pager),
-            input = InputViewController(
-                app = app,
-                lifecycleOwner = this,
-                inputter = wordInputter,
-                overlay = view!!.findViewById<ViewGroup>(R.id.imageinput_overlay),
-                backspaceView = view!!.findViewById(R.id.backspace_button),
-                forwardDeleteView = view!!.findViewById(R.id.forwarddel_button),
-                inputActionView = view!!.findViewById(R.id.done_button)
-            ),
-            accessSettings = AccessSettingsController(
-                requestSettingsView = view!!.findViewById(R.id.preferences_button),
-                gotoSettingsView = view!!.findViewById(R.id.settings_button),
-                overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay)
-            ),
             gotoHomeView = view!!.findViewById(R.id.home_button),
             titleView = view!!.findViewById<TextView>(R.id.inputpage_name)
-
-            //todo: -?- settings could be accessed through notification instead while service is running
         ).apply {
             setPages(getProjectedPages())
             setCurrentPage( app.get("currentPageId")?.toString())
-        }//.also { wordInputter.textListener = it }
+        }
 
 
 

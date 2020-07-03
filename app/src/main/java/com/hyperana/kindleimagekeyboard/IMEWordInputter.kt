@@ -7,8 +7,11 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.ExtractedText
 import android.view.inputmethod.ExtractedTextRequest
 import android.view.inputmethod.InputConnection
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.OnLifecycleEvent
 
 // todo: calls super to keep model updated, text set by model, cursor set by model observation
+// updates ime from iconlistmodel, sets iconlist cursor based on ime selection position
 class IMEWordInputter (val ime: InputMethodService)
     : WordInputter {
 
@@ -125,7 +128,7 @@ class IMEWordInputter (val ime: InputMethodService)
                 ic.commitText(text, 1)
             }
 
-            //model.updateText(splitWords(getAllText()))
+
         } catch(e: Exception) {
             Log.e(TAG, "input problem: " + e.message)
         }

@@ -23,9 +23,6 @@ class AACManager (
     val app: App,
     val overlay: ViewGroup?,
     val pager: SwipePagerView?,
-    val input: InputViewController?,
-    val speaker: Speaker?,
-    val accessSettings: AccessSettingsController?,
     val gotoHomeView: View?,
     val titleView: TextView?
 )
@@ -74,30 +71,10 @@ class AACManager (
     override fun execute(icon: IconData?, v: View?) {
         Log.d(TAG, "execute icon")
         if ((icon != null) && (icon.text != DEFAULT_ICON_TEXT)) {
-            typeIcon(icon)
             gotoLinkIcon(icon)
         }
     }
 
-
-
-
-    //Put text into input on text icon touch
-    fun typeIcon(icon: IconData) {
-        Log.d(TAG, "typeIcon: " + icon.text)
-        try {
-            val typeLinks = app.get("doTypeLinks")?.toString()?.toBoolean() ?: false
-            if ((icon.linkToPageId != null) && (!typeLinks)) {
-                return
-            }
-            if (icon.text == null) {
-                return
-            }
-           input?.inputter?.input(icon.text!!)
-        } catch(e: Exception) {
-            Log.e(TAG, "problem with icon input", e)
-        }
-    }
 
     fun highlightIcon(iconView: View, icon: IconData) {
         // use textview if path is null - todo -L-

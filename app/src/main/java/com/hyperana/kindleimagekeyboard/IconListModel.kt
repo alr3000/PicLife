@@ -8,8 +8,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 //todo: word inputter contains iconlistmodel and implements interface as below
-class IconListModel: ViewModel(), WordInputter {
-    val TAG = "IconListModel"
+open class IconListModel: ViewModel(), WordInputter {
+    open val TAG = "IconListModel"
 
 // todo: delete selection if any, clear
     //todo: make a factory to create this from given text
@@ -49,6 +49,9 @@ class IconListModel: ViewModel(), WordInputter {
         }
     }
 
+    fun getIconsText(list: List<IconData>) : String {
+        return list.map { it.text }.joinToString (" ")
+    }
 
     // WordInputter Interface
     override fun setIndex(i: Int?) {
@@ -81,12 +84,11 @@ class IconListModel: ViewModel(), WordInputter {
     }
 
     override fun getAllText(): String {
-        return icons.value!!
-            .map { it.text }
-            .joinToString(" ")
+        return getIconsText(icons.value!!)
     }
 
     override fun action() {
         // I don't know what to do here
     }
+
 }

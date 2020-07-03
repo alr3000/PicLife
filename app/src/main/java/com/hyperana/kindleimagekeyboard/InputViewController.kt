@@ -19,7 +19,7 @@ class InputViewController (
     val backspaceView: View? = null,
     val forwardDeleteView: View? = null,
     val inputActionView: View? = null
-)
+) : IconListener
 {
     val TAG = "InputViewController"
 
@@ -58,8 +58,28 @@ class InputViewController (
         }
         model?.icons?.observe(lifecycleOwner, messageObserver)
         model?.index?.observe(lifecycleOwner, messageCursorObserver)
+
+
     }
 
+    // icon interface:
+    override fun execute(icon: IconData?, v: View?) {
+        Log.d(TAG, "execute: " + icon?.text)
+        try {
+            val typeLinks = app.get("doTypeLinks")?.toString()?.toBoolean() ?: false
+            if ((icon?.linkToPageId != null) && (!typeLinks)) {
+                return
+            }
+            if (icon?.text == null) {
+                return
+            }
+            inputter?.input(icon.text!!)
+        } catch(e: Exception) {
+            Log.e(TAG, "problem with icon input", e)
+        }
+    }
+
+    override fun preview(icon: IconData?, v: View?) {} // do nothing...
 
     fun highlightActionButton(start: Boolean) {
         val VIEW_TAG = "actionHighlight"
