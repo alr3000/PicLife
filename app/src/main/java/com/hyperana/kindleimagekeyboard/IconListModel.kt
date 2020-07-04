@@ -1,5 +1,6 @@
 package com.hyperana.kindleimagekeyboard
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
@@ -63,7 +64,8 @@ open class IconListModel: ViewModel(), WordInputter {
 
 
     override fun input(text: String) {
-        input(IconData().apply {
+        Log.d(TAG, "input text: $text")
+        this.input(IconData().apply {
             this.text = text
         })
     }

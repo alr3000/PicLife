@@ -36,11 +36,11 @@ android {
         }
     }
 
-    sourceSets {
+    /*sourceSets {
         main {
             res.srcDirs = ['./src/main/res', './src/main/res-dropbox']
         }
-    }
+    }*/
 
         compileOptions {
         sourceCompatibility = 1.8

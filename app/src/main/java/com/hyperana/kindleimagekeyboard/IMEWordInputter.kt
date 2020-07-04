@@ -102,10 +102,12 @@ class IMEWordInputter (val ime: InputMethodService)
     }
 
     override fun input(icon: IconData) {
+        Log.d(TAG, "input icon: ${icon.text}")
         icon.text?.also { input(it) }
     }
 
     override fun input(text: String) {
+        Log.d(TAG, "input text: $text, committing...")
         try {
             val ic = ime.currentInputConnection
             val backward = getWordBeforeCursor(ic)

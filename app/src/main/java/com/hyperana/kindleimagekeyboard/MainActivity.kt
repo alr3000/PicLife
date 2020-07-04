@@ -17,7 +17,6 @@ class MainActivity : AppCompatActivity(), FragmentListener {
 
     val TAG = "MainActivity"
     val context = this
-    val app = App.getInstance(applicationContext)
 
     val messageViewModel: IconListModel by viewModels()
 
@@ -94,15 +93,14 @@ class MainActivity : AppCompatActivity(), FragmentListener {
 
             // attach viewcontrollers to livedata here because this is the relevant lifecycle
             // todo: remove view reference from livedata?
-            app.iconEventLiveData.observe(this@MainActivity, object: Observer<IconEvent?> {
+            App.getInstance(applicationContext)
+                .iconEventLiveData.observe(this@MainActivity, object: Observer<IconEvent?> {
                 override fun onChanged(t: IconEvent?) {
                     iconListeners.forEach {
                         it.onIconEvent(t?.icon, t?.action, t?.view)
                     }
                 }
             })
-
-
 
 
         }catch (e: Exception) {
@@ -121,7 +119,15 @@ class MainActivity : AppCompatActivity(), FragmentListener {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+        App.getInstance(applicationContext).iconEventLiveData.removeObservers(this)
+    }
+
     fun initializeAAC() {
+        Log.d(TAG, "initializeAAC")
+        val app = App.getInstance(applicationContext)
 
         iconListeners = listOf(
             Speaker(App.getInstance(this.applicationContext)).also {

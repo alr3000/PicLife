@@ -50,12 +50,6 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
     val wordInputter: WordInputter = IMEWordInputter(this)
 
 
-    // TTS:
-    val speaker = Speaker(App.getInstance(this.applicationContext)).also {
-        lifecycleRegistry.addObserver(it)
-    }
-
-
     //********************************** InputMethod Overrides: ********************************
 
     // check highlight action button
@@ -139,6 +133,7 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
         Log.d(TAG, "onDestroy")
 
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+        App.getInstance(applicationContext).iconEventLiveData.removeObservers(this)
         super.onDestroy()
     }
 
@@ -146,6 +141,15 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
         Log.d(TAG, "onCreate")
         super.onCreate()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        App.getInstance(applicationContext).iconEventLiveData.observe(this, object: Observer<IconEvent?> {
+            init { Log.d(TAG, "observe IconEvent...")}
+            override fun onChanged(t: IconEvent?) {
+                Log.d(TAG, "iconEvent::onChange ${t?.icon?.text} -- ${t?.action}")
+                iconListeners.forEach {
+                    it.onIconEvent(t?.icon, t?.action, t?.view)
+                }
+            }
+        })
     }
 
     override fun getLifecycle(): Lifecycle {
@@ -251,14 +255,6 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
                 setCurrentPage( app.get("currentPageId")?.toString())
             }
         )
-
-        app.iconEventLiveData.observe(this, object: Observer<IconEvent?> {
-            override fun onChanged(t: IconEvent?) {
-                iconListeners.forEach {
-                    it.onIconEvent(t?.icon, t?.action, t?.view)
-                }
-            }
-        })
 
 
         return view!!

@@ -35,7 +35,7 @@ class AACManager (
         Log.d(TAG, "setPages: ${pages.count()}")
         // build a view with iconListener for each page that has icons
         // uses columns, iconMargin, createLinks
-        pager?.adapter = PageAdapterFactory.create(app, pages, this)
+        pager?.adapter = PageAdapterFactory.create(app, pages)
 
         pager?.pageListener = this
 
@@ -65,7 +65,7 @@ class AACManager (
     }
 
     fun execute(icon: IconData?, v: View?) {
-        Log.d(TAG, "execute icon")
+        Log.d(TAG, "execute icon link?")
         if ((icon != null) && (icon.text != DEFAULT_ICON_TEXT)) {
             gotoLinkIcon(icon)
         }

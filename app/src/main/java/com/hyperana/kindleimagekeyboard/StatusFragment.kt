@@ -134,7 +134,7 @@ class StatusFragment: Fragment(), ViewTreeObserver.OnGlobalLayoutListener {
     }
 
      fun checkIsLoaded() : Boolean {
-        val name = (activity?.application as? App)
+        val name = App.getInstance(requireActivity().applicationContext)
                 ?.get("currentKeyboard")
                 ?.toString()
         if (name == null) {

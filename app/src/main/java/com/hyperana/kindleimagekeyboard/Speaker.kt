@@ -55,13 +55,20 @@ class Speaker(val app: App): LifecycleObserver, IconListener {
     }
 
     // Icon interface:
-    override fun execute(icon: IconData?, v: View?) {
+    override fun onIconEvent(icon: IconData?, action: AACAction?, view: View?) {
+        when (action) {
+            AACAction.ICON_EXECUTE -> execute(icon, view)
+            AACAction.ICON_PREVIEW -> preview(icon, view)
+        }
+    }
+
+    fun execute(icon: IconData?, v: View?) {
         if (icon != null && app.get("speakWords").toString() == "speakIconEntry") {
             speakIcon(icon)
         }
     }
 
-    override fun preview(icon: IconData?, v: View?) {
+    fun preview(icon: IconData?, v: View?) {
         if (icon != null && app.get("speakWords").toString() == "speakIconTouch") {
             speakIcon(icon)
         }

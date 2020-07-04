@@ -11,9 +11,7 @@ object PageAdapterFactory {
 
     fun create(
         app: App,
-        pages: List<PageData> = listOf(),
-        iconListener: InputPageView.IconListener
-
+        pages: List<PageData> = listOf()
     ) : BaseAdapter {
         return object: BaseAdapter() {
 
@@ -31,9 +29,7 @@ object PageAdapterFactory {
                     else InputPageView(
                         parent!!.context,
                         getItem(position) as PageData,
-                        Color.parseColor(app.get("backgroundColor")?.toString()),
-                        app.get("touchAction")?.toString() ?: "touchActionClick",
-                        iconListener
+                        Color.parseColor(app.get("backgroundColor")?.toString())
                     )
                 }
                 catch (e: Exception) {

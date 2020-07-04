@@ -5,8 +5,7 @@
     android:id="@+id/imageinput_content"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:tag="imageinput_content"
-    tools:context="com.hyperana.kindleimagekeyboard.ImageInputIME">
+    android:tag="imageinput_content">
 
 
     <!-- container for all normal input parts -->
@@ -97,7 +96,6 @@
                 android:layout_gravity="start"
                 android:contentDescription="@string/settings_1_desc"
                 android:gravity="start"
-                android:onClick="doClickPreferences"
                 android:src="@drawable/ic_preferences" />
 
             <!-- switch keyboards -->
@@ -147,7 +145,6 @@
             android:layout_margin="30dp"
             android:background="@color/colorAccent"
             android:hint="@string/error_desc"
-            android:onClick="doClickError"
             android:padding="50dp"
             android:text="error..."
             android:textAlignment="center"

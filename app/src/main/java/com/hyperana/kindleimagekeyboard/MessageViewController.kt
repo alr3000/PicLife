@@ -63,7 +63,14 @@ class MessageViewController (
     }
 
     // icon interface:
-    override fun execute(icon: IconData?, v: View?) {
+    override fun onIconEvent(icon: IconData?, action: AACAction?, view: View?) {
+        when (action) {
+            AACAction.ICON_EXECUTE -> execute(icon, view)
+            else -> {}
+        }
+    }
+
+    fun execute(icon: IconData?, v: View?) {
         Log.d(TAG, "execute: " + icon?.text)
         try {
             val typeLinks = app.get("doTypeLinks")?.toString()?.toBoolean() ?: false
@@ -78,8 +85,6 @@ class MessageViewController (
             Log.e(TAG, "problem with icon input", e)
         }
     }
-
-    override fun preview(icon: IconData?, v: View?) {} // do nothing...
 
     fun highlightActionButton(start: Boolean) {
         val VIEW_TAG = "actionHighlight"

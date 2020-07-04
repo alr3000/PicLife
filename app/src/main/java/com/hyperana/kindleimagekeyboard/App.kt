@@ -25,7 +25,7 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
 
     var mData: MutableMap<String, Any?>? = null
     var sharedPreferences: SharedPreferences? = null
-     var preferenceChangeTime: Long = 0
+     var preferenceChangeTime: Long = 1
 
     var icons: List<IconData>? = null
 
