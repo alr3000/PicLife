@@ -18,6 +18,10 @@ import androidx.lifecycle.MutableLiveData
 
 /**
  * Created by alr on 11/17/17.
+ *
+ * todo: create page from message icons
+ * todo: create page from image
+ * todo: export message icons or page to png.
  */
 class App private constructor(val appContext: Context): SharedPreferences.OnSharedPreferenceChangeListener{
     val TAG = "App"
@@ -83,20 +87,23 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
         val keyboardName = get("currentKeyboard")!! as String
         Log.d(TAG, "updatePageList: " + keyboardName)
 
-        val newPages = jsonStringToPageDataArray(
+        try {
+            val newPages = jsonStringToPageDataArray(
                 loadString(
-                        getKeyboardConfigFile(
-                                appContext,
-                                keyboardName
-                        ).inputStream()
+                    getKeyboardConfigFile(
+                        appContext,
+                        keyboardName
+                    ).inputStream()
                 )
-        )
-        if (newPages.isEmpty()) {
-            throw Exception("no pages loaded")
-        }
+            )
 
-        put("pageList", newPages)
-        return newPages
+            put("pageList", newPages)
+            return newPages
+        }
+        catch (e: Exception) {
+            Log.e(TAG, "failed load keyboard $keyboardName")
+            return emptyList()
+        }
     }
 
 

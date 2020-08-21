@@ -61,6 +61,21 @@ class ManageKeyboardsFragment : ListFragment() {
                 }
             }
 
+      /*      // set button listener -> SelectDropboxActivity:
+            view.findViewById<Button>(R.id.button_add_dropbox).setOnClickListener {
+                try {
+                    Log.d(TAG, "onClick add dropbox")
+                    startActivity(
+                        Intent(
+                            requireActivity().applicationContext,
+                            SelectDropboxActivity::class.java
+                        )
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "could not show choose dropbox activity", e)
+                }
+            }*/
+
             return view
         }
         catch (e: Exception) {

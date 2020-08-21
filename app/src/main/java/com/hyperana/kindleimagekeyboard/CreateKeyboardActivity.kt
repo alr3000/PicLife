@@ -17,9 +17,12 @@ import com.github.angads25.filepicker.model.DialogConfigs
 import com.github.angads25.filepicker.model.DialogProperties
 import com.github.angads25.filepicker.view.FilePickerDialog
 import java.io.File
+
+
 class CreateKeyboardActivity : AppCompatActivity() {
 
     val TAG = "CreateKeyboardActivity"
+    val REQUEST_SELECT_DROPBOX = 7324
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -28,7 +31,8 @@ class CreateKeyboardActivity : AppCompatActivity() {
 
 
             //DropBox:
-            Log.d(TAG, "DropBox Auth: ${BuildConfig.CONSUMER_KEY}")
+          //  Log.d(TAG, "DropBox Auth: ${BuildConfig.CONSUMER_KEY}")
+            Log.d(TAG, "DropboxApiKey: " + resources.getString(R.string.app_key))
             /* val toolbar = findViewById(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
 
@@ -50,6 +54,15 @@ class CreateKeyboardActivity : AppCompatActivity() {
                         .getBoolean(PREF_DROPBOX_ENABLED, false)) View.GONE else View.VISIBLE
                 setOnClickListener {
                     Log.d(TAG, "start enableDropboxactivity for result...")
+                    try {
+                        startActivityForResult(
+                            Intent().setClassName(packageName, SelectDropboxActivity::class.java.name),
+                            REQUEST_SELECT_DROPBOX
+                        )
+                    }
+                    catch (e: Exception) {
+                        Log.e(TAG, "Failed start dropbox activity", e)
+                    }
                 }
             }
 
@@ -131,7 +144,7 @@ class CreateKeyboardActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         Log.d(TAG, "onActivityResult: $requestCode, $resultCode, ${data?.data}")
     }
-    
+
 
     fun validateName(name: String?) : Boolean {
         val list: List<String?> = listOf(null, "") // and all the existing names

@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:text="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorForwardDelete"
+    android:orientation="vertical"
     android:padding="20dp"
     android:weightSum="100">
 
     <TextView
+        style="@style/TextAppearance.AppCompat.Headline"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="20"
         android:gravity="left|bottom"
-        style="@style/TextAppearance.AppCompat.Headline"
-        android:textColor="@color/colorNeutralDark"
-        android:text="@string/title_manage_directories"/>
+        android:text="@string/title_manage_directories"
+        android:textColor="@color/colorNeutralDark" />
 
     <!-- list of recent previously loaded keyboard directories from app data -->
 
@@ -22,33 +23,32 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="60"
-        android:padding="10dp"
-        android:background="@color/colorNeutralDark">
+        android:background="@color/colorNeutralDark"
+        android:padding="10dp">
+
         <ListView
             android:id="@android:id/list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:choiceMode="singleChoice"
             android:background="@color/colorNeutralLight"
-            ></ListView>
+            android:choiceMode="singleChoice"></ListView>
 
         <TextView
             android:id="@android:id/empty"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/colorNeutralLight"
             android:layout_gravity="center"
-            android:text="@string/no_homepage_options"/>
+            android:background="@color/colorNeutralLight"
+            android:text="@string/no_homepage_options" />
     </FrameLayout>
-
 
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="20"
-        android:orientation="horizontal"
-        android:gravity="center">
+        android:gravity="center"
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/button_add_directory"
@@ -57,5 +57,17 @@
             android:background="@color/colorAction"
             android:contentDescription="@string/add_directory_desc"
             android:text="@string/button_create_keyboard" />
+<!--
+        <View
+            android:layout_width="32dp"
+            android:layout_height="match_parent" />
+
+        <Button
+            android:id="@+id/button_add_dropbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/colorAction"
+            android:contentDescription="@string/add_dropbox_desc"
+            android:text="@string/button_add_dropbox" />-->
     </LinearLayout>
 </LinearLayout>

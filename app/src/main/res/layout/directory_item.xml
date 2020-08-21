@@ -1,29 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="20dp"
     android:background="@drawable/list_item_selector"
+    android:orientation="horizontal"
+    android:padding="20dp"
     android:tag="directoryItem">
 
     <TextView
         android:id="@+id/directory_item_path"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:gravity="center_vertical" />
 
     <!-- cannot be button or the listfragment listener will not work -->
     <ImageView
         android:id="@+id/directory_item_delete"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@color/colorAccent"
+        android:clickable="true"
         android:contentDescription="@string/delete_directory_desc"
         android:focusable="false"
-        android:clickable="true"
-        android:src="@android:drawable/ic_menu_delete"
-        android:background="@color/colorAccent"
-        android:onClick="onDeleteItem"/>
+        android:onClick="onDeleteItem"
+        android:src="@android:drawable/ic_menu_delete" />
 
 
 </LinearLayout>

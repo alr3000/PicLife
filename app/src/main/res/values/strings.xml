@@ -82,6 +82,11 @@
     <string name="add_directory_desc">Add a custom keyboard</string>
     <string name="delete_directory_desc">Delete this keyboard</string>
     <string name="button_create_keyboard">Create New</string>
+    <string name="button_add_dropbox">Link to Dropbox</string>
+    <string name="add_dropbox_desc">Create keyboards from Dropbox</string>
+
+    <!-- Strings related to Dropbox -->
+
 
     <!-- Strings related to Settings -->
     <string name="pref_cat_touch">Icon Activation</string>

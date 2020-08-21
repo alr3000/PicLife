@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.hyperana.kindleimagekeyboard">
 
     <application
-        android:allowBackup="true"
+        tools:replace="android:allowBackup,android:theme,android:supportsRtl,android:icon"
+    android:allowBackup="true"
         android:icon="@mipmap/ic_launcher_input"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar">
-        <activity android:name=".DropboxAuthActivity"></activity>
-        <!-- singleTask means only one instance in system tasklist -->
-        <activity
+        <activity android:name=".SelectDropboxActivity"></activity>
+       <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
             android:launchMode="singleTask"
@@ -49,6 +50,24 @@
             android:label="@string/title_activity_create_keyboard"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateVisible" />
+
+        <!--You should have a com.dropbox.core.android.AuthActivity with the scheme: db-AppKey-->
+        <activity
+            android:name="com.dropbox.core.android.AuthActivity"
+            android:configChanges="orientation|keyboard"
+            android:launchMode="singleTask" >
+            <intent-filter>
+
+                <!-- Change this to be db- followed by your app key -->
+                <data android:scheme="db-navueqe6mvf4wmn" />
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
     </application>
 
 </manifest>
