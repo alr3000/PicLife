@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="dbx_color_control_activated">@color/dbx_primary</color>
+    <color name="dbx_color_control_highlight">@color/dbx_primary_dark</color>
+    <color name="dbx_color_control_normal">@color/dbx_primary</color>
+    <color name="dbx_color_switch_thumbNormal">@color/dbx_primary</color>
+    <color name="dbx_primary">#FF007EE5</color>
+    <color name="dbx_primary_dark">#FF0078d9</color>
+    <color name="dbx_white_opaque_100">#FFFFFFFF</color>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="global_padding">16dp</dimen>
+    <dimen name="thumbnail_size">36dp</dimen>
+    <string name="app_key">YOUR_APP_KEY_HERE</string>
+    <string name="app_name">Dropbox Android Example</string>
+    <string name="title_activity_files">Files</string>
+    <string name="title_activity_openwith">Open With</string>
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@color/dbx_white_opaque_100</item>
+        <item name="colorPrimary">@color/dbx_primary</item>
+        <item name="colorPrimaryDark">@color/dbx_primary_dark</item>
+        <item name="colorControlNormal">@color/dbx_color_control_normal</item>
+        <item name="colorControlActivated">@color/dbx_color_control_activated</item>
+        <item name="colorControlHighlight">@color/dbx_color_control_highlight</item>
+        <item name="colorSwitchThumbNormal">@color/dbx_color_switch_thumbNormal</item>
+        <item name="colorAccent">@color/dbx_primary</item>
+    </style>
+    <style name="ButtonStyle" parent="Widget.AppCompat.Button.Colored">
+    </style>
+</resources>
