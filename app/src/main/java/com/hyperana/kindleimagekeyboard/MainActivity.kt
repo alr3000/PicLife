@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity(), FragmentListener {
 
         fun start(fragmentList: List<Fragment>) {
             fragments = fragmentList.toMutableList()
+            nextFragment()
         }
 
         private fun nextFragment() : Boolean{

@@ -192,7 +192,6 @@ class CreateKeyboardActivity : AppCompatActivity() {
         val progress = findViewById(R.id.progress_bar) as ProgressBar
         val savebutton = findViewById(R.id.button_save_keyboard) as Button
 
-        // todo: -?- weak references to self?
         val loader = object: AsyncKeyboardTask() {
             override fun onPreExecute() {
                 super.onPreExecute()

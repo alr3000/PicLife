@@ -85,8 +85,13 @@ fun getKeyboardsDirectory(context: Context) : File {
 
 
 fun getKeyboardsNotLoaded(context: Context) : List<String> {
+    val assetKeyboards = context.assets.list(DEFAULT_HOMEDIR)
+        .also { Log.i("getKeyboardsNotLoaded", "found asset keyboards: " + it?.joinToString()) }
     val keyboardDirs = getKeyboardsDirectory(context).list()
-    return context.assets.list(DEFAULT_HOMEDIR)?.filter { !keyboardDirs.contains(it) }
+        .also { Log.i("getKeyboardsNotLoaded", "found app keyboards: " + it?.joinToString())}
+
+    return keyboardDirs?.let { assetKeyboards?.filter { !keyboardDirs.contains(it) } }
+        .also { Log.i("getKEyboardsNotLoaded", "loading now: " + it?.joinToString())}
         ?: emptyList()
 }
 

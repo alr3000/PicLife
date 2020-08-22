@@ -36,6 +36,7 @@ class LoadAssetsFragment internal constructor(): Fragment() {
     var loadersStartCount: Int = 0
     var pollTimer: Timer? = null
 
+    init { Log.i(TAG, "init")}
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -146,7 +147,7 @@ class LoadAssetsFragment internal constructor(): Fragment() {
     }
 
     companion object {
-        val TAG = "StartingFragment"
+        val TAG = "LoadAssetsFragment"
         fun create(listener: FragmentListener?) : LoadAssetsFragment {
             return LoadAssetsFragment().apply { fragmentListener = listener }
         }

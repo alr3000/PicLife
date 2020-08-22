@@ -66,6 +66,7 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
 
 
 
+
     // sharedPreferences is only altered through the proper channels, but values accessed here
     fun get(key: String) : Any?{
         return sharedPreferences?.all?.get(key) ?: mData?.get(key)
@@ -101,7 +102,7 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
             return newPages
         }
         catch (e: Exception) {
-            Log.e(TAG, "failed load keyboard $keyboardName")
+            Log.e(TAG, "failed load keyboard $keyboardName", e)
             return emptyList()
         }
     }

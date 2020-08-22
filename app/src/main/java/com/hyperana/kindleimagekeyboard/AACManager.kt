@@ -20,6 +20,7 @@ class AACManager (
 
     val TAG = "AACManager"
 
+
     init {
         gotoHomeView?.apply {
             visibility =
