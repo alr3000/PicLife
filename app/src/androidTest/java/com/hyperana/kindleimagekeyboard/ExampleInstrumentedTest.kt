@@ -3,6 +3,8 @@ package com.hyperana.kindleimagekeyboard
 
 import android.content.Context
 import android.net.Uri
+import android.os.Handler
+import android.os.HandlerThread
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -25,16 +27,18 @@ import java.util.*
 @RunWith(AndroidJUnit4::class)
 class ExampleInstrumentedTest {
     lateinit var db: AppDatabase
-    val appContext = InstrumentationRegistry.getInstrumentation().context
-    val app = App.getInstance(appContext)
+    lateinit var appContext: Context
+    lateinit var app: App
 
     fun getRan() = (Math.random() * Int.MAX_VALUE).toInt()
 
 
     @Before
     fun createDb() {
+        appContext = InstrumentationRegistry.getInstrumentation().context
+       // app = App.getInstance(appContext)
         db = Room.inMemoryDatabaseBuilder(
-            appContext, AppDatabase::class.java).build()
+            appContext, AppDatabase::class.java).build() as AppDatabase
     }
 
     @After
@@ -89,7 +93,7 @@ class ExampleInstrumentedTest {
 
         val files = getFilesRecursive(getKeyboardsDirectory(appContext), 10)
             .map { Uri.fromFile(it)?.toString()?.let { uri ->
-                Resource(getRan(), it.nameWithoutExtension, uri, IMAGE)
+                Resource(getRan(), uri, IMAGE)
             }}
             .filterNotNull()
             .toTypedArray()
@@ -100,5 +104,31 @@ class ExampleInstrumentedTest {
             it.insertAll(*files)
             assert(it.getAllUriContains("animals").count() > 0)
         }
+    }
+
+    @Test
+    fun storeDirectoryData() {
+        val dictionary = db
+        val context = appContext!!
+        val loader = object: AsyncKeyboardTask() {
+            override fun onPostExecute(result: String?) {
+                super.onPostExecute(result)
+
+                // this is ui thread, so post:
+                HandlerThread("boo").also {
+                    it.start()
+                    Handler(it.looper).post {
+                        assert(dictionary.wordDao().findByText("crash", 10).count() > 0)
+                    }
+                }
+            }
+        }.apply {
+            execute(AsyncKeyboardParams(
+                appContext = context,
+                name = "example",
+                path = File(getKeyboardsDirectory(context), "example").path
+            ))
+        }
+
     }
 }

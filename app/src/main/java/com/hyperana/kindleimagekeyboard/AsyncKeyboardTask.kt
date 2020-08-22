@@ -9,6 +9,8 @@ import java.io.FileOutputStream
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Handler
+import androidx.room.Room
+import androidx.room.RoomDatabase
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -38,6 +40,7 @@ class AsyncKeyboardParams(val appContext: Context,
 open class AsyncKeyboardTask: AsyncTask<AsyncKeyboardParams, Int, String?>() {
 
     open val TAG = "AsyncKeyboardTask"
+    var db: RoomDatabase? = null
 
     // task vars:
     var selectedDirectory: File? = null
@@ -50,6 +53,16 @@ open class AsyncKeyboardTask: AsyncTask<AsyncKeyboardParams, Int, String?>() {
      var pageErrors = 0
     var iconErrors = 0
 
+    override fun onPreExecute() {
+        super.onPreExecute()
+
+        try {
+            db = Room.databaseBuilder(appContext!!, AppDatabase::class.java, "app_database").build()
+        }catch (e: Exception) {
+            Log.e(TAG, "failed open database", e)
+        }
+    }
+
     override fun doInBackground(vararg params: AsyncKeyboardParams): String? {
         try {
             Log.d(TAG, "loader doInBackground: " + params[0].toString())
@@ -57,7 +70,9 @@ open class AsyncKeyboardTask: AsyncTask<AsyncKeyboardParams, Int, String?>() {
             setTaskVars(params[0])
 
             val pages = parseDirectory()
+
             storePages(pages, keyboardName)
+            (db as? AppDatabase)?.enterPages(pages, keyboardName)
 
             unsetTaskVars()
 
@@ -302,4 +317,6 @@ open class AsyncKeyboardTask: AsyncTask<AsyncKeyboardParams, Int, String?>() {
 
         Log.d(TAG, "stored data in file: " + configFile.absolutePath)
     }
+
+
 }
