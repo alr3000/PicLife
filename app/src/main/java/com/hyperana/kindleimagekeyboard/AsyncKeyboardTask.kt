@@ -8,11 +8,9 @@ import java.io.File
 import java.io.FileOutputStream
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Handler
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import java.io.InputStream
-import java.io.OutputStream
 
 
 /**
@@ -72,7 +70,7 @@ open class AsyncKeyboardTask: AsyncTask<AsyncKeyboardParams, Int, String?>() {
             val pages = parseDirectory()
 
             storePages(pages, keyboardName)
-            (db as? AppDatabase)?.enterPages(pages, keyboardName)
+            (db as? AppDatabase)?.enterKeyboard(pages, Uri.fromFile(keyboardDirectory), keyboardName)
 
             unsetTaskVars()
 
@@ -193,7 +191,7 @@ open class AsyncKeyboardTask: AsyncTask<AsyncKeyboardParams, Int, String?>() {
                     val icon = IconData(
                             text = iconFilenameToText(it.nameWithoutExtension),
                             index = (iconFilenameToIndex(it.nameWithoutExtension)?: index).toString(),
-                            pageId = page.id
+                            fPageId = page.id
                     )
 
                     // copy image into internal memory and record its new path

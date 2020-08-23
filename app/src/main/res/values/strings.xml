@@ -7,6 +7,9 @@
     <string name="title_activity_page_from_image">Cut Image</string>
     <string name="title_activity_settings">Settings</string>
     <string name="title_activity_error">Apologies...</string>
+    <string name="read_permission">com.hyperana.kindleimagekeyboard.canRead</string>
+    <string name="write_permission">com.hyperana.kindleimagekeyboard.canWrite</string>
+
 
     <!-- help messages -->
     <string name="globe_switch_keyboard_help">While editing, click the globe button to cycle through enabled keyboards easily.</string>

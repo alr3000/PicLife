@@ -62,7 +62,7 @@ class ExampleInstrumentedTest {
 
 
         listOf("happy!", "Freddy's bag", "lemons", "93", "foot massage", "now")
-            .map { Word(getRan(), it, getRan())}
+            .map { Word(getRan(), it, getRan(), 1)}
             .toTypedArray()
             .also {
                 db.wordDao().insertAll(*it)
@@ -93,7 +93,7 @@ class ExampleInstrumentedTest {
 
         val files = getFilesRecursive(getKeyboardsDirectory(appContext), 10)
             .map { Uri.fromFile(it)?.toString()?.let { uri ->
-                Resource(getRan(), uri, IMAGE)
+                Resource(getRan(), uri, Resource.Type.IMAGE.name)
             }}
             .filterNotNull()
             .toTypedArray()
@@ -130,5 +130,17 @@ class ExampleInstrumentedTest {
             ))
         }
 
+    }
+
+    @Test
+    fun useContentProvider() {
+        storeDirectoryData()
+
+        val cursor = appContext.contentResolver.query(
+            ContentProvider.WORD_URI.buildUpon().appendPath("crash").build(),
+            null, null, null, null
+        )
+
+        assert(cursor?.count?.let { it > 0} == true)
     }
 }
