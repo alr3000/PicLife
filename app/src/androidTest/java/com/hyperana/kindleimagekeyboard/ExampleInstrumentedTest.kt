@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Handler
 import android.os.HandlerThread
 import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.After
@@ -17,7 +16,6 @@ import org.junit.Assert.*
 import org.junit.Before
 import java.io.File
 import java.io.IOException
-import java.util.*
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -66,7 +64,7 @@ class ExampleInstrumentedTest {
             .toTypedArray()
             .also {
                 db.wordDao().insertAll(*it)
-                assert(db.wordDao().getAll().any{ it.text == "lemons" })
+                assert(db.wordDao().getAllByText("lemons", 10)?.let { it.count > 0 } == true)
             }
 
     }
@@ -102,7 +100,7 @@ class ExampleInstrumentedTest {
 
         db.resourceDao().also {
             it.insertAll(*files)
-            assert(it.getAllUriContains("animals").count() > 0)
+            assert(it.getAllUriContains("animals")?.let { it.count > 0} == true)
         }
     }
 
@@ -118,7 +116,7 @@ class ExampleInstrumentedTest {
                 HandlerThread("boo").also {
                     it.start()
                     Handler(it.looper).post {
-                        assert(dictionary.wordDao().findByText("crash", 10).count() > 0)
+                        assert(dictionary.wordDao().listByText("crash").count() > 0)
                     }
                 }
             }

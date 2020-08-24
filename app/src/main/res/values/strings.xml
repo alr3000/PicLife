@@ -292,5 +292,6 @@
         <item>300</item>
     </string-array>
     <string name="title_activity_create_keyboard">Create Keyboard</string>
+    <string name="content_authority">com.hyperana.piclife.ContentProvider</string>
 
 </resources>

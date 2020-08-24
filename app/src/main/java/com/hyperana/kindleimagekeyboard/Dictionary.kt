@@ -38,14 +38,19 @@ data class Word(
 
 @Dao
 interface WordDao {
-    @Query("SELECT * FROM word")
-    fun getAll(): List<Word>
+
+    @Query("SELECT * FROM word GROUP BY text ORDER BY text")
+    fun getAllDistinct(): Cursor?
+
+    // todo: paging
+    @Query("SELECT * FROM word WHERE text LIKE :text")
+    fun listByText(text: String): List<Word>
 
     @Query("SELECT * FROM word WHERE uid IN (:wordIds)")
-    fun loadAllByIds(wordIds: IntArray): List<Word>
+    fun getAllByIds(wordIds: IntArray): Cursor?
 
     @Query("SELECT * FROM word WHERE text LIKE :text LIMIT :limit")
-    fun findByText(text: String, limit: Int): List<Word>
+    fun getAllByText(text: String, limit: Int): Cursor?
 
     @Insert
     fun insertAll(vararg words: Word)
@@ -75,13 +80,26 @@ data class Resource (
 interface ResourceDao {
 
     @Query("SELECT * FROM resource WHERE uid IN (:resourceIds)")
-    fun loadAllByIds(resourceIds: IntArray): List<Resource>
+    fun listAllByIds(resourceIds: IntArray): List<Resource>
 
     @Query("SELECT * FROM resource WHERE uid LIKE :text")
-    fun getAllUriContains(text: String): List<Resource>
+    fun listAllUriContains(text: String): List<Resource>
 
     @Query("SELECT * FROM resource WHERE uid LIKE :text")
-    fun getAllUriContainsCursor(text: String): Cursor?
+    fun getAllUriContains(text: String): Cursor?
+
+    // todo: paging
+    @Query("SELECT * FROM resource WHERE resource_type IN (:types)")
+    fun getAllByType(types: Array<String>) : Cursor?
+
+    @Query("SELECT * FROM resource WHERE uid IN (:ids)")
+    fun getAllById(ids: IntArray) : Cursor?
+
+    @Query("SELECT * FROM resource WHERE resource_type=:type AND uid IN (:ids)")
+    fun getAllTypeById(type: String, ids: IntArray) : Cursor?
+
+    @Query("SELECT * FROM resource WHERE uid=:id LIMIT 1")
+    fun get(id: Int): Cursor?
 
 
     @Insert
@@ -99,6 +117,13 @@ abstract class AppDatabase : RoomDatabase() {
 
     val newUID: Int
         get() = (Math.random() * Int.MAX_VALUE).toInt()
+
+    fun getResourcesByWord(word: String) : Cursor? {
+        return wordDao().listByText(word)
+            .map { it.resourceId }
+            .toIntArray()
+            .let { resourceDao().getAllById(it) }
+    }
 
     //todo: these should just be "create resource entities" then "create word entities(res[], text[])"
     // for each level

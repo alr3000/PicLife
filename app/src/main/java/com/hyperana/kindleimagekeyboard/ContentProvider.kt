@@ -1,7 +1,6 @@
 package com.hyperana.kindleimagekeyboard
 
 import android.content.ContentProvider
-import android.content.ContentResolver
 import android.content.ContentResolver.SCHEME_CONTENT
 import android.content.ContentValues
 import android.database.Cursor
@@ -9,11 +8,9 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.text.isDigitsOnly
 import androidx.room.Room
-import androidx.room.RoomDatabase
 
 class ContentProvider : ContentProvider() {
     val TAG = "ContentProvider"
-
 
     var db: AppDatabase? = null
     get() = field ?: buildDatabase()
@@ -28,8 +25,11 @@ class ContentProvider : ContentProvider() {
 
     override fun onCreate(): Boolean {
         Log.i(TAG, "create")
+
         return true
     }
+
+
 
     override fun query(
         uri: Uri,
@@ -39,7 +39,34 @@ class ContentProvider : ContentProvider() {
         sortOrder: String?
     ): Cursor? {
 
-        return uri.lastPathSegment?.let { db?.resourceDao()?.getAllUriContainsCursor(it) }
+        return when {
+            // use Word table:
+            uri.pathSegments.contains(WORD) -> {
+
+                // path is id:
+                if (uri.pathSegments.contains(ITEM)) db?.wordDao()
+                    ?.getAllByIds(intArrayOf(uri.lastPathSegment?.toIntOrNull() ?: 0))
+
+                // path is search term:
+                else db?.wordDao()?.getAllByText(uri.lastPathSegment ?: "no_text", 10)
+            }
+
+            // perform search for word-associated resource records:
+            uri.pathSegments.contains(SEARCH) -> {
+                uri.lastPathSegment?.let { db?.getResourcesByWord(it) }
+            }
+
+            // perform query on resource table based on path:
+            else -> {
+                // path is id:
+                if (uri.pathSegments.contains(ITEM)) db?.resourceDao()
+                    ?.get(uri.lastPathSegment?.toIntOrNull() ?: 0)
+
+                // path is resourceType:
+                else uri.lastPathSegment?.let {db?.resourceDao()?.getAllByType(arrayOf(it))}
+            }
+
+        }
 
     }
 
@@ -70,8 +97,23 @@ class ContentProvider : ContentProvider() {
     }
 
     companion object {
-        val WORD_URI: Uri = Uri.fromParts(SCHEME_CONTENT,
-            "com.hyperana.kindleimagekeyboard.word",
-            null)
+
+        val authority = "com.hyperana.piclife.ContentProvider"
+
+        // return records from WordDao:
+        val WORD = "word"
+
+        // return resource children of matching word:
+        val SEARCH = "search"
+
+        // return single record with given id:
+        val ITEM = "item"
+
+        val WORD_URI: Uri = Uri.Builder()
+            .scheme(SCHEME_CONTENT)
+            .authority(authority)
+            .appendPath("word")
+            .build()
+
     }
 }
