@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/recents"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorForwardDelete"
+    android:paddingBottom="@dimen/thumbnail_size"
+    tools:context="com.hyperana.kindleimagekeyboard.RecentsFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.hyperana.kindleimagekeyboard.InputPageView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+        </com.hyperana.kindleimagekeyboard.InputPageView>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/message_recyclerview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorAlert" />
+    </LinearLayout>
+
+</FrameLayout>

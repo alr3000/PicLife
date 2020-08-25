@@ -13,7 +13,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Observer
 import androidx.preference.PreferenceManager
 
-class MainActivity : AppCompatActivity(), FragmentListener {
+class MainActivity :  AppCompatActivity(), FragmentListener {
 
     val TAG = "MainActivity"
     val context = this
@@ -91,6 +91,15 @@ class MainActivity : AppCompatActivity(), FragmentListener {
                 chain.start(startup)
             }
             setContentView(R.layout.activity_main)
+
+
+
+
+            RecentsFragment().also {
+                supportFragmentManager.beginTransaction()
+                    .add(it, "recents")
+                    .commit()
+            }
 
             // attach viewcontrollers to livedata here because this is the relevant lifecycle
             // todo: remove view reference from livedata?

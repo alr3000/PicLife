@@ -51,39 +51,46 @@ open class AsyncKeyboardTask: AsyncTask<AsyncKeyboardParams, Int, String?>() {
      var pageErrors = 0
     var iconErrors = 0
 
-    override fun onPreExecute() {
-        super.onPreExecute()
-
-        try {
-            db = Room.databaseBuilder(appContext!!, AppDatabase::class.java, "app_database").build()
-        }catch (e: Exception) {
-            Log.e(TAG, "failed open database", e)
-        }
-    }
 
     override fun doInBackground(vararg params: AsyncKeyboardParams): String? {
+        var name: String? = null
         try {
             Log.d(TAG, "loader doInBackground: " + params[0].toString())
 
+
             setTaskVars(params[0])
 
-            val pages = parseDirectory()
-
-            storePages(pages, keyboardName)
-            (db as? AppDatabase)?.enterKeyboard(pages, Uri.fromFile(keyboardDirectory), keyboardName)
-
-            unsetTaskVars()
-
-            if (isCancelled) {
-                throw Exception("cancelled")
+            try {
+                db = Room.databaseBuilder(appContext!!, AppDatabase::class.java, "app_database").build()
+            }catch (e: Exception) {
+                Log.e(TAG, "failed open database", e)
             }
 
-            return keyboardName
+            selectedDirectory
+                .let { parseDirectory() }
+                .also { pages ->
+                    storePages(pages, keyboardName)
+
+                    if (isCancelled) {
+                        throw Exception("cancelled")
+                    }
+
+                    (db as? AppDatabase)?.enterKeyboard(
+                        pages,
+                        Uri.fromFile(keyboardDirectory),
+                        keyboardName
+                    )
+                }
+
+            name = keyboardName
         }
         catch (e: Exception) {
             Log.e(TAG, "loader failed", e)
             keyboardDirectory?.deleteRecursively()
-            return null
+         }
+        finally {
+            unsetTaskVars()
+            return name
         }
     }
 

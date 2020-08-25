@@ -7,8 +7,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
+import android.widget.AdapterView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.RecyclerView
 
 class MessageViewController (
     val app: App,
@@ -18,7 +20,8 @@ class MessageViewController (
     val overlay: ViewGroup,
     val backspaceView: View? = null,
     val forwardDeleteView: View? = null,
-    val inputActionView: View? = null
+    val inputActionView: View? = null,
+    val messageViewContainer: View? = null
 ) : IconListener
 {
     val TAG = "InputViewController"
@@ -31,6 +34,8 @@ class MessageViewController (
                 if (app.get("doActionHighlight")?.toString()?.toBoolean() ?: true) {
                     highlightActionButton(isNotEmpty)
                 }
+
+                //updateMessageView(t)
 
             } catch (e: Exception) {
                 Log.w(TAG, "failed done button highlight", e)

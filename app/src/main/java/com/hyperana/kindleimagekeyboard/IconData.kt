@@ -1,10 +1,12 @@
 package com.hyperana.kindleimagekeyboard
 
 import android.content.Context
+import android.net.Uri
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 import org.json.JSONObject
 
 /**
@@ -15,7 +17,8 @@ class IconData(val id: String = createIconId(),
                var text: String? = null,
                var fPageId: String? = null,
                var path: String? = null,
-               var linkToPageId: String? = null)  {
+               var linkToPageId: String? = null,
+                var thumbUri: Uri? = null)  {
 
     constructor(jsonObj: JSONObject) : this(
             id = jsonObj.getString("id"),
@@ -78,4 +81,8 @@ class IconData(val id: String = createIconId(),
             return cell
         }
     }
+}
+
+class IconViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
+
 }

@@ -17,7 +17,7 @@ class IMEWordInputter (val ime: InputMethodService)
 
     val TAG = "IMEWordInputter"
 
-    var editorActionId = null
+    var editorActionId: Nothing? = null
     val wordbreak = Regex("\\W")
     val word = Regex("[^\\W]+")
 

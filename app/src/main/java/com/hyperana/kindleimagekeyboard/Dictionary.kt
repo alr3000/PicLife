@@ -2,6 +2,7 @@ package com.hyperana.kindleimagekeyboard
 
 import android.database.Cursor
 import android.net.Uri
+import androidx.lifecycle.LiveData
 import androidx.room.*
 import java.io.File
 
@@ -22,17 +23,17 @@ val SOUND = "sound"
 
 @Entity
 data class Word(
-    @PrimaryKey val uid: Int = hashCode(),
+    @PrimaryKey val uid: Int,
     @ColumnInfo(name = "text") val text: String?,
     @ColumnInfo(name = "resource_id") val resourceId: Int,
     @ColumnInfo(name = "priority") val priority: Int
 ) {
 
     companion object {
-        val USER = 0x01
-        val DERIVED = 0x02
-        val CATEGORY = 0x04
-        val PARTIAL = 0x08
+        const val USER = 0x01
+        const val DERIVED = 0x02
+        const val CATEGORY = 0x04
+        const val PARTIAL = 0x08
     }
 }
 
@@ -71,9 +72,7 @@ data class Resource (
     enum class Type {
         IMAGE, VIDEO, PAGE, BUTTON, SOUND, KEYBOARD
     }
-    companion object {
 
-    }
 }
 
 @Dao
@@ -93,10 +92,14 @@ interface ResourceDao {
     fun getAllByType(types: Array<String>) : Cursor?
 
     @Query("SELECT * FROM resource WHERE uid IN (:ids)")
+    fun getLiveById(ids: IntArray) : List<Resource>?
+
+    @Query("SELECT * FROM resource WHERE uid IN (:ids)")
     fun getAllById(ids: IntArray) : Cursor?
 
+
     @Query("SELECT * FROM resource WHERE resource_type=:type AND uid IN (:ids)")
-    fun getAllTypeById(type: String, ids: IntArray) : Cursor?
+    fun getAllTypeById(type: String, ids: IntArray) : List<Resource>?
 
     @Query("SELECT * FROM resource WHERE uid=:id LIMIT 1")
     fun get(id: Int): Cursor?
@@ -110,13 +113,72 @@ interface ResourceDao {
 }
 
 
-@Database(entities = arrayOf(Word::class, Resource::class), version = 1)
+@Entity()
+data class Recent(
+    @PrimaryKey(autoGenerate = true) val uid: Int = 0,
+    @ColumnInfo(name = "resourceId") val resourceId: Int = 0,
+    @ColumnInfo(name = "actionType") val actionType: Int
+) {
+    enum class ActionType {
+        ADD_TO_MESSAGE, START_MESSAGE, CLEAR_RECENTS
+    }
+
+}
+
+@Dao
+abstract class RecentDao {
+
+    @Insert
+    abstract fun insert(recent: Recent)
+
+    @Delete
+    abstract fun delete(recent: Recent)
+
+    fun clearRecents() {
+        Recent(actionType = Recent.ActionType.CLEAR_RECENTS.ordinal)
+            .also { insert(it) }
+    }
+
+    fun startMessage() {
+        Recent( actionType = Recent.ActionType.START_MESSAGE.ordinal)
+            .also { insert(it) }
+    }
+
+    fun addResource(resourceId: Int) {
+        Recent( resourceId = resourceId, actionType = Recent.ActionType.ADD_TO_MESSAGE.ordinal)
+    }
+
+   @Query("SELECT * FROM recent WHERE uid >= (SELECT MAX(uid) FROM recent WHERE actionType=:action)")
+    abstract fun getAllSince(action: Int) : List<Recent>
+
+}
+
+
+
+@Database(entities = arrayOf(Word::class, Resource::class, Recent::class), version = 1)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun wordDao(): WordDao
     abstract fun resourceDao(): ResourceDao
+    abstract fun recentDao(): RecentDao
 
     val newUID: Int
         get() = (Math.random() * Int.MAX_VALUE).toInt()
+
+  /*  // todo: make single queries for complex data that result in livedata lists
+    fun getRecentButtons() : List<Resource>? {
+        return recentDao().getAllSince(Recent.ActionType.CLEAR_RECENTS.ordinal)
+            .map { it.resourceId }
+            .filter { it != 0 }
+            .toIntArray()
+            .let { resourceDao().getLiveById(it)}
+    }*/
+
+    fun getLiveResourcesByWord(word: String) : List<Resource>? {
+        return wordDao().listByText(word)
+            .map { it.resourceId }
+            .toIntArray()
+            .let { resourceDao().getLiveById(it) }
+    }
 
     fun getResourcesByWord(word: String) : Cursor? {
         return wordDao().listByText(word)

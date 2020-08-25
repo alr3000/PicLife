@@ -8,6 +8,7 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.os.Handler
 import android.preference.PreferenceManager
+import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
@@ -35,10 +36,20 @@ import java.util.regex.Pattern
  */
 
 
-class InputPageView(
+class InputPageView(context: Context, attributeSet: AttributeSet?) : LinearLayout(context, null){
+
+    constructor(
         context: Context,
-        var page: PageData,
-        val color: Int) : LinearLayout(context){
+         pPage: PageData,
+         pColor: Int) : this(context, null) {
+
+        page = pPage
+        color = pColor
+
+    }
+    var page: PageData = PageData()
+    var color: Int = Color.GRAY
+
     val TAG = "InputPageView - " + page.id
 
     val app = App.getInstance(context.applicationContext)
@@ -61,8 +72,8 @@ class InputPageView(
 
         // prepare page styles todo: cascading from app, then page overrides
         margins = page.get("margins")?.toIntOrNull() ?: margins
-         cols = page.get("cols")!!.toInt()
-        rows = page.get("rows")!!.toInt()
+         cols = page.get("cols")?.toInt() ?: cols
+        rows = page.get("rows")?.toInt() ?: rows
 
         // set page features
         tag = page.name

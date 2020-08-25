@@ -46,7 +46,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/colorAlert"
-        android:gravity="fill"
+        android:gravity="center_horizontal"
         android:minHeight="100dp"
         android:padding="10dp"
         android:textAlignment="center"

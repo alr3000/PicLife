@@ -56,7 +56,6 @@
                 android:layout_gravity="start"
                 android:contentDescription="@string/settings_1_desc"
                 android:gravity="end"
-                android:onClick="doClickPreferences"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_preferences"  />
         </RelativeLayout>
@@ -82,7 +81,7 @@
                     android:id="@+id/inputpage_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
+                    android:layout_gravity="center"
                     android:paddingLeft="5dp"
                     android:paddingRight="5dp"
                     android:hint="@string/page_title_desc"
@@ -172,7 +171,6 @@
             android:layout_margin="30dp"
             android:background="@color/colorAccent"
             android:hint="@string/error_desc"
-            android:onClick="doClickError"
             android:padding="50dp"
             android:text="@string/default_error_message"
             android:textAlignment="center"

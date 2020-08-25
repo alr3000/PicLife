@@ -24,11 +24,10 @@ import java.io.IOException
  */
 @RunWith(AndroidJUnit4::class)
 class ExampleInstrumentedTest {
-    lateinit var db: AppDatabase
-    lateinit var appContext: Context
-    lateinit var app: App
+    private lateinit var db: AppDatabase
+    private lateinit var appContext: Context
 
-    fun getRan() = (Math.random() * Int.MAX_VALUE).toInt()
+    private fun getRan() = (Math.random() * Int.MAX_VALUE).toInt()
 
 
     @Before
@@ -36,7 +35,7 @@ class ExampleInstrumentedTest {
         appContext = InstrumentationRegistry.getInstrumentation().context
        // app = App.getInstance(appContext)
         db = Room.inMemoryDatabaseBuilder(
-            appContext, AppDatabase::class.java).build() as AppDatabase
+            appContext, AppDatabase::class.java).build()
     }
 
     @After
@@ -64,7 +63,7 @@ class ExampleInstrumentedTest {
             .toTypedArray()
             .also {
                 db.wordDao().insertAll(*it)
-                assert(db.wordDao().getAllByText("lemons", 10)?.let { it.count > 0 } == true)
+                assertEquals(db.wordDao().getAllByText("lemons", 10)?.let { list -> list.count > 0 }, true)
             }
 
     }
@@ -72,12 +71,12 @@ class ExampleInstrumentedTest {
     fun getFilesRecursive(dir: File, limit: Int) : List<File> {
         var num = 0
         return dir.listFiles()
-            ?.flatMap {
+            ?.flatMap {file ->
 
-                if (num < limit) {
-                    if (it.isDirectory)
-                        getFilesRecursive(it, limit - num).also { num += it.size }
-                    else listOf(it)
+            if (num < limit) {
+                    if (file.isDirectory)
+                        getFilesRecursive(file, limit - num).also { num += it.size }
+                    else listOf(file)
                 }
                 else listOf()
 
@@ -90,25 +89,26 @@ class ExampleInstrumentedTest {
     fun useResourceDatabase() {
 
         val files = getFilesRecursive(getKeyboardsDirectory(appContext), 10)
-            .map { Uri.fromFile(it)?.toString()?.let { uri ->
-                Resource(getRan(), uri, Resource.Type.IMAGE.name)
-            }}
-            .filterNotNull()
+            .mapNotNull {
+                Uri.fromFile(it)?.toString()?.let { uri ->
+                    Resource(getRan(), uri, Resource.Type.IMAGE.name)
+                }
+            }
             .toTypedArray()
 
-        assert(files.isNotEmpty())
+        assertEquals(files.isNotEmpty(), true)
 
-        db.resourceDao().also {
-            it.insertAll(*files)
-            assert(it.getAllUriContains("animals")?.let { it.count > 0} == true)
+        db.resourceDao().also {dao ->
+            dao.insertAll(*files)
+            assertEquals(dao.getAllUriContains("animals")?.let { it.count > 0}, true)
         }
     }
 
     @Test
     fun storeDirectoryData() {
         val dictionary = db
-        val context = appContext!!
-        val loader = object: AsyncKeyboardTask() {
+        val context = appContext
+        object: AsyncKeyboardTask() {
             override fun onPostExecute(result: String?) {
                 super.onPostExecute(result)
 
@@ -116,7 +116,7 @@ class ExampleInstrumentedTest {
                 HandlerThread("boo").also {
                     it.start()
                     Handler(it.looper).post {
-                        assert(dictionary.wordDao().listByText("crash").count() > 0)
+                        assertEquals(dictionary.wordDao().listByText("crash").count() > 0, true)
                     }
                 }
             }
@@ -139,6 +139,26 @@ class ExampleInstrumentedTest {
             null, null, null, null
         )
 
-        assert(cursor?.count?.let { it > 0} == true)
+        assertEquals(cursor?.count?.let { it > 0}, true)
+    }
+
+    @Test
+    fun useRecentsTable() {
+        val dao = db.recentDao()
+        println("Use recents table")
+
+        Array<Int>(8) { it }.forEach {
+            if (it == 4) dao.clearRecents()
+            else if (it == 6) dao.startMessage()
+            else dao.insert(Recent(resourceId = it, actionType = Recent.ActionType.ADD_TO_MESSAGE.ordinal))
+        }
+
+        dao.getAllSince(Recent.ActionType.START_MESSAGE.ordinal)
+            .also { list -> println("Since message: ["+list.map { it.actionType }.joinToString() + "]") }
+            .also { assertEquals(it.count(), 2 )}
+        dao.getAllSince(Recent.ActionType.CLEAR_RECENTS.ordinal)
+            .also { list -> println("Since clear: [" + list.map { it.actionType }.joinToString() + "]") }
+            .also { assertEquals(it.count(), 4) }
+
     }
 }
