@@ -26,6 +26,7 @@ class SwipePagerView : LinearLayout {
 
     val TAG = "SwipePagerView"
     var currentPageIndex = 0
+    var currentPageVerticalIndex = 0
     var isSwipeOn = true
     var isTrailsOn = false
     var isFirstChild = true
@@ -149,9 +150,17 @@ class SwipePagerView : LinearLayout {
         return (event?.action == MotionEvent.ACTION_DOWN)
     }
 
+    //todo: real two-D adapter 
     //*************************** HANDLE PAGES *******************************************
     fun setVerticalPage(forward: Boolean) {
         Log.i(TAG, "next vertical page, " + if(forward) "UP" else "DOWN")
+        setPage(getNextVertical(forward))
+    }
+
+    fun getNextVertical(forward: Boolean) : Int {
+         return verticalAdapter?.count?.let {
+             (currentPageVerticalIndex + (if (forward) 1 else -1)).coerceIn(0 until it)
+         } ?: currentPageVerticalIndex
     }
 
     fun getNext(forward: Boolean) : Int{

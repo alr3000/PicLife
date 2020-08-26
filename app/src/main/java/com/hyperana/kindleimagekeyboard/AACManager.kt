@@ -37,9 +37,12 @@ class AACManager (
         // build a view with iconListener for each page that has icons
         // uses columns, iconMargin, createLinks
         pager?.adapter = PageAdapterFactory.create(app, pages)
-
         pager?.pageListener = this
+    }
 
+    fun setToolPages(pages: List<PageData>) {
+        pager?.verticalAdapter = PageAdapterFactory.create(app, pages)
+        pager?.verticalPageListener = this
     }
 
     fun setCurrentPage(pageId: String?) {

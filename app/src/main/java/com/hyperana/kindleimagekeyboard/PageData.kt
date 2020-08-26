@@ -13,7 +13,7 @@ import org.json.JSONObject
 /**
  * Created by alr on 7/25/17.
  */
-class PageData(val id: String = createPageId(),
+open class PageData(val id: String = createPageId(),
                var name: String? = null, var path: String? = null, var parentPageId: String? = null) {
 
     constructor(jsonObj: JSONObject) : this(
@@ -76,3 +76,10 @@ class PageData(val id: String = createPageId(),
 
 }
 
+class RecentsPage :  PageData(name = "Recents") {
+    //attach to model
+}
+
+class ToolsPage: PageData(name = "Tools") {
+    //attach to model
+}

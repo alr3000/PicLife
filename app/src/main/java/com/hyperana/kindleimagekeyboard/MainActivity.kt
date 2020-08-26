@@ -160,6 +160,7 @@ class MainActivity :  AppCompatActivity(), FragmentListener {
                 titleView = findViewById<TextView>(R.id.inputpage_name)
             ).apply {
                 setPages(getProjectedPages())
+                setToolPages(listOf(RecentsPage(), ToolsPage()))
                 setCurrentPage( app.get("currentPageId")?.toString())
             }
         )
