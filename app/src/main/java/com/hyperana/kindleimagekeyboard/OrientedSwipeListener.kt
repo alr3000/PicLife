@@ -14,7 +14,7 @@ import android.view.*
 // swiper returns true to consume the event from the beginning, but isswiping remains false for the
 // first bit so an interceptor can be alerted when swiper should supercede other consumers
 abstract class OrientedSwipeListener(val isVertical: Boolean, val settings: SharedPreferences, windowManager: WindowManager) : View.OnTouchListener {
-    val TAG = "VerticalSwipeListener"
+    val TAG = "OrientedSwipeListener"
 
     // SETTINGS:
     var BAND_WIDTH = 100
@@ -51,12 +51,12 @@ abstract class OrientedSwipeListener(val isVertical: Boolean, val settings: Shar
             }
             "medium" -> {
                 BAND_WIDTH = screenSize/6
-                MIN_LENGTH = (screenSize * 0.7).toInt()
+                MIN_LENGTH = (screenSize * 0.3).toInt()
                 MAX_TIME = 500L
             }
             "hard" -> {
                 BAND_WIDTH = screenSize/6
-                MIN_LENGTH = (screenSize * 0.7).toInt()
+                MIN_LENGTH = (screenSize * 0.3).toInt()
                 MAX_TIME = 200L
             }
         }

@@ -97,22 +97,22 @@ abstract class SwipeListener(val settings: SharedPreferences) : View.OnTouchList
         try {
             when (event?.action) {
                 KeyEvent.ACTION_DOWN -> {
-                    Log.d(TAG, "DOWN: " + event.x + "," + event.y)
+                    Log.v(TAG, "DOWN: " + event.x + "," + event.y)
                     startSwipe(event.x, event.y)
                 }
                 KeyEvent.ACTION_UP -> {
-                    Log.d(TAG, "UP")
+                    Log.v(TAG, "UP")
                     if (startX != null) {
                         endSwipe(event.x, event.y)
                         clearSwipe()
                     }
                 }
                 MotionEvent.ACTION_CANCEL -> {
-                    Log.d(TAG, "CANCEL")
+                    Log.v(TAG, "CANCEL")
                     clearSwipe()
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    Log.d(TAG, "MOVE: " + event.y)
+                    Log.v(TAG, "MOVE: " + event.y)
                     if (startX != null) {
                         if (!isInBand(event.y) || !isInTime()) {
                             Log.d(TAG, "swipe out of bounds")

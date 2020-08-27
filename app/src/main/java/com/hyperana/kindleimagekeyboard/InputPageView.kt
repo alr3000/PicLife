@@ -2,10 +2,7 @@ package com.hyperana.kindleimagekeyboard
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Color
-import android.graphics.Rect
+import android.graphics.*
 import android.os.Handler
 import android.preference.PreferenceManager
 import android.util.AttributeSet
@@ -15,6 +12,7 @@ import android.view.ViewGroup
 import java.io.File
 import android.util.DisplayMetrics
 import android.view.MotionEvent
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
 import android.widget.*
 import java.util.*
@@ -36,19 +34,11 @@ import java.util.regex.Pattern
  */
 
 
-class InputPageView(context: Context, attributeSet: AttributeSet?) : LinearLayout(context, null){
+class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
+    LinearLayout(context, attributeSet) {
 
-    constructor(
-        context: Context,
-         pPage: PageData,
-         pColor: Int) : this(context, null) {
-
-        page = pPage
-        color = pColor
-
-    }
-    var page: PageData = PageData()
-    var color: Int = Color.GRAY
+    var page: PageData = PageData().apply { name = "Empty page" }
+    var color: Int = Color.DKGRAY
 
     val TAG = "InputPageView - " + page.id
 
@@ -80,6 +70,8 @@ class InputPageView(context: Context, attributeSet: AttributeSet?) : LinearLayou
         orientation = LinearLayout.VERTICAL
         setBackgroundColor(color)
 
+        layoutParams = LayoutParams(MATCH_PARENT, MATCH_PARENT)
+
         // add table rows and cells
         views = createGrid(
                 table = this,
@@ -98,6 +90,7 @@ class InputPageView(context: Context, attributeSet: AttributeSet?) : LinearLayou
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val marr = getMargins(MeasureSpec.getSize(widthMeasureSpec),
                 MeasureSpec.getSize(heightMeasureSpec))
+        Log.d(TAG, "onMeasure: ${marr.joinToString()}")
         views.onEach {
             (it.layoutParams as? LinearLayout.LayoutParams)
                     ?.setMargins(marr[0], marr[1], marr[2], marr[3])
@@ -105,8 +98,14 @@ class InputPageView(context: Context, attributeSet: AttributeSet?) : LinearLayou
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 
+    override fun onDraw(canvas: Canvas?) {
+        super.onDraw(canvas)
+        Log.d(TAG, "onDraw")
+    }
+
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         super.onLayout(changed, l, t, r, b)
+        Log.d(TAG, "onLayout $l, $t, $r, $b")
      }
 
     fun refit(newPage: PageData): View? {

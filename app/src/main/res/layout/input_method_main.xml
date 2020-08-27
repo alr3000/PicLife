@@ -74,9 +74,8 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:clipChildren="true"
-            android:isScrollContainer="true"
+            android:isScrollContainer="false"
             android:orientation="horizontal"
-            android:scrollbars="horizontal"
             android:tag="pager"></com.hyperana.kindleimagekeyboard.SwipePagerView>
 
         <!-- footer nav -->

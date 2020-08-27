@@ -15,7 +15,7 @@ class AACManager (
     val gotoHomeView: View?,
     val titleView: TextView?
 )
-    :  SwipePagerView.PageListener, IconListener
+    :  TwoDAdapterView.PageListener, IconListener
 {
 
     val TAG = "AACManager"
@@ -36,20 +36,18 @@ class AACManager (
         Log.d(TAG, "setPages: ${pages.count()}")
         // build a view with iconListener for each page that has icons
         // uses columns, iconMargin, createLinks
-        pager?.adapter = PageAdapterFactory.create(app, pages)
+        pager?.setAdapter(PageAdapter(pages))
         pager?.pageListener = this
     }
 
-    fun setToolPages(pages: List<PageData>) {
-        pager?.verticalAdapter = PageAdapterFactory.create(app, pages)
-        pager?.verticalPageListener = this
+    fun setAltPages(pages1: List<PageData>, pages2: List<PageData>) {
+        pager?.setAltAdapter( WingsAdapter(pages1, pages2) )
     }
 
-    fun setCurrentPage(pageId: String?) {
+    fun setCurrentPage(pageId: String) {
         Log.d(TAG, "setCurrentPage -- id: $pageId / ${pager?.adapter?.count}")
 
-        pageId?.also { pager?.setPageById(it)}
-            ?:    pager?.setPage(0) // first in list by default
+        pager?.setSelectionByPageId(pageId)
     }
 
 
@@ -104,7 +102,7 @@ class AACManager (
 
     fun doClickHome(view: View): Boolean {
         Log.d(TAG, "doClickHome")
-        gotoPage(0)
+        pager?.setSelection(0)
         return true
     }
 
@@ -113,24 +111,12 @@ class AACManager (
     //************************************* ICON HANDLERS ***************************************
 
     fun gotoLinkIcon(icon: IconData) {
-        if (icon.linkToPageId == null) {
-            return
+        icon.linkToPageId?.also {
+            pager?.setSelectionByPageId(it)
         }
-        val newPageIndex = app.getPageList().indexOfFirst { it.id == icon.linkToPageId }
-        if (newPageIndex < 0) {
-            Log.w(TAG, "linked page not found for " + icon.text + "->" + icon.linkToPageId)
-            return
-        }
-        gotoPage(newPageIndex)
     }
 
-    fun gotoPage(index: Int) {
-        try {
-            pager?.setPage(index)
-        }catch (e: Exception) {
-            Log.e(TAG, "go to page fail", e)
-        }
-    }
+
     override fun onPageChange(page: PageData?, index: Int) {
         Log.d(TAG, "onPageChange: " + page?.name)
 

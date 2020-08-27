@@ -121,12 +121,14 @@ class MainActivity :  AppCompatActivity(), FragmentListener {
     override fun onResume() {
         super.onResume()
 
-        App.getInstance(applicationContext).preferenceChangeTime.also { change ->
+        initializeAAC()
+
+       /* App.getInstance(applicationContext).preferenceChangeTime.also { change ->
             if (preferenceCheckTime < change) {
                 initializeAAC()
             }
             preferenceCheckTime = change
-        }
+        }*/
     }
 
     override fun onDestroy() {
@@ -160,8 +162,8 @@ class MainActivity :  AppCompatActivity(), FragmentListener {
                 titleView = findViewById<TextView>(R.id.inputpage_name)
             ).apply {
                 setPages(getProjectedPages())
-                setToolPages(listOf(RecentsPage(), ToolsPage()))
-                setCurrentPage( app.get("currentPageId")?.toString())
+                setAltPages(listOf(RecentsPage()), listOf(ToolsPage()))
+                app.get("currentPageId")?.also { setCurrentPage( it.toString())} ?: pager?.setSelection(0)
             }
         )
 
