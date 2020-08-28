@@ -15,7 +15,7 @@ class AACManager (
     val gotoHomeView: View?,
     val titleView: TextView?
 )
-    :  TwoDAdapterView.PageListener, IconListener
+    :  PageAdapter.PageSelectionListener, IconListener
 {
 
     val TAG = "AACManager"
@@ -32,22 +32,20 @@ class AACManager (
     }
 
 
-    fun setPages(pages: List<PageData>) {
+    fun setPages(pages: List<PageData>, upList: List<PageData>?, downList: List<PageData>?) {
         Log.d(TAG, "setPages: ${pages.count()}")
         // build a view with iconListener for each page that has icons
         // uses columns, iconMargin, createLinks
-        pager?.setAdapter(PageAdapter(pages))
-        pager?.pageListener = this
-    }
-
-    fun setAltPages(pages1: List<PageData>, pages2: List<PageData>) {
-        pager?.setAltAdapter( WingsAdapter(pages1, pages2) )
+        pager?.adapter = TwoDAdapter(pages, upList ?: emptyList(), downList ?: emptyList())
+            .apply {
+                pageListener = this@AACManager
+            }
     }
 
     fun setCurrentPage(pageId: String) {
         Log.d(TAG, "setCurrentPage -- id: $pageId / ${pager?.adapter?.count}")
 
-        pager?.setSelectionByPageId(pageId)
+        (pager?.adapter as? PageAdapter)?.setSelectionByPageId(pageId)
     }
 
 
@@ -102,7 +100,7 @@ class AACManager (
 
     fun doClickHome(view: View): Boolean {
         Log.d(TAG, "doClickHome")
-        pager?.setSelection(0)
+        (pager?.adapter as? PageAdapter)?.setSelection(0)
         return true
     }
 
@@ -112,19 +110,21 @@ class AACManager (
 
     fun gotoLinkIcon(icon: IconData) {
         icon.linkToPageId?.also {
-            pager?.setSelectionByPageId(it)
+            (pager?.adapter as? PageAdapter)?.setSelectionByPageId(it)
         }
     }
 
-
-    override fun onPageChange(page: PageData?, index: Int) {
-        Log.d(TAG, "onPageChange: " + page?.name)
+    override fun onPageSelected(page: PageData?) {
+        Log.i(TAG, "onPageChange: " + page?.name)
 
         //set title
         titleView?.text = page?.name ?: "Untitled"
 
         //set app var:
         app.put("currentPageId", page?.id)
+
+        // set view:
+        pager?.setPageView()
     }
 
 

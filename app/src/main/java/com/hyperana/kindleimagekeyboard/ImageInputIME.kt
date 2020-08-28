@@ -251,7 +251,7 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
                 gotoHomeView = view!!.findViewById(R.id.home_button),
                 titleView = view!!.findViewById<TextView>(R.id.inputpage_name)
             ).apply {
-                setPages(getProjectedPages())
+                setPages(getProjectedPages(), null, null)
                 app.get("currentPageId")?.toString()?.also { setCurrentPage(it )}
             }
         )

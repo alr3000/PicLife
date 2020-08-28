@@ -161,9 +161,9 @@ class MainActivity :  AppCompatActivity(), FragmentListener {
                 gotoHomeView = findViewById(R.id.home_button),
                 titleView = findViewById<TextView>(R.id.inputpage_name)
             ).apply {
-                setPages(getProjectedPages())
-                setAltPages(listOf(RecentsPage()), listOf(ToolsPage()))
-                app.get("currentPageId")?.also { setCurrentPage( it.toString())} ?: pager?.setSelection(0)
+                setPages(getProjectedPages(),listOf(RecentsPage()), listOf(ToolsPage()))
+                app.get("currentPageId")?.also { setCurrentPage( it.toString())}
+                    ?: (pager?.adapter as? PageAdapter)?.setSelection(0)
             }
         )
 

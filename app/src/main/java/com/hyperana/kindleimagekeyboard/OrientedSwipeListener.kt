@@ -32,6 +32,7 @@ abstract class OrientedSwipeListener(val isVertical: Boolean, val settings: Shar
 
     init {
         windowManager.defaultDisplay.getRealSize(dimen)
+        Log.i(TAG, "init")
         loadSettings()
     }
 
@@ -42,7 +43,6 @@ abstract class OrientedSwipeListener(val isVertical: Boolean, val settings: Shar
 
         val type = settings.all.get("swipeType")?.toString()
         val screenSize = if (isVertical) dimen.y else dimen.x
-        Log.i(TAG, "loadSettings: $type ($screenSize)")
         when (type) {
             "easy" -> {
                 BAND_WIDTH = screenSize/4
@@ -73,7 +73,7 @@ abstract class OrientedSwipeListener(val isVertical: Boolean, val settings: Shar
     }
 
     fun startSwipe(x: Float, y: Float) {
-        Log.d(TAG, "start: $x,$y")
+       // Log.d(TAG, "start: $x,$y")
         startTime = System.currentTimeMillis()
         startMain = if (isVertical) y else x
         isSwiping = false
@@ -99,7 +99,8 @@ abstract class OrientedSwipeListener(val isVertical: Boolean, val settings: Shar
     fun getDistance(x: Float, y: Float) : Float? {
         return startMain?.let {
             Math.abs(if(isVertical) y - it else x - it)
-        }.also { Log.d(TAG, "distance: $it")}
+        }
+            //.also { Log.d(TAG, "distance: $it")}
     }
 
     fun isComplete(x: Float, y: Float): Boolean {
@@ -110,11 +111,11 @@ abstract class OrientedSwipeListener(val isVertical: Boolean, val settings: Shar
         try {
             when (event?.action) {
                 KeyEvent.ACTION_DOWN -> {
-                    Log.d(TAG, "DOWN: ${event.x},${event.y}")
+                   // Log.d(TAG, "DOWN: ${event.x},${event.y}")
                     startSwipe(event.x, event.y)
                 }
                 KeyEvent.ACTION_UP -> {
-                    Log.d(TAG, "UP: ${event.x},${event.y}")
+                  //  Log.d(TAG, "UP: ${event.x},${event.y}")
                     startMain?.also { start ->
                         if (isComplete(event.x, event.y)) doSwipe(isForward(event.x, event.y, start))
                     }
@@ -122,11 +123,11 @@ abstract class OrientedSwipeListener(val isVertical: Boolean, val settings: Shar
 
                 }
                 MotionEvent.ACTION_CANCEL -> {
-                    Log.d(TAG, "CANCEL")
+                   // Log.d(TAG, "CANCEL")
                     clearSwipe()
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    Log.d(TAG, "MOVE: ${event.x},${event.y}")
+                   // Log.d(TAG, "MOVE: ${event.x},${event.y}")
                     startMain?.also {start ->
                         if (!isInBand(event.x, event.y) || !isInTime()) {
                             Log.d(TAG, "swipe out of bounds")
@@ -134,7 +135,7 @@ abstract class OrientedSwipeListener(val isVertical: Boolean, val settings: Shar
                         }
                         else {
                             isSwiping = isHalfway(event.x, event.y)
-                            Log.d(TAG, "onTouch: check isSwiping? " + isSwiping.toString())
+                         //   Log.d(TAG, "onTouch: check isSwiping? " + isSwiping.toString())
                         }
                     }
 

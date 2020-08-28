@@ -37,7 +37,13 @@ import java.util.regex.Pattern
 class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
     LinearLayout(context, attributeSet) {
 
+    //todo: attach to view holder with model
     var page: PageData = PageData().apply { name = "Empty page" }
+    set(value) {
+        field = value
+        items = value.icons
+        setViews()
+    }
     var color: Int = Color.DKGRAY
 
     val TAG = "InputPageView - " + page.id
@@ -59,30 +65,34 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
     }
 
     init {
+        orientation = LinearLayout.VERTICAL
+        layoutParams = LayoutParams(MATCH_PARENT, MATCH_PARENT)
 
+    }
+
+    fun setViews() {
+        removeAllViews()
+        
         // prepare page styles todo: cascading from app, then page overrides
         margins = page.get("margins")?.toIntOrNull() ?: margins
-         cols = page.get("cols")?.toInt() ?: cols
+        cols = page.get("cols")?.toInt() ?: cols
         rows = page.get("rows")?.toInt() ?: rows
 
         // set page features
         tag = page.name
-        orientation = LinearLayout.VERTICAL
         setBackgroundColor(color)
 
-        layoutParams = LayoutParams(MATCH_PARENT, MATCH_PARENT)
 
         // add table rows and cells
         views = createGrid(
-                table = this,
-                rows = rows,
-                cols = cols
+            table = this,
+            rows = rows,
+            cols = cols
         )
 
         // add icon views
         setItemsInViews()
     }
-
 
 
     // set margins after size is known, and before layout so they take effect
@@ -108,18 +118,11 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
         Log.d(TAG, "onLayout $l, $t, $r, $b")
      }
 
-    fun refit(newPage: PageData): View? {
+    fun refit(newPage: PageData): InputPageView? {
         Log.d(TAG, "refit for " + newPage.name)
         try {
             page = newPage
-            items = newPage.icons
-
-            views.onEach {
-               it.removeAllViews()
-                it.tag = null
-            }
-            setItemsInViews()
-            return this
+             return this
         }
         catch (e: Exception) {
             Log.w(TAG, "could not refit view to " + newPage.name, e)

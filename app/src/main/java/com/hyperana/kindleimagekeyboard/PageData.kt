@@ -3,18 +3,25 @@ package com.hyperana.kindleimagekeyboard
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.util.JsonWriter
+import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 import org.json.JSONArray
 import org.json.JSONObject
 
+
+open class PageViewHolder(var page: PageData, view: InputPageView) : RecyclerView.ViewHolder(view) {
+
+}
 
 /**
  * Created by alr on 7/25/17.
  */
 open class PageData(val id: String = createPageId(),
-               var name: String? = null, var path: String? = null, var parentPageId: String? = null) {
+               var name: String? = null, var path: String? = null, var parentPageId: String? = null)
+    {
 
     constructor(jsonObj: JSONObject) : this(
             id = jsonObj.getString("id"),

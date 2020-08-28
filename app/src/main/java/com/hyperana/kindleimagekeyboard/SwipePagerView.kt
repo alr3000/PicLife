@@ -2,6 +2,7 @@ package com.hyperana.kindleimagekeyboard
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Canvas
 import android.preference.PreferenceManager
 import android.util.AttributeSet
 import android.util.Log
@@ -10,7 +11,10 @@ import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
 import android.widget.Adapter
+import android.widget.FrameLayout
 import android.widget.LinearLayout
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager.widget.ViewPager
 
 /**
  * Created by alr on 9/21/17.
@@ -21,7 +25,8 @@ import android.widget.LinearLayout
  * first child is visible by default
  * swiping left or right changes visible child
  */
-class SwipePagerView : TwoDAdapterView {
+// todo: make base PageRecyclerView
+class SwipePagerView : FrameLayout {
     constructor(myContext: Context) : super(myContext)
     constructor(myContext: Context, attributeSet: AttributeSet) : super(myContext, attributeSet)
 
@@ -31,22 +36,33 @@ class SwipePagerView : TwoDAdapterView {
     var isFirstChild = true
 
     var data: List<PageData> = listOf()
+    var adapter: TwoDAdapter? = null
+    set(value) {
+        field = value
+        onDataChanged()
+    }
 
     var swiper: OrientedSwipeListener? = null
     var verticalSwiper: OrientedSwipeListener? = null
     var trails: TrailTouchListener? = null
 
+    var currentView: InputPageView? = null
+    val defaultView = InputPageView(context)
+        .apply { tag = PageViewHolder(PageData(), this)}
 
 
     init {
         loadSettings()
         val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
+
+
+
         // set page on swipe:
         swiper = object: OrientedSwipeListener(false, PreferenceManager.getDefaultSharedPreferences(context)!!, wm) {
             override fun doSwipe(forward: Boolean) {
                 Log.d(TAG, "moveOnMainAxis: forward?$forward")
-                moveOnMainAxis(if (forward) 1 else -1)
+                (adapter as? TwoDAdapter)?.moveOnMainAxis(if (forward) 1 else -1)
             }
         }
         // set page on swipe:
@@ -56,7 +72,7 @@ class SwipePagerView : TwoDAdapterView {
         ) {
             override fun doSwipe(forward: Boolean) {
                 Log.d(TAG, "moveOnAltAxis: forward?$forward")
-               moveOnAltAxis(if (forward) 1 else -1)
+                (adapter as? TwoDAdapter)?.moveOnAltAxis(if (forward) 1 else -1)
             }
         }
         trails = TrailTouchListener(PreferenceManager.getDefaultSharedPreferences(context)!!)
@@ -69,6 +85,24 @@ class SwipePagerView : TwoDAdapterView {
         Log.d(TAG, "settings: swipe on?" + settings.get("doSwipe"))
         isSwipeOn = settings.get("doSwipe")?.toString()?.toBoolean() ?: true
         isTrailsOn = settings.get("doTrails")?.toString()?.toBoolean() ?: true
+    }
+
+    fun onDataChanged() {
+        currentView?.page?.id?.also { oldId ->
+            adapter?.setSelectionByPageId(oldId)
+        }
+
+        setPageView()
+    }
+
+    fun setPageView() {
+        Log.d(TAG, "setPageView")
+        adapter?.getSelectedView(this, currentView)?.also { child ->
+            Log.d(TAG, "setting page view")
+            removeAllViews()
+            addView(child)
+            requestLayout()
+        }
     }
 
     override fun onWindowVisibilityChanged(visibility: Int) {
@@ -125,5 +159,6 @@ class SwipePagerView : TwoDAdapterView {
         // return true to DOWNs that children (icons) have passed so you get the MOVES that follow
         return (event?.action == MotionEvent.ACTION_DOWN)
     }
+
 
 }

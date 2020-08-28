@@ -24,7 +24,7 @@ class TrailTouchListener(val settings: SharedPreferences) : View.OnTouchListener
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         when (event?.action) {
              MotionEvent.ACTION_MOVE -> {
-                 Log.d(TAG, "onTouch MOVE")
+             //    Log.d(TAG, "onTouch MOVE")
 
                  //add to rootview to get correct positioning and z-index
                  val parent = (v?.rootView as? ViewGroup)
@@ -32,7 +32,7 @@ class TrailTouchListener(val settings: SharedPreferences) : View.OnTouchListener
                      val windowCoords = intArrayOf(-1,-1)
                      v?.getLocationInWindow(windowCoords)
 
-                     Log.d(TAG, "add " + (event.historySize + 1) + " blobs")
+                 //    Log.d(TAG, "add " + (event.historySize + 1) + " blobs")
                      (0 .. event.historySize - 1)
                              .map { Pair(event.getHistoricalX(it), event.getHistoricalY(it))}
                              .toMutableList().plus(Pair(event.x, event.y))
