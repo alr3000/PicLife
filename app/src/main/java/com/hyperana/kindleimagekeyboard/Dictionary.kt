@@ -1,10 +1,12 @@
 package com.hyperana.kindleimagekeyboard
 
+import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import java.io.File
+
 
 /*
 val IMAGE = "image"
@@ -61,7 +63,7 @@ interface WordDao {
 }
 
 @Entity
-data class Resource (
+data class Resource(
     @PrimaryKey val uid: Int,
     @ColumnInfo(name = "resource_type") val resourceType: String,
     @ColumnInfo(name = "uri") val resourceUri: String = "",
@@ -89,7 +91,7 @@ interface ResourceDao {
 
     // todo: paging
     @Query("SELECT * FROM resource WHERE resource_type IN (:types)")
-    fun getAllByType(types: Array<String>) : Cursor?
+    fun getAllByType(types: Array<String>) : LiveData<List<Resource>?>?
 
     @Query("SELECT * FROM resource WHERE uid IN (:ids)")
     fun getLiveById(ids: IntArray) : List<Resource>?
@@ -140,12 +142,12 @@ abstract class RecentDao {
     }
 
     fun startMessage() {
-        Recent( actionType = Recent.ActionType.START_MESSAGE.ordinal)
+        Recent(actionType = Recent.ActionType.START_MESSAGE.ordinal)
             .also { insert(it) }
     }
 
     fun addResource(resourceId: Int) {
-        Recent( resourceId = resourceId, actionType = Recent.ActionType.ADD_TO_MESSAGE.ordinal)
+        Recent(resourceId = resourceId, actionType = Recent.ActionType.ADD_TO_MESSAGE.ordinal)
     }
 
    @Query("SELECT * FROM recent WHERE uid >= (SELECT MAX(uid) FROM recent WHERE actionType=:action)")
@@ -160,6 +162,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun wordDao(): WordDao
     abstract fun resourceDao(): ResourceDao
     abstract fun recentDao(): RecentDao
+
+
 
     val newUID: Int
         get() = (Math.random() * Int.MAX_VALUE).toInt()
@@ -196,14 +200,15 @@ abstract class AppDatabase : RoomDatabase() {
         entries.addAll(createPageEntries(pages))
 
         entries.add(Resource(
-                keyboardId,
-                Resource.Type.KEYBOARD.name,
-                uri?.toString() ?: "",
+            keyboardId,
+            Resource.Type.KEYBOARD.name,
+            uri?.toString() ?: "",
             title = name ?: "",
             children = entries.filterIsInstance<Resource>()
                 .filter { it.resourceType == Resource.Type.PAGE.name }
                 .map { it.uid }.joinToString()
-            ))
+        )
+        )
 
         uri?.lastPathSegment?.also {
             entries.add(Word(newUID, it, keyboardId, Word.DERIVED))
@@ -224,21 +229,22 @@ abstract class AppDatabase : RoomDatabase() {
     fun createPageEntries(pages: List<PageData>) : Array<Any?> {
         val entries = mutableListOf<Any>()
         pages
-            .forEach {page ->
+            .forEach { page ->
                 val pageId = newUID
 
                 // create entries for buttons in page:
-                entries.addAll(page.icons.flatMap { createIconEntries(it)})
+                entries.addAll(page.icons.flatMap { createIconEntries(it) })
 
                 // add page as a resource, associated with children from above:
-                entries.add( Resource(
+                entries.add(Resource(
                     uid = pageId,
                     title = page.name ?: "",
                     resourceType = Resource.Type.PAGE.name,
                     children = entries.filterIsInstance<Resource>()
                         .filter { it.resourceType == Resource.Type.BUTTON.name }
                         .map { it.uid }.joinToString()
-                ))
+                )
+                )
 
                 // create dictionary entry for the page resource:
                 entries.add(Word(newUID, page.name, pageId, Word.DERIVED))
@@ -270,9 +276,11 @@ abstract class AppDatabase : RoomDatabase() {
                     ),
 
                     // add the word to the dictionary for the button:
-                    *(icon.text?.let { text -> arrayOf(
-                        Word(newUID, text, buttonId, Word.DERIVED)
-                    )} ?: arrayOf())
+                    *(icon.text?.let { text ->
+                        arrayOf(
+                            Word(newUID, text, buttonId, Word.DERIVED)
+                        )
+                    } ?: arrayOf())
 
                 ).filterNotNull()
             }
@@ -284,16 +292,26 @@ abstract class AppDatabase : RoomDatabase() {
 
         val id = uri.hashCode()
         return  arrayOf(
-            Resource(id,  uri.toString(), Resource.Type.IMAGE.name),
+            Resource(id, uri.toString(), Resource.Type.IMAGE.name),
 
             // add dictionary entries based on text in path:
             Word(newUID, uri.lastPathSegment, id, Word.DERIVED),
 
             // add dictionary entries based on provided text:
-            text?.let { Word(newUID, it, id, Word.USER)}
+            text?.let { Word(newUID, it, id, Word.USER) }
         )
     }
 
+    companion object {
+        var instance: AppDatabase? = null
+
+        fun getDatabase(context: Context): AppDatabase? {
+            return instance ?:
+                Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "AppDatabase")
+                    .build()
+                    .also { instance = it }
+        }
+    }
 
 }
 

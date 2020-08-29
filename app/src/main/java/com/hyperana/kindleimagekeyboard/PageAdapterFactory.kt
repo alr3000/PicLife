@@ -1,10 +1,16 @@
 package com.hyperana.kindleimagekeyboard
 
+import android.app.Activity
 import android.graphics.Color
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
+import android.widget.LinearLayout
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.PagerAdapter
 
@@ -17,6 +23,10 @@ open class PageAdapter (
 
     open var pageListener: PageSelectionListener? = listener
     private var selectedPosition: Int? = null
+
+
+
+
 
 
     // this adapter does not handle view insertion.
@@ -42,13 +52,12 @@ open class PageAdapter (
             Log.i(TAG, "pager adapter getView($position) for ${newPage.name}")
 
 
-            val cv = (convertView as? InputPageView)
-            return  (cv?.refit(newPage)
-                ?: InputPageView(parent!!.context)).apply {
-                // todo: attach viewholder w/ model instead
+            val context = parent!!.context
+            return  ((convertView as? InputPageView)
+                ?: InputPageView(context)).apply {
                 page = newPage
-                color = Color.RED
             }
+
         }
         catch (e: Exception) {
             Log.e(TAG, "could not get view at " + position, e)

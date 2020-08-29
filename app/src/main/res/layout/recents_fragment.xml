@@ -20,11 +20,6 @@
 
         </com.hyperana.kindleimagekeyboard.InputPageView>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/message_recyclerview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/colorAlert" />
     </LinearLayout>
 
 </FrameLayout>

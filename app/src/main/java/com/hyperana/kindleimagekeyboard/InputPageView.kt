@@ -72,7 +72,7 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
 
     fun setViews() {
         removeAllViews()
-        
+
         // prepare page styles todo: cascading from app, then page overrides
         margins = page.get("margins")?.toIntOrNull() ?: margins
         cols = page.get("cols")?.toInt() ?: cols

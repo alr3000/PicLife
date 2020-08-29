@@ -12,7 +12,6 @@ import kotlin.math.min
 open class IconListModel: ViewModel(), WordInputter {
     open val TAG = "IconListModel"
 
-// todo: delete selection if any, clear
     //todo: make a factory to create this from given text
 
     // icons value is always non-null. Set iconsLiveData, get icons.
@@ -28,6 +27,9 @@ open class IconListModel: ViewModel(), WordInputter {
         max(min(it ?: max, max), 0)
     }.apply { observeForever({}) }
 
+    private val eventLiveData = MutableLiveData<AACAction?>(null)
+    val event: LiveData<AACAction?>
+            get() = eventLiveData
 
     private fun appendIcon(icon: IconData) {
         iconsLiveData.value = icons.value!!.plus(icon)
@@ -89,8 +91,12 @@ open class IconListModel: ViewModel(), WordInputter {
         return getIconsText(icons.value!!)
     }
 
+    // todo: handle aacaction
     override fun action() {
         // I don't know what to do here
     }
 
+    override fun clear() {
+        iconsLiveData.value = emptyList()
+    }
 }

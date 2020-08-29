@@ -28,11 +28,11 @@ class RecentsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val recyclerView: RecyclerView = view.findViewById(R.id.message_recyclerview)
+     /*  // val recyclerView: RecyclerView = view.findViewById(R.id.message_recyclerview)
         val adapter =IconListAdapter(requireActivity())
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(activity)
-            .apply { orientation = RecyclerView.HORIZONTAL }
+            .apply { orientation = RecyclerView.HORIZONTAL }*/
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {

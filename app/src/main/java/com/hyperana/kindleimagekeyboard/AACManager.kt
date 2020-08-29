@@ -7,6 +7,10 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+
+
+
 
 class AACManager (
     val app: App,
@@ -49,11 +53,23 @@ class AACManager (
     }
 
 
+
+
+
+    fun doClickHome(view: View): Boolean {
+        Log.d(TAG, "doClickHome")
+        (pager?.adapter as? PageAdapter)?.setSelection(0)
+        return true
+    }
+
+
+
+    //************************************* ICON HANDLERS ***************************************
     // icon interface:
     override fun onIconEvent(icon: IconData?, action: AACAction?, view: View?) {
         when (action) {
-            AACAction.ICON_PREVIEW -> preview(icon, view)
-            AACAction.ICON_EXECUTE -> execute(icon, view)
+            ICON_PREVIEW -> preview(icon, view)
+            ICON_EXECUTE -> execute(icon, view)
         }
     }
 
@@ -70,6 +86,7 @@ class AACManager (
             gotoLinkIcon(icon)
         }
     }
+
 
 
     fun highlightIcon(iconView: View, icon: IconData) {
@@ -96,17 +113,6 @@ class AACManager (
             (app.get("highlightTime")?.toString()?.toLongOrNull() ?: 1000)
         )
     }
-
-
-    fun doClickHome(view: View): Boolean {
-        Log.d(TAG, "doClickHome")
-        (pager?.adapter as? PageAdapter)?.setSelection(0)
-        return true
-    }
-
-
-
-    //************************************* ICON HANDLERS ***************************************
 
     fun gotoLinkIcon(icon: IconData) {
         icon.linkToPageId?.also {

@@ -12,6 +12,18 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.RecyclerView
 
+interface MessageViewManager {
+    var messageActions: List<AACAction>
+    var messageText: String?
+    var showMessage: Boolean
+    var expandMessage: Boolean
+    fun highlightMessage()
+    fun scanMessage()
+    fun speakMessage()
+
+    fun updateMessage(list: List<IconData>)
+}
+
 class MessageViewController (
     val app: App,
     val lifecycleOwner: LifecycleOwner,
@@ -21,8 +33,9 @@ class MessageViewController (
     val backspaceView: View? = null,
     val forwardDeleteView: View? = null,
     val inputActionView: View? = null,
+    val actions: List<AACAction> = emptyList(),
     val messageViewContainer: View? = null
-) : IconListener
+) : IconListener, MessageViewManager
 {
     val TAG = "InputViewController"
 
@@ -49,9 +62,19 @@ class MessageViewController (
         }
     }
 
+    val messageActionObserver = object: Observer<AACAction?> {
+        override fun onChanged(t: AACAction?) {
+            when (t) {
+                MESSAGE_CLEAR -> inputter?.clear()
+                MESSAGE_SPEAK -> inputter?.action()
+            }
+        }
+    }
+
 
 
     init {
+        // todo: these are aacActions:
         backspaceView?.setOnClickListener {
             inputter?.backwardDelete()
         }
@@ -63,14 +86,68 @@ class MessageViewController (
         }
         model?.icons?.observe(lifecycleOwner, messageObserver)
         model?.index?.observe(lifecycleOwner, messageCursorObserver)
+        model?.event?.observe(lifecycleOwner, messageActionObserver)
+
+        updateMessageActions(actions)
 
 
+    }
+
+    // message interface:
+
+    val iconListView: ViewGroup? = messageViewContainer?.findViewById<ViewGroup>(R.id.message_iconlist)
+    val actionListView: ViewGroup? = messageViewContainer?.findViewById(R.id.message_action_container)
+
+    override var messageActions: List<AACAction> = listOf()
+        set(value) {
+            field = value
+            updateMessageActions(value)
+        }
+    override var messageText: String?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    override var showMessage: Boolean
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    override var expandMessage: Boolean
+        get() = TODO("Not yet implemented")
+        set(value) {}
+
+    override fun updateMessage(list: List<IconData>) {
+        iconListView?.also { container ->
+            container.removeAllViews()
+            list.forEach {
+                container.addView(
+                    IconData.createView(it, container.context, true)
+                )
+            }
+        }
+    }
+
+    override fun highlightMessage() {
+        TODO("Not yet implemented")
+    }
+
+    override fun scanMessage() {
+        TODO("Not yet implemented")
+    }
+
+    override fun speakMessage() {
+        TODO("Not yet implemented")
+    }
+
+    fun updateMessageActions(actions: List<AACAction>) {
+        actionListView?.also { container ->
+            actions.forEach {
+                it.createView( container)
+            }
+        }
     }
 
     // icon interface:
     override fun onIconEvent(icon: IconData?, action: AACAction?, view: View?) {
         when (action) {
-            AACAction.ICON_EXECUTE -> execute(icon, view)
+            ICON_EXECUTE -> execute(icon, view)
             else -> {}
         }
     }

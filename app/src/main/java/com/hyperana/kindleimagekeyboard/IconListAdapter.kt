@@ -25,6 +25,11 @@ class IconListAdapter(context: Context):  RecyclerView.Adapter<IconListAdapter.I
 
     init { mInflater = LayoutInflater.from(context); }
 
+    fun setIcons(list: List<IconData>) {
+        icons = list
+        notifyDataSetChanged()
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): IconViewHolder {
         return mInflater.inflate(R.layout.element_icon, parent, false)
             .let { IconViewHolder(it)}

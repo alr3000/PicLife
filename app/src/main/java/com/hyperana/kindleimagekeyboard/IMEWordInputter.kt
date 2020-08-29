@@ -178,6 +178,18 @@ class IMEWordInputter (val ime: InputMethodService)
         }
     }
 
+    override fun clear() {
+        try {
+            val ic = ime.currentInputConnection
+            val pre = ic.getTextBeforeCursor(9999, 0).length
+            val post = ic.getTextAfterCursor(9999, 0).length
+            ic.deleteSurroundingText(pre, post)
+        }
+        catch (e: Exception) {
+            Log.e(TAG, "failed clear text", e)
+        }
+    }
+
     override fun action() {
         Log.d(TAG, "call performEditorAction "+ editorActionId+" on DONE")
 

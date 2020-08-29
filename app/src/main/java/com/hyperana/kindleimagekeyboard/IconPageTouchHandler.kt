@@ -56,14 +56,14 @@ class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
                         liveIconEvent.postValue(
                             IconEvent(
                                 iconView.tag as? IconData,
-                                AACAction.ICON_PREVIEW,
+                                ICON_PREVIEW,
                                 iconView
                             )
                         )
                         liveIconEvent.postValue(
                             IconEvent(
                                 iconView.tag as? IconData,
-                                AACAction.ICON_EXECUTE,
+                                ICON_EXECUTE,
                                 iconView
                             )
                         )
@@ -82,7 +82,7 @@ class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
                             liveIconEvent.postValue(
                                 IconEvent(
                                     iconView.tag as? IconData,
-                                    AACAction.ICON_PREVIEW,
+                                    ICON_PREVIEW,
                                     iconView
                                 )
                             )
@@ -104,7 +104,7 @@ class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
                             liveIconEvent.postValue(
                                 IconEvent(
                                     iconView?.tag as? IconData,
-                                    AACAction.ICON_EXECUTE,
+                                    ICON_EXECUTE,
                                     iconView
                                 )
                             )
@@ -129,7 +129,7 @@ class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
                         liveIconEvent.postValue(
                             IconEvent(
                                 iconView?.tag as? IconData,
-                                AACAction.ICON_PREVIEW,
+                                ICON_PREVIEW,
                                 iconView
                             )
                         )
@@ -140,7 +140,7 @@ class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
                             liveIconEvent.postValue(
                                 IconEvent(
                                     iconView.tag as? IconData,
-                                    AACAction.ICON_PREVIEW,
+                                    ICON_PREVIEW,
                                     iconView
                                 )
                             )
@@ -160,7 +160,7 @@ class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
                                 liveIconEvent.postValue(
                                     IconEvent(
                                         iconView.tag as? IconData,
-                                        AACAction.ICON_PREVIEW,
+                                        ICON_PREVIEW,
                                         iconView
                                     )
                                 )
@@ -168,7 +168,7 @@ class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
                             liveIconEvent.postValue(
                                 IconEvent(
                                     iconView.tag as? IconData,
-                                    AACAction.ICON_EXECUTE,
+                                    ICON_EXECUTE,
                                     iconView
                                 )
                             )

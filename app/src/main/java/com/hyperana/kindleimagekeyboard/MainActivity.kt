@@ -18,9 +18,10 @@ class MainActivity :  AppCompatActivity(), FragmentListener {
     val TAG = "MainActivity"
     val context = this
 
+    // create here to share with message controller and tools, etc
     val messageViewModel: IconListModel by viewModels()
 
-   var iconListeners: List<IconListener> = listOf()
+    var iconListeners: List<IconListener> = listOf()
 
     var preferenceCheckTime = 0L
 
@@ -152,7 +153,9 @@ class MainActivity :  AppCompatActivity(), FragmentListener {
                 overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
                 backspaceView = findViewById(R.id.backspace_button),
                 forwardDeleteView = findViewById(R.id.forwarddel_button),
-                inputActionView = findViewById(R.id.done_button)
+                inputActionView = findViewById(R.id.done_button),
+                actions = listOf(MESSAGE_CLEAR, MESSAGE_SPEAK),
+                messageViewContainer = findViewById(R.id.message_container)
             ),
             AACManager(
                 app = app,

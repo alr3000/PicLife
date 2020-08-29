@@ -25,7 +25,7 @@ interface WordInputter {
     abstract fun setIndex(i: Int?)
     abstract fun moveIndex(num: Int)
 
-
+    abstract fun clear()
 
 
 }
