@@ -6,26 +6,31 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
+import androidx.lifecycle.*
 
-
-
-
+// handles aac icon actions, such as deep links (not swipe paging) and overlay graphics
+// handles view updates outside of the pager (title, back)
 class AACManager (
     val app: App,
     val overlay: ViewGroup?,
-    val pager: SwipePagerView?,
+    val aacViewModel: AACViewModel,
     val gotoHomeView: View?,
     val titleView: TextView?
 )
-    :  PageAdapter.PageSelectionListener, IconListener
+    :   IconListener
 {
 
     val TAG = "AACManager"
 
 
     init {
+
+        titleView?.also { title ->
+            aacViewModel.liveCurrentPage.observe(title.context as LifecycleOwner) {
+                title.text = it.name
+            }
+        }
+
         gotoHomeView?.apply {
             visibility =
                 if (app.get("doHomeButton")?.toString()?.toBoolean() ?: true) View.VISIBLE
@@ -36,29 +41,9 @@ class AACManager (
     }
 
 
-    fun setPages(pages: List<PageData>, upList: List<PageData>?, downList: List<PageData>?) {
-        Log.d(TAG, "setPages: ${pages.count()}")
-        // build a view with iconListener for each page that has icons
-        // uses columns, iconMargin, createLinks
-        pager?.adapter = TwoDAdapter(pages, upList ?: emptyList(), downList ?: emptyList())
-            .apply {
-                pageListener = this@AACManager
-            }
-    }
-
-    fun setCurrentPage(pageId: String) {
-        Log.d(TAG, "setCurrentPage -- id: $pageId / ${pager?.adapter?.count}")
-
-        (pager?.adapter as? PageAdapter)?.setSelectionByPageId(pageId)
-    }
-
-
-
-
-
     fun doClickHome(view: View): Boolean {
         Log.d(TAG, "doClickHome")
-        (pager?.adapter as? PageAdapter)?.setSelection(0)
+        aacViewModel.gotoHome()
         return true
     }
 
@@ -69,7 +54,7 @@ class AACManager (
     override fun onIconEvent(icon: IconData?, action: AACAction?, view: View?) {
         when (action) {
             ICON_PREVIEW -> preview(icon, view)
-            ICON_EXECUTE -> execute(icon, view)
+      //      ICON_EXECUTE -> execute(icon, view)
         }
     }
 
@@ -83,7 +68,7 @@ class AACManager (
     fun execute(icon: IconData?, v: View?) {
         Log.d(TAG, "execute icon link?")
         if ((icon != null) && (icon.text != DEFAULT_ICON_TEXT)) {
-            gotoLinkIcon(icon)
+            icon.linkToPageId?.also { aacViewModel.gotoPageId(it)}
         }
     }
 
@@ -91,13 +76,12 @@ class AACManager (
 
     fun highlightIcon(iconView: View, icon: IconData) {
         // use textview if path is null - todo -L-
-        val img =
-            if (icon.path != null) {
-                ImageView(iconView.context).also {
-                    App.asyncSetImageBitmap(it, icon.path!!)
-                }
+        val img = icon.thumbUri
+            ?.let {uri ->
+                ImageView(iconView.context)
+                    .also { App.asyncSetImageBitmap(it, uri)}
             }
-            else null
+
 
         val highlight = HighlightView(iconView, img, app)
         overlay?.addView(highlight)
@@ -113,7 +97,8 @@ class AACManager (
             (app.get("highlightTime")?.toString()?.toLongOrNull() ?: 1000)
         )
     }
-
+/*
+    // these don't work with new viewmodels
     fun gotoLinkIcon(icon: IconData) {
         icon.linkToPageId?.also {
             (pager?.adapter as? PageAdapter)?.setSelectionByPageId(it)
@@ -130,8 +115,8 @@ class AACManager (
         app.put("currentPageId", page?.id)
 
         // set view:
-        pager?.setPageView()
-    }
+
+    }*/
 
 
 

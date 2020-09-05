@@ -3,6 +3,7 @@ package com.hyperana.kindleimagekeyboard
 import android.content.Context
 import android.database.Cursor
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import java.io.File
@@ -18,7 +19,7 @@ val SOUND = "sound"
 
 
 
-//todo: instead of uid's, use hash for everything
+//todo: -?- instead of uid's, use hash for everything
 
 // BaseColumns._ID is the best choice, because linking the results of a provider query
 // to a ListView requires one of the retrieved columns to have the name _ID.
@@ -79,9 +80,20 @@ data class Resource(
 
 @Dao
 interface ResourceDao {
+    @Query("SELECT COUNT(uid) FROM resource")
+    fun getCount(): Int?
+
+    @Query("SELECT * FROM resource WHERE uid=:id")
+    fun getLive(id: Int): LiveData<Resource?>?
 
     @Query("SELECT * FROM resource WHERE uid IN (:resourceIds)")
     fun listAllByIds(resourceIds: IntArray): List<Resource>
+
+    @Query("SELECT * FROM resource WHERE resource_type = :type")
+    fun listAllByType(type: String): List<Resource>
+
+    @Query("SELECT * FROM resource WHERE resource_type = :type LIMIT 1")
+    fun getLiveAny(type: String): LiveData<Resource?>?
 
     @Query("SELECT * FROM resource WHERE uid LIKE :text")
     fun listAllUriContains(text: String): List<Resource>
@@ -91,28 +103,91 @@ interface ResourceDao {
 
     // todo: paging
     @Query("SELECT * FROM resource WHERE resource_type IN (:types)")
-    fun getAllByType(types: Array<String>) : LiveData<List<Resource>?>?
+    fun getAllByType(types: Array<String>): Cursor?
 
     @Query("SELECT * FROM resource WHERE uid IN (:ids)")
-    fun getLiveById(ids: IntArray) : List<Resource>?
+    fun getLiveById(ids: IntArray): List<Resource>?
 
     @Query("SELECT * FROM resource WHERE uid IN (:ids)")
-    fun getAllById(ids: IntArray) : Cursor?
+    fun getAllById(ids: IntArray): Cursor?
 
+    @Query("SELECT * FROM resource WHERE uid IN (:ids)")
+    fun getAllLiveById(ids: IntArray): LiveData<List<Resource>?>?
+
+    @Query("SELECT * FROM resource WHERE resource_type = :type")
+    fun getAllLiveByType(type: Resource.Type): LiveData<List<Resource>?>?
 
     @Query("SELECT * FROM resource WHERE resource_type=:type AND uid IN (:ids)")
-    fun getAllTypeById(type: String, ids: IntArray) : List<Resource>?
+    fun getAllTypeById(type: String, ids: IntArray): List<Resource>?
 
     @Query("SELECT * FROM resource WHERE uid=:id LIMIT 1")
     fun get(id: Int): Cursor?
 
+    /**
+     * UPSERT following https://stackoverflow.com/a/50736568/7439163
+     *
+     * Insert an object in the database.
+     *
+     * @param obj the object to be inserted.
+     * @return The SQLite row id
+     */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insert(resource: Resource): Long
 
-    @Insert
-    fun insertAll(vararg resources: Resource)
+    /**
+     * Insert an array of objects in the database.
+     *
+     * @param obj the objects to be inserted.
+     * @return The SQLite row id for each, or -1 if failed
+     */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insert(resources: List<Resource>): List<Long>
 
+    /**
+     * Update an object from the database.
+     *
+     * @param obj the object to be updated
+     */
+    @Update
+    fun update(resource: Resource)
+
+    /**
+     * Update an array of objects from the database.
+     *
+     * @param obj the object to be updated
+     */
+    @Update
+    fun update(resources: List<Resource>)
+
+    /**
+     * Delete an object from the database
+     *
+     * @param obj the object to be deleted
+     */
     @Delete
     fun delete(resource: Resource)
+
+    @Transaction
+    fun upsert(resource: Resource) {
+        insert(resource)
+            .also { if (it == -1L) update(resource) }
+    }
+
+    @Transaction
+    fun upsert(resources: List<Resource>) {
+        Log.d("ResourceDao", "inserting resources: ${resources.size}")
+        insert(resources)
+            .mapIndexedNotNull { index, l ->
+                if (l == -1L) resources.get(index) else null
+            }
+            .also { failed ->
+                Log.d("ResourceDao", "updating existing resources: ${failed.size}")
+                if (failed.isNotEmpty()) update(failed)
+            }
+    }
 }
+
+
 
 
 @Entity()
@@ -150,39 +225,33 @@ abstract class RecentDao {
         Recent(resourceId = resourceId, actionType = Recent.ActionType.ADD_TO_MESSAGE.ordinal)
     }
 
-   @Query("SELECT * FROM recent WHERE uid >= (SELECT MAX(uid) FROM recent WHERE actionType=:action)")
+    @Query("SELECT * FROM recent WHERE uid >= (SELECT MAX(uid) FROM recent WHERE actionType=:action)")
     abstract fun getAllSince(action: Int) : List<Recent>
 
 }
 
 
 
-@Database(entities = arrayOf(Word::class, Resource::class, Recent::class), version = 1)
+@Database(entities = arrayOf(Word::class, Resource::class, Recent::class), version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun wordDao(): WordDao
     abstract fun resourceDao(): ResourceDao
     abstract fun recentDao(): RecentDao
 
-
+    val TAG = "AppDatabase"
 
     val newUID: Int
         get() = (Math.random() * Int.MAX_VALUE).toInt()
 
-  /*  // todo: make single queries for complex data that result in livedata lists
-    fun getRecentButtons() : List<Resource>? {
-        return recentDao().getAllSince(Recent.ActionType.CLEAR_RECENTS.ordinal)
-            .map { it.resourceId }
-            .filter { it != 0 }
-            .toIntArray()
-            .let { resourceDao().getLiveById(it)}
-    }*/
+    /*  // todo: make livedata list of ids
+      fun getRecentButtons() : List<Resource>? {
+          return recentDao().getAllSince(Recent.ActionType.CLEAR_RECENTS.ordinal)
+              .map { it.resourceId }
+              .filter { it != 0 }
+              .toIntArray()
+              .let { resourceDao().getLiveById(it)}
+      }*/
 
-    fun getLiveResourcesByWord(word: String) : List<Resource>? {
-        return wordDao().listByText(word)
-            .map { it.resourceId }
-            .toIntArray()
-            .let { resourceDao().getLiveById(it) }
-    }
 
     fun getResourcesByWord(word: String) : Cursor? {
         return wordDao().listByText(word)
@@ -191,22 +260,23 @@ abstract class AppDatabase : RoomDatabase() {
             .let { resourceDao().getAllById(it) }
     }
 
-    //todo: these should just be "create resource entities" then "create word entities(res[], text[])"
-    // for each level
     fun enterKeyboard(pages: List<PageData>, uri: Uri?, name: String?) {
+        Log.i(TAG, "enterKeyboard: $name")
         val entries = mutableListOf<Any?>()
+
         val keyboardId = uri?.hashCode() ?: newUID
 
-        entries.addAll(createPageEntries(pages))
+        val pageEntries = createPageEntries(pages)
+        entries.addAll(pageEntries)
 
         entries.add(Resource(
             keyboardId,
             Resource.Type.KEYBOARD.name,
             uri?.toString() ?: "",
-            title = name ?: "",
-            children = entries.filterIsInstance<Resource>()
+            title = name ?: "Untitled",
+            children = pageEntries.filterIsInstance<Resource>()
                 .filter { it.resourceType == Resource.Type.PAGE.name }
-                .map { it.uid }.joinToString()
+                .map { it.uid }.joinToString(DELIMITER)
         )
         )
 
@@ -221,9 +291,9 @@ abstract class AppDatabase : RoomDatabase() {
         entries.filterIsInstance(Word::class.java)
             .also { if (it.isNotEmpty()) wordDao().insertAll(*it.toTypedArray()) }
         entries.filterIsInstance(Resource::class.java)
-            .also { if (it.isNotEmpty()) resourceDao().insertAll(*it.toTypedArray()) }
+            .also { if (it.isNotEmpty()) resourceDao().upsert(it) }
 
-
+        Log.i(TAG, "entered keyboard $name with ${pageEntries.size} resources/words from pages")
     }
 
     fun createPageEntries(pages: List<PageData>) : Array<Any?> {
@@ -233,18 +303,18 @@ abstract class AppDatabase : RoomDatabase() {
                 val pageId = newUID
 
                 // create entries for buttons in page:
-                entries.addAll(page.icons.flatMap { createIconEntries(it) })
+                val iconEntries = page.icons.flatMap { createIconEntries(it) }
+                entries.addAll(iconEntries)
 
                 // add page as a resource, associated with children from above:
                 entries.add(Resource(
                     uid = pageId,
                     title = page.name ?: "",
                     resourceType = Resource.Type.PAGE.name,
-                    children = entries.filterIsInstance<Resource>()
+                    children = iconEntries.filterIsInstance<Resource>()
                         .filter { it.resourceType == Resource.Type.BUTTON.name }
-                        .map { it.uid }.joinToString()
-                )
-                )
+                        .map { it.uid }.joinToString(DELIMITER)
+                ))
 
                 // create dictionary entry for the page resource:
                 entries.add(Word(newUID, page.name, pageId, Word.DERIVED))
@@ -276,11 +346,7 @@ abstract class AppDatabase : RoomDatabase() {
                     ),
 
                     // add the word to the dictionary for the button:
-                    *(icon.text?.let { text ->
-                        arrayOf(
-                            Word(newUID, text, buttonId, Word.DERIVED)
-                        )
-                    } ?: arrayOf())
+                    icon.text?.let { text -> Word(newUID, text, buttonId, Word.DERIVED) }
 
                 ).filterNotNull()
             }
@@ -303,13 +369,18 @@ abstract class AppDatabase : RoomDatabase() {
     }
 
     companion object {
-        var instance: AppDatabase? = null
+        val DELIMITER: String = "&"
+        private var instance: AppDatabase? = null
 
         fun getDatabase(context: Context): AppDatabase? {
             return instance ?:
-                Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "AppDatabase")
-                    .build()
-                    .also { instance = it }
+            Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "AppDatabase")
+                // no migrations created for newer versions -- just remove old stuff
+                .fallbackToDestructiveMigration()
+                .build()
+                .also {
+                    instance = it
+                }
         }
     }
 

@@ -15,6 +15,8 @@ import android.view.MotionEvent
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
 import android.widget.*
+import androidx.core.view.children
+import androidx.recyclerview.widget.RecyclerView
 import java.util.*
 import java.util.regex.Pattern
 
@@ -32,6 +34,42 @@ import java.util.regex.Pattern
  *
  *
  */
+open class PageViewHolder(var view: InputPageView) {
+
+    // no effect until page is set:
+    var page: PageData = PageData()
+        set(value) {
+            field = value
+            view.page = value
+        }
+
+}
+
+// todo: merge this with IconListAdapter
+open class IconAdapter(val context: Context, val icons: List<IconData>) : BaseAdapter() {
+    val TAG = "IconAdapter"
+    init { Log.d(TAG, "${icons.size} icons")}
+
+    override fun getCount(): Int {
+        return icons.size
+    }
+
+    override fun getItem(position: Int): Any? {
+        return icons.getOrNull(position)
+       /* return icons.find {
+            it.get("indexAdjusted")?.toIntOrNull() == position
+        }*/
+    }
+
+    override fun getItemId(position: Int): Long {
+        return (getItem(position) as? IconData)?.id?.toLongOrNull() ?: -1
+    }
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View? {
+        return (getItem(position) as? IconData)?.let { IconData.createView(it, context) }
+    }
+}
+
 
 
 class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
@@ -40,22 +78,30 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
     //todo: attach to view holder with model
     var page: PageData = PageData().apply { name = "Empty page" }
     set(value) {
+        Log.d(TAG, "setting page ${value.name}")
         field = value
-        items = value.icons
+        iconAdapter = IconAdapter(context, value.icons)
+        setStyle(value)
         setViews()
     }
+    // todo: cascading styles
     var color: Int = Color.DKGRAY
+    var rows =  3
+    var cols =  5
+    var margins = 10 // percent of cellwidth
 
-    val TAG = "InputPageView - " + page.id
+
+
+    val TAG = "InputPageView - "
+    get() = field + page.name
 
     val app = App.getInstance(context.applicationContext)
 
-    var views: List<ViewGroup> = listOf()
-    var items: List<IconData> = page.icons
+    var iconAdapter: IconAdapter? = null
 
-    var margins = 10 // percent of cellwidth
-    var rows: Int = 3
-    var cols: Int = 5
+    // views are frames for icons, may not be immediate children of this view:
+    var views: List<ViewGroup> = listOf()
+
     val touchHandler = IconPageTouchHandler(app.iconEventLiveData)
     val touchAction = app.get("touchAction") as? String
 
@@ -67,19 +113,22 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
     init {
         orientation = LinearLayout.VERTICAL
         layoutParams = LayoutParams(MATCH_PARENT, MATCH_PARENT)
+        //setStyle()
+    }
 
+
+    // todo: set with cascaded map of strings
+    fun setStyle(page: PageData) {
+        margins = page.get("margins")?.toIntOrNull() ?: margins
+        rows = page.get("rows")?.toIntOrNull() ?: 3
+        cols = page.get("cols")?.toIntOrNull() ?: 5
+        color = page.get("backgroundColor")?.toIntOrNull() ?: Color.DKGRAY
     }
 
     fun setViews() {
         removeAllViews()
 
-        // prepare page styles todo: cascading from app, then page overrides
-        margins = page.get("margins")?.toIntOrNull() ?: margins
-        cols = page.get("cols")?.toInt() ?: cols
-        rows = page.get("rows")?.toInt() ?: rows
-
         // set page features
-        tag = page.name
         setBackgroundColor(color)
 
 
@@ -91,7 +140,18 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
         )
 
         // add icon views
-        setItemsInViews()
+         views.onEachIndexed { index, view ->
+
+            try {
+                iconAdapter!!.getView(index, null, view )
+                    ?.also { view.addView(it) }
+                    .also { Log.d(TAG, "setting $it at $index") }
+            }
+            catch (e: Exception) {
+                Log.w(TAG, "failed set icon", e)
+            }
+        }
+
     }
 
 
@@ -108,52 +168,6 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 
-    override fun onDraw(canvas: Canvas?) {
-        super.onDraw(canvas)
-        Log.d(TAG, "onDraw")
-    }
-
-    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        super.onLayout(changed, l, t, r, b)
-        Log.d(TAG, "onLayout $l, $t, $r, $b")
-     }
-
-    fun refit(newPage: PageData): InputPageView? {
-        Log.d(TAG, "refit for " + newPage.name)
-        try {
-            page = newPage
-             return this
-        }
-        catch (e: Exception) {
-            Log.w(TAG, "could not refit view to " + newPage.name, e)
-            return null
-
-        }
-    }
-
-    // reuse views if possible
-
-    fun setIconInCell(icon: IconData, cell: ViewGroup) {
-        cell.addView(IconData.createView(icon, context, true))
-        cell.tag = icon
-    }
-
-    fun setItemsInViews() {
-        Log.d(TAG, "setItemsInViews")
-
-
-        items.filter { it.index?.toIntOrNull() != null}.onEach {
-            try {
-                // icon indices must be convertible to integer and < grid cell count
-               setIconInCell(it, views[it.get("indexAdjusted")!!.toInt()])
-            }
-            catch (e: Exception) {
-                Log.w(TAG, "failed set icon " + it.text + " with index " + it.index)
-            }
-        }.also {
-            Log.d(TAG, "set " + it.count() + " items")
-        }
-    }
 
     //************************************* TOUCH HANDLERS ***************************************
     // settings: touchAction (touchActionDown, touchActionUp, touchActionClick)
@@ -171,7 +185,6 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
 
     // depending on selected icon activation type,
     // returns whether event is of interested in future events
-    // todo: touch handler is separately defined, takes getResolveIcon(x, y) function
 
     //*************************************** CREATE EMPTY FULL-WIDTH GRID ****************************
 fun createGrid(table: LinearLayout, rows: Int, cols: Int) : List<ViewGroup> {

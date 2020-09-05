@@ -17,9 +17,7 @@ import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodSubtype
 import android.widget.TextView
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.*
 import androidx.lifecycle.Observer
 import java.util.*
 
@@ -45,6 +43,8 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
     // views:
     var view: ViewGroup? = null
     var iconListeners: List<IconListener> = listOf()
+
+    lateinit var aacViewModel: AACViewModel
 
 
     val wordInputter: WordInputter = IMEWordInputter(this)
@@ -150,6 +150,9 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
                 }
             }
         })
+
+        aacViewModel = ViewModelProvider(applicationContext as ViewModelStoreOwner)[AACViewModel::class.java]
+
     }
 
     override fun getLifecycle(): Lifecycle {
@@ -247,13 +250,10 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
                 app = app,
                 overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay),
                 //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
-                pager = view!!.findViewById<SwipePagerView>(R.id.pager),
+                aacViewModel = aacViewModel,
                 gotoHomeView = view!!.findViewById(R.id.home_button),
                 titleView = view!!.findViewById<TextView>(R.id.inputpage_name)
-            ).apply {
-                setPages(getProjectedPages(), null, null)
-                app.get("currentPageId")?.toString()?.also { setCurrentPage(it )}
-            }
+            )
         )
 
 

@@ -191,6 +191,7 @@ class CreateKeyboardActivity : AppCompatActivity() {
 
         val progress = findViewById(R.id.progress_bar) as ProgressBar
         val savebutton = findViewById(R.id.button_save_keyboard) as Button
+        val db = AppDatabase.getDatabase(applicationContext)
 
         val loader = object: AsyncKeyboardTask() {
             override fun onPreExecute() {
@@ -230,9 +231,10 @@ class CreateKeyboardActivity : AppCompatActivity() {
         }
 
         loader.execute(AsyncKeyboardParams(
-                appContext = applicationContext,
-                name = name,
-                path = path
+            appContext = applicationContext,
+            db = db,
+            name = name,
+            path = path
         ))
     }
 

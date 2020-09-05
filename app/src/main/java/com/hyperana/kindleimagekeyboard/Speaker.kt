@@ -57,8 +57,8 @@ class Speaker(val app: App): LifecycleObserver, IconListener {
     // Icon interface:
     override fun onIconEvent(icon: IconData?, action: AACAction?, view: View?) {
         when (action) {
-            AACAction.ICON_EXECUTE -> execute(icon, view)
-            AACAction.ICON_PREVIEW -> preview(icon, view)
+            ICON_EXECUTE -> execute(icon, view)
+            ICON_PREVIEW -> preview(icon, view)
         }
     }
 

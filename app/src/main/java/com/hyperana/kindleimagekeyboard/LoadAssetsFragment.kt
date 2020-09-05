@@ -71,6 +71,7 @@ class LoadAssetsFragment internal constructor(): Fragment() {
                     execute(
                         AsyncKeyboardParams(
                             requireActivity().applicationContext,
+                            db = AppDatabase.getDatabase(requireActivity().applicationContext),
                             isAsset = true,
                             name = it
                         )

@@ -1,27 +1,26 @@
 package com.hyperana.kindleimagekeyboard
 
-import android.content.Context
-import android.content.Context.MODE_PRIVATE
-import android.util.JsonWriter
-import android.view.View
+import android.util.Log
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
-import androidx.recyclerview.widget.RecyclerView
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
 
-open class PageViewHolder(var page: PageData, view: InputPageView) : RecyclerView.ViewHolder(view) {
-
-}
 
 /**
  * Created by alr on 7/25/17.
  */
 open class PageData(val id: String = createPageId(),
                var name: String? = null, var path: String? = null, var parentPageId: String? = null)
-    {
+    : ViewModel() {
 
     constructor(jsonObj: JSONObject) : this(
             id = jsonObj.getString("id"),
@@ -36,6 +35,32 @@ open class PageData(val id: String = createPageId(),
 
     }
 
+    constructor(repository: AACRepository, livePageResource: LiveData<Resource?>) : this () {
+
+        live = livePageResource.apply {
+            observeForever { pageRes ->
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    // build icons:
+                    icons = pageRes
+                        ?.let { repository.getLiveChildResources(it) }
+                        ?.filterNotNull()
+                        ?.map { IconData(repository, it).apply { parentPageId = id } }
+                        ?.toMutableList()
+                        ?: mutableListOf()
+                }
+
+                // set data:
+                name = pageRes?.title ?: "Untitled"
+                Log.d(TAG, "onChanged")
+
+            }
+        }
+        Log.d(TAG, "init")
+    }
+
+    val TAG : String
+    get() = "PageData($name)"
 
     //todo: -?- not mutable, just use plus
     var icons: MutableList<IconData> = mutableListOf()
@@ -51,6 +76,9 @@ open class PageData(val id: String = createPageId(),
     fun get(key: String) : String? {
         return mData.get(key)
     }
+
+
+    var live: LiveData<Resource?>? = null
 
 
     //TODO -L- add page title? for editable name

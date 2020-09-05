@@ -2,23 +2,26 @@ package com.hyperana.kindleimagekeyboard
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.RecyclerView
 import org.json.JSONObject
 
 /**
  * Created by alr on 7/5/17.
  */
-class IconData(val id: String = createIconId(),
+class IconData(var id: String = createIconId(),
                var index: String? = null,
                var text: String? = null,
                var fPageId: String? = null,
                var path: String? = null,
                var linkToPageId: String? = null,
-                var thumbUri: Uri? = null)  {
+                var thumbUri: Uri? = null) : ViewModel() {
 
     constructor(jsonObj: JSONObject) : this(
             id = jsonObj.getString("id"),
@@ -26,7 +29,10 @@ class IconData(val id: String = createIconId(),
             text = jsonObj.optString("text", null),
             path = jsonObj.optString("path", null),
             linkToPageId = jsonObj.optString("linkToPageId", null)
-    )
+    ) {
+        thumbUri = Uri.parse(path)
+    }
+
 
     // bitmap will be GC'd but not immediately (no strong references)
     // softreference seems be collected quite eagerly -- not desirable because reload slows pages!
@@ -34,6 +40,19 @@ class IconData(val id: String = createIconId(),
     //protected var bmpRef: SoftReference<Bitmap?>? = null
     //protected var bmp: Bitmap? = null
 
+    // todo: add link, style from data
+    constructor(repository: AACRepository, liveIconResource: LiveData<Resource?>) : this () {
+
+        liveIconResource.observeForever {
+            text = it?.title
+            id = it?.uid.toString()
+            thumbUri = Uri.parse(it?.resourceUri)
+            Log.d(TAG, "onChanged")
+        }
+
+    }
+    val TAG: String
+        get() = "IconData($text)"
 
     // for one-time use by projections/views, etc -- not stored
     var mData: HashMap<String, String?> = hashMapOf()
@@ -71,11 +90,13 @@ class IconData(val id: String = createIconId(),
                 cell.addView(it)
                 it.text = icon.text
             }
-            if (withImage && icon.path != null) {
-                ImageView(context).also {
-                    cell.addView(it)
-                    App.asyncSetImageBitmap(it, icon.path!!)
-                    it.scaleType = ImageView.ScaleType.FIT_XY
+            if (withImage) {
+                (icon.thumbUri)?.also {uri ->
+                    ImageView(context).also {
+                        cell.addView(it)
+                        App.asyncSetImageBitmap(it, uri)
+                        it.scaleType = ImageView.ScaleType.FIT_XY
+                    }
                 }
             }
             return cell

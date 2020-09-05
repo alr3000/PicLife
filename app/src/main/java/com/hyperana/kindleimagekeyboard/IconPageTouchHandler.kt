@@ -121,7 +121,7 @@ class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
             fun releaseIconHandler(event: MotionEvent?) : Boolean {
                 // executes on up for icon cursor is currently in, previews icons as it moves through
                 if (event == null) { return false }
-                Log.d(TAG, "releaseIconHandler -- " +
+                Log.v(TAG, "releaseIconHandler -- " +
                         (iconView?.tag as? IconData)?.text + ": " + event.toString())
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {

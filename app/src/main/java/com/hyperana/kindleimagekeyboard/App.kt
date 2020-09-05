@@ -7,12 +7,16 @@ import android.preference.PreferenceManager
 import android.util.Log
 import java.util.*
 import android.app.ActivityManager
+import android.content.ContentResolver.SCHEME_FILE
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Handler
 import android.util.LruCache
+import android.util.Size
 import android.widget.ImageView
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 
 
@@ -31,8 +35,7 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
     var sharedPreferences: SharedPreferences? = null
      var preferenceChangeTime: Long = 1
 
-    var icons: List<IconData>? = null
-
+    var liveKeyboard: LiveData<Keyboard?>? = null
     val iconEventLiveData = MutableLiveData<IconEvent?>(null)
 
     init {
@@ -125,24 +128,24 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
         val bmpCache: LruCache<String, Bitmap> = LruCache(400) // max bitmaps in memory
 
 
-        fun asyncSetImageBitmap(img: ImageView, path: String) {
-            val bmp = bmpCache.get(path)
+        fun asyncSetImageBitmap(img: ImageView, uri: Uri) {
+            val bmp = bmpCache.get(uri.toString())
             if (bmp != null) {
                 img.setImageBitmap(bmp)
                 return
             }
-            Log.d("IconData", "loading bitmap: " + path)
+            Log.d("IconData", "loading bitmap: " + uri.toString())
             val uiHandler = Handler()
             Thread(){
                 try {
-                    val bitmap = BitmapFactory.decodeFile(path)
+                    val bitmap = img.context.contentResolver.loadThumbnail(uri, Size(600,600), null)
                     uiHandler.post {
-                        Log.d("IconData", "bitmap loaded: " + path)
+                        Log.d("IconData", "bitmap loaded: " + uri.toString())
                         img.setImageBitmap(bitmap)
-                        bmpCache.put(path, bitmap)
+                        bmpCache.put(uri.toString(), bitmap)
                     }
                 } catch (e: Exception) {
-                    Log.w("IconData", "set bitmap failed: " + path, e)
+                    Log.w("IconData", "set bitmap failed: " + uri.toString(), e)
                 }
             }.start()
         }

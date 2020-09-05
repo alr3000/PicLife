@@ -71,12 +71,12 @@
         <com.hyperana.kindleimagekeyboard.SwipePagerView
             android:id="@+id/pager"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1"
             android:clipChildren="true"
             android:isScrollContainer="false"
             android:orientation="horizontal"
-            android:tag="pager"></com.hyperana.kindleimagekeyboard.SwipePagerView>
+            android:tag="pager"/>
 
         <!-- footer nav -->
         <RelativeLayout

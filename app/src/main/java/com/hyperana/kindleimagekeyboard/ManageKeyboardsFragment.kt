@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.Bundle
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.FileObserver
 import android.util.Log
 import android.view.LayoutInflater
@@ -13,6 +14,8 @@ import android.widget.*
 import android.widget.Adapter.NO_SELECTION
 import androidx.fragment.app.ListFragment
 import androidx.preference.PreferenceManager
+import kotlinx.android.synthetic.main.fragment_manage_directories.*
+import kotlinx.coroutines.*
 import java.io.File
 
 /**
@@ -45,7 +48,16 @@ class ManageKeyboardsFragment : ListFragment() {
             val view = inflater.inflate(R.layout.fragment_manage_directories, container!!, false)
 
             // watch for delete events. create events happen while observer is paused.
-            initializeFileObserver(requireActivity(),  File(requireActivity().getDir (APP_KEYBOARD_PATH, Context.MODE_PRIVATE).absolutePath))
+            // initializeFileObserver(requireActivity(),  File(requireActivity().getDir (APP_KEYBOARD_PATH, Context.MODE_PRIVATE).absolutePath))
+
+            //observe keyboardlist in repository:
+            CoroutineScope(Dispatchers.IO).launch {
+                AACRepository(AppDatabase.getDatabase(requireContext().applicationContext)!!)
+                    .getLiveListKeyboards()
+                    ?.observe(requireActivity()) {
+                        setListViewData(it?.map { Keyboard(it) } ?: emptyList())
+                    }
+            }
 
             // set add button listener -> CreateKeyboardActivity:
             view.findViewById<Button>(R.id.button_add_directory).setOnClickListener {
@@ -53,7 +65,7 @@ class ManageKeyboardsFragment : ListFragment() {
                     Log.d(TAG, "onClick add directory")
                     startActivity(Intent(
                             requireActivity().applicationContext,
-                            com.hyperana.kindleimagekeyboard.CreateKeyboardActivity::class.java
+                            CreateKeyboardActivity::class.java
                     ))
                 }
                 catch (e: Exception) {
@@ -101,7 +113,7 @@ class ManageKeyboardsFragment : ListFragment() {
 
     override fun onResume() {
         super.onResume()
-        setListViewData()
+        setListViewData(emptyList())
         dataFilesObserver?.startWatching()
     }
 
@@ -129,63 +141,66 @@ class ManageKeyboardsFragment : ListFragment() {
 
                     // fileObserver is in a different thread
                     activity.runOnUiThread {
-                        setListViewData()
+                        annotateListViewData(getDataFromFiles(activity))
                     }
                 }
             }
         }
 
+
+
     }
 
-    fun setListViewData() {
+    data class Keyboard(val name: String, val path: Uri, val date: Long) {
+        constructor(resource: Resource) :
+                this(resource.title, Uri.parse(resource.resourceUri), resource.uid.toLong())
+
+        override fun toString(): String {
+            return name
+        }
+    }
+
+    fun getDataFromFiles(a: Activity) : List<Keyboard> {
+        //todo: make dataclass instead of string map
+        return a.getDir(APP_KEYBOARD_PATH, Context.MODE_PRIVATE).listFiles()
+            ?.filter { ((it.isDirectory) && (it.name != defaultKeyboard!!)) }
+            ?.map {
+                Keyboard( it.name, Uri.parse(it.absolutePath), it.lastModified())
+            }
+            ?.sortedByDescending {
+                (it.date) ?: 0
+            }
+            ?: emptyList()
+    }
+
+    //todo: something about offline availability
+    fun annotateListViewData(alt: List<Keyboard>) {
+
+    }
+
+    fun setListViewData(data: List<Keyboard>) {
         Log.d(TAG, "setListViewData")
         activity?.also { a ->
             defaultKeyboard = a.resources.getString(R.string.default_keyboard_name)
 
-            //todo: make dataclass instead of string map
-            val data = a.getDir(APP_KEYBOARD_PATH, Context.MODE_PRIVATE).listFiles()
-                ?.filter { ((it.isDirectory) && (it.name != defaultKeyboard!!)) }
-                ?.map {
-                    mapOf(
-                        Pair("path", it.path),
-                        Pair("name", it.name),
-                        Pair("date", it.lastModified())
-                    )
-                }
-                ?.sortedByDescending {
-                    (it["date"] as? Long) ?: 0
-                }
-                ?: emptyList()
-
-            listAdapter = object : SimpleAdapter(
+            listAdapter = object : ArrayAdapter<Keyboard>(
                 a,
-                data,
-                R.layout.directory_item, // item view
-                arrayOf("name"), // item map key
-                intArrayOf(R.id.directory_item_path) // view in item view
+                R.layout.directory_item,
+                R.id.directory_item_path,
+                data
             ) {
-                override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-                    var view = convertView // or super.getView?
-                    if (view == null) {
-                        val inflater = a.getSystemService(Context.LAYOUT_INFLATER_SERVICE)
-                                as LayoutInflater
-                        view = inflater.inflate(R.layout.directory_item, null)
-                    }
+                override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                    return super.getView(position, convertView, parent).also {view ->
 
-                    val name = (this.getItem(position) as? Map<*,*>)?.get("name") as? String
-
-                    //Handle TextView and display string from your list
-                    val listItemText = view?.findViewById(R.id.directory_item_path) as? TextView
-                    listItemText?.setText(name ?: "NO NAME")
+                        val name = data.getOrNull(position).toString() ?: ""
 
                     //Can't delete default keyboard
-                    view?.findViewById<ImageView>(R.id.directory_item_delete)?.apply {
+                    view.findViewById<ImageView>(R.id.directory_item_delete)?.apply {
                         setOnClickListener {
-                            name?.also { doClickDeleteKeyboard(name)}
+                             doClickDeleteKeyboard(name)}
                         }
                     }
 
-                    return view!!
 
                 }
             }

@@ -31,6 +31,7 @@ import java.io.InputStream
  * todo: -?- weak reference to app context?
  */
 class AsyncKeyboardParams(val appContext: Context,
+                          val db: AppDatabase?,
                           val name: String,
                           val path: String = "",
                           val isAsset: Boolean = false)
@@ -38,7 +39,7 @@ class AsyncKeyboardParams(val appContext: Context,
 open class AsyncKeyboardTask: AsyncTask<AsyncKeyboardParams, Int, String?>() {
 
     open val TAG = "AsyncKeyboardTask"
-    var db: RoomDatabase? = null
+   // var db: RoomDatabase? = null
 
     // task vars:
     var selectedDirectory: File? = null
@@ -46,6 +47,7 @@ open class AsyncKeyboardTask: AsyncTask<AsyncKeyboardParams, Int, String?>() {
     var isAsset: Boolean = false
     var appContext: Context? = null
     var keyboardName: String = "keyboard"+createId(8)
+    var appDatabase: AppDatabase? = null
 
     // output:
      var pageErrors = 0
@@ -60,11 +62,7 @@ open class AsyncKeyboardTask: AsyncTask<AsyncKeyboardParams, Int, String?>() {
 
             setTaskVars(params[0])
 
-            try {
-                db = Room.databaseBuilder(appContext!!, AppDatabase::class.java, "app_database").build()
-            }catch (e: Exception) {
-                Log.e(TAG, "failed open database", e)
-            }
+
 
             selectedDirectory
                 .let { parseDirectory() }
@@ -75,7 +73,7 @@ open class AsyncKeyboardTask: AsyncTask<AsyncKeyboardParams, Int, String?>() {
                         throw Exception("cancelled")
                     }
 
-                    (db as? AppDatabase)?.enterKeyboard(
+                    appDatabase?.enterKeyboard(
                         pages,
                         Uri.fromFile(keyboardDirectory),
                         keyboardName
@@ -105,6 +103,7 @@ open class AsyncKeyboardTask: AsyncTask<AsyncKeyboardParams, Int, String?>() {
 
         // output
         keyboardDirectory = getKeyboardSubDir(keyboardName)
+        appDatabase = params.db
         Log.d(TAG, "output -> " + keyboardDirectory?.path)
     }
 

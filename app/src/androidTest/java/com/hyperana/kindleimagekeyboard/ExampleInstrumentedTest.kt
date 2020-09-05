@@ -2,10 +2,13 @@ package com.hyperana.kindleimagekeyboard
 
 
 import android.content.Context
+import android.database.Cursor
 import android.net.Uri
 import android.os.Handler
 import android.os.HandlerThread
 import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.RoomOpenHelper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.After
@@ -24,24 +27,33 @@ import java.io.IOException
  */
 @RunWith(AndroidJUnit4::class)
 class ExampleInstrumentedTest {
+    private val assetKeyboardName = "example"
     private lateinit var db: AppDatabase
     private lateinit var appContext: Context
+
+   // private lateinit var testFileDir: File
 
     private fun getRan() = (Math.random() * Int.MAX_VALUE).toInt()
 
 
     @Before
     fun createDb() {
-        appContext = InstrumentationRegistry.getInstrumentation().context
-       // app = App.getInstance(appContext)
-        db = Room.inMemoryDatabaseBuilder(
-            appContext, AppDatabase::class.java).build()
+        appContext = androidx.test.core.app.ApplicationProvider.getApplicationContext()
+        db = Room.inMemoryDatabaseBuilder(appContext, AppDatabase::class.java).build()
+        try {
+            File(getKeyboardsDirectory(appContext), assetKeyboardName).deleteRecursively()
+        }
+        catch (e: Exception) { println("Output Directory not deleted: " + e.message)}
     }
 
     @After
     @Throws(IOException::class)
     fun closeDb() {
         db.close()
+        try {
+            File(getKeyboardsDirectory(appContext), assetKeyboardName).deleteRecursively()
+        }
+        catch (e: Exception) { println("Output Directory not deleted: " + e.message)}
     }
 
 
@@ -50,7 +62,7 @@ class ExampleInstrumentedTest {
     @Test
     fun useAppContext() {
         // Context of the app under test.
-        assertEquals("com.hyperana.kindleimagekeyboard", appContext.packageName)
+        assertEquals("com.hyperana.piclife", appContext.packageName)
     }
 
 
@@ -99,32 +111,57 @@ class ExampleInstrumentedTest {
         assertEquals(files.isNotEmpty(), true)
 
         db.resourceDao().also {dao ->
-            dao.insertAll(*files)
+            dao.upsert(files.asList())
             assertEquals(dao.getAllUriContains("animals")?.let { it.count > 0}, true)
         }
+
+
     }
 
     @Test
-    fun storeDirectoryData() {
+    fun useKeyboardResource() {
+        useAppContext()
+
+        storeDirectoryData {
+            System.out.println("found " + db.resourceDao().getCount() + " total resources")
+            System.out.println("first keyboard: " + db.resourceDao().getLiveAny(Resource.Type.KEYBOARD.name)?.value?.title)
+        }
+    }
+
+    fun getChildrenFromList(db: AppDatabase, list: List<Resource>) : List<Resource> {
+
+        assertEquals(true, list.size > 0)
+        return list
+            .flatMap { it.children.split(AppDatabase.DELIMITER).mapNotNull { it.toIntOrNull() } }
+            .let {
+                println("found ${it.size} children")
+                db.resourceDao().listAllByIds(it.toIntArray())
+            }
+    }
+
+    fun storeDirectoryData(cb: () -> Unit) {
         val dictionary = db
         val context = appContext
         object: AsyncKeyboardTask() {
             override fun onPostExecute(result: String?) {
                 super.onPostExecute(result)
 
-                // this is ui thread, so post:
+                // this is ui thread, so post database lookup:
                 HandlerThread("boo").also {
                     it.start()
                     Handler(it.looper).post {
-                        assertEquals(dictionary.wordDao().listByText("crash").count() > 0, true)
+                        System.out.println("checking stored resources")
+                        assertEquals(true, dictionary.wordDao().listByText("need").count() > 0)
+                        cb()
                     }
                 }
             }
         }.apply {
             execute(AsyncKeyboardParams(
                 appContext = context,
-                name = "example",
-                path = File(getKeyboardsDirectory(context), "example").path
+                db = db,
+                name = assetKeyboardName,
+                isAsset = true
             ))
         }
 
@@ -132,14 +169,15 @@ class ExampleInstrumentedTest {
 
     @Test
     fun useContentProvider() {
-        storeDirectoryData()
+        storeDirectoryData() {
 
-        val cursor = appContext.contentResolver.query(
-            ContentProvider.WORD_URI.buildUpon().appendPath("crash").build(),
-            null, null, null, null
-        )
+            val cursor = appContext.contentResolver.query(
+                ContentProvider.WORD_URI.buildUpon().appendPath("crash").build(),
+                null, null, null, null
+            )
 
-        assertEquals(cursor?.count?.let { it > 0}, true)
+            assertEquals(cursor?.count?.let { it > 0 }, true)
+        }
     }
 
     @Test

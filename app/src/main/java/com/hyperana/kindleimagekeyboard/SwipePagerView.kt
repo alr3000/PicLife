@@ -2,30 +2,26 @@ package com.hyperana.kindleimagekeyboard
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Canvas
 import android.preference.PreferenceManager
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
-import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
-import android.widget.Adapter
 import android.widget.FrameLayout
-import android.widget.LinearLayout
-import androidx.recyclerview.widget.RecyclerView
-import androidx.viewpager.widget.ViewPager
+import androidx.core.app.ActivityCompat
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStoreOwner
 
 /**
  * Created by alr on 9/21/17.
  *
  * horizontal linear layout.
- * add child views
- * one child fills parent width and determines pager's height
- * first child is visible by default
- * swiping left or right changes visible child
+ *
+ * swiping any direction may change current page view depending on model's navigation logic.
+ * This pager only ever knows about the currently selected page. No other pages are visible.
  */
-// todo: make base PageRecyclerView
 class SwipePagerView : FrameLayout {
     constructor(myContext: Context) : super(myContext)
     constructor(myContext: Context, attributeSet: AttributeSet) : super(myContext, attributeSet)
@@ -33,48 +29,54 @@ class SwipePagerView : FrameLayout {
     val TAG = "SwipePagerView"
     var isSwipeOn = true
     var isTrailsOn = false
-    var isFirstChild = true
-
-    var data: List<PageData> = listOf()
-    var adapter: TwoDAdapter? = null
-    set(value) {
-        field = value
-        onDataChanged()
-    }
 
     var swiper: OrientedSwipeListener? = null
     var verticalSwiper: OrientedSwipeListener? = null
     var trails: TrailTouchListener? = null
 
+    lateinit var aacViewModel: AACViewModel
+
+    // keep this as possible convert view when page changes:
     var currentView: InputPageView? = null
-    val defaultView = InputPageView(context)
-        .apply { tag = PageViewHolder(PageData(), this)}
 
 
     init {
         loadSettings()
         val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
+        // observe model's current page:
+        aacViewModel = ViewModelProvider(context as ViewModelStoreOwner)[AACViewModel::class.java]
+        aacViewModel.liveCurrentPage.observe(context as LifecycleOwner) {
+            it?.also { setPageView(it, currentView) }
+        }
 
-
-
-        // set page on swipe:
-        swiper = object: OrientedSwipeListener(false, PreferenceManager.getDefaultSharedPreferences(context)!!, wm) {
+        // navigate on horizontal swipe:
+        swiper = object: OrientedSwipeListener(
+            false, PreferenceManager.getDefaultSharedPreferences(
+                context
+            )!!, wm
+        ) {
             override fun doSwipe(forward: Boolean) {
-                Log.d(TAG, "moveOnMainAxis: forward?$forward")
-                (adapter as? TwoDAdapter)?.moveOnMainAxis(if (forward) 1 else -1)
+                Log.d(TAG, "swipe horizontal: right?$forward")
+                if (forward) { aacViewModel.goRight(1) }
+                else aacViewModel.goLeft(1)
             }
         }
-        // set page on swipe:
-        verticalSwiper = object: OrientedSwipeListener( true,
+
+        // navigate on vertical swipe:
+        verticalSwiper = object: OrientedSwipeListener(
+            true,
             PreferenceManager.getDefaultSharedPreferences(context)!!,
             wm
         ) {
             override fun doSwipe(forward: Boolean) {
-                Log.d(TAG, "moveOnAltAxis: forward?$forward")
-                (adapter as? TwoDAdapter)?.moveOnAltAxis(if (forward) 1 else -1)
+                Log.d(TAG, "swipe vertical: down?$forward")
+                if (forward) { aacViewModel.goDown(1) }
+                else aacViewModel.goUp(1)
             }
         }
+
+        // show visual feedback:
         trails = TrailTouchListener(PreferenceManager.getDefaultSharedPreferences(context)!!)
         this.layoutParams = LayoutParams(MATCH_PARENT, MATCH_PARENT)
     }
@@ -87,22 +89,20 @@ class SwipePagerView : FrameLayout {
         isTrailsOn = settings.get("doTrails")?.toString()?.toBoolean() ?: true
     }
 
-    fun onDataChanged() {
-        currentView?.page?.id?.also { oldId ->
-            adapter?.setSelectionByPageId(oldId)
-        }
 
-        setPageView()
-    }
+    fun setPageView(data: PageData, view: InputPageView?) {
+        val convertVH = (view?.tag as? PageViewHolder)
+        Log.d(TAG, "setPageView(${data.name}) replacing ${convertVH?.page?.name} with ${data.icons.size} icons")
 
-    fun setPageView() {
-        Log.d(TAG, "setPageView")
-        adapter?.getSelectedView(this, currentView)?.also { child ->
-            Log.d(TAG, "setting page view")
-            removeAllViews()
-            addView(child)
-            requestLayout()
-        }
+        convertVH
+            ?.apply { page = data }
+
+            ?: InputPageView(context)
+                .also {
+                    it.tag = PageViewHolder(it).apply { page = data}
+                    removeAllViews()
+                    addView(it)
+                }
     }
 
     override fun onWindowVisibilityChanged(visibility: Int) {
