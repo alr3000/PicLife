@@ -1,9 +1,6 @@
 package com.hyperana.kindleimagekeyboard
 
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
 import android.util.Log
@@ -126,7 +123,7 @@ class LoadAssetsFragment internal constructor(): Fragment() {
             .count {
                 it.status == AsyncTask.Status.FINISHED
             }
-            .let {(it * 100) / loadersStartCount }
+            .let {if (it == 0) 100 else (it * 100) / loadersStartCount }
             .also {percentDone ->
                 Log.d(TAG, "update progress: $percentDone")
                 (view?.findViewById(R.id.progress_bar) as? ProgressBar)?.progress = percentDone

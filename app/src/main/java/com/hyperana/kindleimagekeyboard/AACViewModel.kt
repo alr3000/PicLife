@@ -10,6 +10,7 @@ import androidx.lifecycle.*
 import androidx.preference.PreferenceManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 interface PageNavigator {
@@ -21,6 +22,7 @@ interface PageNavigator {
     fun gotoHome()
     fun gotoAACPages()
     fun goBack()
+    fun goForward()
 }
 
 
@@ -44,41 +46,52 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
         field = value
         Log.i(TAG, "setAACPageList with ${value.size} pages")
     }
-    private var upList = listOf(RecentsPage())
-    private var downList = listOf(ToolsPage())
+    private var upList = (0 .. 4).map { RecentsPage(repository, it)}
+    private var downList = (0..2).map { ToolsPage(repository, it) }
     // position between up and down list where aac pages "show through"
     private val rest: Int
         get() = downList.size
+
+    //todo: this could be recents, back/forward buttons most likely shown in recents page
+    val backList: MutableList<String> = mutableListOf()
+
 
     // State:
     // create projected pages (and within them, icons) from the keyboard's child list:
     val keyboardObserver = object: Observer<Resource?> {
         override fun onChanged(t: Resource?) {
             Log.i(TAG, "live keyboard change")
+
+            // access database in background:
             CoroutineScope(Dispatchers.IO).launch {
-                aacPageList = (t
+                aacPageList = async { (t
                     ?.let { repository.getLiveChildResources(it) }
-                    ?.filterNotNull()
-                    ?.map { PageData(repository, it) }
-                    ?: listOf(PageData()))
+                    ?.filterNotNull())
+                }.await()
+                    .let {
+
+                        // create models in main
+                        CoroutineScope(Dispatchers.Main).async {
+                            it?.map { PageData(repository, it) }
+                                ?: listOf(PageData())
+                        }.await()
+                    }
 
                     // create indices for icons, overflow pages, etc!
                     .let { getProjectedPages(it) }
-
-                //todo: find current page if it exists in new keyboard, else
 
                 // get default page
                 gotoHome()
             }
         }
     }
-
-
-    var liveKeyboardResource: LiveData<Resource?>? = null
+    private var liveKeyboardResource: LiveData<Resource?>? = null
     set(value) {
-        field?.removeObserver(keyboardObserver)
-        field = value
-        field?.observeForever(keyboardObserver)
+        CoroutineScope(Dispatchers.Main).launch {
+            field?.removeObserver(keyboardObserver)
+            field = value
+            field?.observeForever(keyboardObserver)
+        }
     }
     private var currentPageLiveData = MutableLiveData(PageData())
     var liveCurrentPage: LiveData<PageData> = currentPageLiveData
@@ -90,11 +103,6 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
     private val currentPageId: Int?
         get() = currentPageLiveData.value?.id?.toIntOrNull()
 
-
-    // viewmodels created on the main thread
-    init {
-        Log.i(TAG, "init")
-    }
 
     // set keyboard and current page from saved or preferences if out-of-whack
     fun onRestoreInstanceState(savedInstanceState: Bundle?, prefs: SharedPreferences) {
@@ -130,13 +138,16 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
 
     // Page Navigation:
     override fun goBack() {
-        //todo: use recents
-        TODO("Not yet implemented")
+
+    }
+
+    override fun goForward() {
+
     }
 
     override fun goUp(num: Int) {
-        val newPos = getIndexFixed(upList.size + 1 + downList.size, currentPosition.second)
-        if (newPos != currentPosition.first)
+        val newPos = getIndexFixed(upList.size + 1 + downList.size, currentPosition.second + num)
+        //if (newPos != currentPosition.first)
             setPosition(Pair(currentPosition.first, newPos))
     }
     override fun goDown(num: Int) { goUp( num * -1 ) }
@@ -145,21 +156,28 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
     override fun goLeft(num: Int) {
         if (shouldShowAlt) return
         val newPos = getIndexLooping(aacPageList.size, currentPosition.first + num)
-        if (newPos != currentPosition.first)
+        //if (newPos != currentPosition.first)
             setPosition(Pair(newPos, currentPosition.second))
     }
     override fun goRight(num: Int) { goLeft(num * -1) }
 
     // set current page, notify observers:
-    // don't move if no page at that position--
+    // don't move if no page at that position or same page--
     fun setPosition(newPos: Position) {
-        getPageFromPosition(currentPosition)?.also { newPage ->
+        Log.i(TAG, "setPosition: $newPos")
+        val currentId = currentPageId.toString()
+        getPageFromPosition(newPos)?.also { newPage ->
+            if (newPage.id == currentId) return
             currentPosition = newPos
-            currentPageLiveData.value = newPage
+            currentPageLiveData.postValue(newPage)
         }
     }
 
     // find position in keyboard
+    // add current page to backlist beforehand if required (if this is not a "backpress"):
+    //        backList.add(currentPageId.toString())
+    //
+    // as it is likely a jump (not paging scroll)
     // todo: or, goto new keyboard:
     override fun gotoPageId(id: String) {
         getPositionOfPageId(id)?.also { setPosition(it) }

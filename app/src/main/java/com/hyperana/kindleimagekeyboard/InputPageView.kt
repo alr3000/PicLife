@@ -145,6 +145,7 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
             try {
                 iconAdapter!!.getView(index, null, view )
                     ?.also { view.addView(it) }
+                    ?.also { view.tag = it.tag }
                     .also { Log.d(TAG, "setting $it at $index") }
             }
             catch (e: Exception) {

@@ -62,13 +62,14 @@ class MainActivity :  AppCompatActivity() {
             App.getInstance(applicationContext)
                 .iconEventLiveData.observe(this@MainActivity, object: Observer<IconEvent?> {
                 override fun onChanged(t: IconEvent?) {
+                    Log.d(TAG, "iconEvent: $t")
                     iconListeners.forEach {
                         it.onIconEvent(t?.icon, t?.action, t?.view)
                     }
                 }
             })
 
-            startActivityForResult(Intent(this, LaunchActivity::class.java), REQUEST_STARTUP)
+      //      startActivityForResult(Intent(this, LaunchActivity::class.java), REQUEST_STARTUP)
 
         }catch (e: Exception) {
             displayError("failed to create activity", e)

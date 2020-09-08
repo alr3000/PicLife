@@ -34,7 +34,7 @@ class SwipePagerView : FrameLayout {
     var verticalSwiper: OrientedSwipeListener? = null
     var trails: TrailTouchListener? = null
 
-    lateinit var aacViewModel: AACViewModel
+    var aacViewModel: AACViewModel
 
     // keep this as possible convert view when page changes:
     var currentView: InputPageView? = null
@@ -71,8 +71,8 @@ class SwipePagerView : FrameLayout {
         ) {
             override fun doSwipe(forward: Boolean) {
                 Log.d(TAG, "swipe vertical: down?$forward")
-                if (forward) { aacViewModel.goDown(1) }
-                else aacViewModel.goUp(1)
+                if (forward) { aacViewModel.goUp(1) }
+                else aacViewModel.goDown(1)
             }
         }
 

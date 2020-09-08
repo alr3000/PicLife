@@ -11,7 +11,9 @@ import android.content.ContentResolver.SCHEME_FILE
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.util.LruCache
 import android.util.Size
@@ -138,7 +140,11 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
             val uiHandler = Handler()
             Thread(){
                 try {
-                    val bitmap = img.context.contentResolver.loadThumbnail(uri, Size(600,600), null)
+                    // loadThumbnail only on latest Android
+                    val bitmap = if (Build.VERSION.SDK_INT >= 28)
+                        img.context.contentResolver.loadThumbnail(uri, Size(600,600), null)
+                    else img.context.contentResolver.openInputStream(uri)
+                        ?.let { BitmapFactory.decodeStream(it)}
                     uiHandler.post {
                         Log.d("IconData", "bitmap loaded: " + uri.toString())
                         img.setImageBitmap(bitmap)

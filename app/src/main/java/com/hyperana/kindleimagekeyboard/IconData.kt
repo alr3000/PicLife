@@ -10,6 +10,9 @@ import android.widget.TextView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 /**
@@ -42,14 +45,14 @@ class IconData(var id: String = createIconId(),
 
     // todo: add link, style from data
     constructor(repository: AACRepository, liveIconResource: LiveData<Resource?>) : this () {
-
-        liveIconResource.observeForever {
-            text = it?.title
-            id = it?.uid.toString()
-            thumbUri = Uri.parse(it?.resourceUri)
-            Log.d(TAG, "onChanged")
+        CoroutineScope(Dispatchers.Main).launch {
+            liveIconResource.observeForever {
+                text = it?.title
+                id = it?.uid.toString()
+                thumbUri = Uri.parse(it?.resourceUri)
+                Log.d(TAG, "onChanged")
+            }
         }
-
     }
     val TAG: String
         get() = "IconData($text)"
@@ -85,7 +88,7 @@ class IconData(var id: String = createIconId(),
 
     companion object {
         fun createView(icon: IconData, context: Context, withImage: Boolean = true) : View {
-            val cell = FrameLayout(context)
+            val cell = FrameLayout(context).apply { tag = icon }
             TextView(context).also {
                 cell.addView(it)
                 it.text = icon.text

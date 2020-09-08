@@ -18,9 +18,8 @@ import org.json.JSONObject
 /**
  * Created by alr on 7/25/17.
  */
-open class PageData(val id: String = createPageId(),
-               var name: String? = null, var path: String? = null, var parentPageId: String? = null)
-    : ViewModel() {
+open class PageData(var id: String = createPageId(),
+               var name: String? = null, var path: String? = null, var parentPageId: String? = null) {
 
     constructor(jsonObj: JSONObject) : this(
             id = jsonObj.getString("id"),
@@ -35,6 +34,8 @@ open class PageData(val id: String = createPageId(),
 
     }
 
+    // live page resources are fetched in batch, does this even reduce the hits on database? Who knows.
+    // Otherwise, maybe just give it the id and let it bind to the query here.
     constructor(repository: AACRepository, livePageResource: LiveData<Resource?>) : this () {
 
         live = livePageResource.apply {
@@ -51,6 +52,7 @@ open class PageData(val id: String = createPageId(),
                 }
 
                 // set data:
+                pageRes?.uid?.let { id = it.toString() }
                 name = pageRes?.title ?: "Untitled"
                 Log.d(TAG, "onChanged")
 
@@ -111,10 +113,21 @@ open class PageData(val id: String = createPageId(),
 
 }
 
-class RecentsPage :  PageData(name = "Recents") {
-    //attach to model
+class RecentsPage(repository: AACRepository, pageNo: Int = 0) :  PageData(
+    name = "Recents" + (if (pageNo == 0) "" else "-$pageNo"),
+    id = "Recents-$pageNo"
+) {
+
+    // observe recents
+    init {
+        //repository.getLiveRecentsPage()
+    }
+
 }
 
-class ToolsPage: PageData(name = "Tools") {
+class ToolsPage(repository: AACRepository, pageNo: Int = 0): PageData(
+    name = "Tools" + (if (pageNo == 0) "" else "-$pageNo"),
+    id = "Tools-$pageNo"
+) {
     //attach to model
 }

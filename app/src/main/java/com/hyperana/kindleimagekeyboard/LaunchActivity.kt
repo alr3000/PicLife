@@ -8,7 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 
 class LaunchActivity : AppCompatActivity() {
-    val TAG = this::class.java.name
+    val TAG = "LaunchActivity"
 
 
     //todo: add view with progress bar
@@ -23,7 +23,7 @@ class LaunchActivity : AppCompatActivity() {
 
         fun start(fragmentList: List<Fragment>) {
             fragments = fragmentList.toMutableList()
-            nextFragment()
+            if (!nextFragment()) cb()
         }
 
         private fun nextFragment() : Boolean{
@@ -64,15 +64,17 @@ class LaunchActivity : AppCompatActivity() {
 
         // run through startup actions, launch next activity, and then finish:
         FragmentChainListener(R.id.loading_fragment_view, supportFragmentManager) {
-            finish()
+            Log.i(TAG, "startup fragments finished, starting MainActivity")
+            startActivity(Intent(this, MainActivity::class.java))
+            //finish()
         }.also { chain ->
-                val startup = mutableListOf<Fragment>()
-                if (getKeyboardsNotLoaded(this).isNotEmpty())
-                    startup.add(LoadAssetsFragment.create(chain))
+            val startup = mutableListOf<Fragment>()
 
-                //todo: -?- add fragment to load images for current aac keyboard/page
-                chain.start(startup)
-            }
+            startup.add(LoadAssetsFragment.create(chain))
+
+            //todo: -?- add fragment to load images for current aac keyboard/page
+            chain.start(startup)
+        }
 
     }
 }

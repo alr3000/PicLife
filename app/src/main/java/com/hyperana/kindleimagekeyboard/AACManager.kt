@@ -59,7 +59,7 @@ class AACManager (
     }
 
     fun preview(icon: IconData?, v: View?) {
-        Log.d(TAG, "preview icon")
+        Log.d(TAG, "preview icon: ${icon?.text}")
         if (((icon != null) && (v != null))  && (icon.text != DEFAULT_ICON_TEXT)) {
             highlightIcon(v, icon)
         }
@@ -67,9 +67,7 @@ class AACManager (
 
     fun execute(icon: IconData?, v: View?) {
         Log.d(TAG, "execute icon link?")
-        if ((icon != null) && (icon.text != DEFAULT_ICON_TEXT)) {
-            icon.linkToPageId?.also { aacViewModel.gotoPageId(it)}
-        }
+        icon?.linkToPageId?.also { aacViewModel.gotoPageId(it)}
     }
 
 

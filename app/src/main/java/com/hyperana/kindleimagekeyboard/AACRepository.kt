@@ -1,5 +1,6 @@
 package com.hyperana.kindleimagekeyboard
 
+import android.database.Cursor
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
@@ -31,7 +32,7 @@ class AACRepository(db: AppDatabase) {
             .also { Log.d(TAG, "default resource: ${it?.value?.title}")}
     }
     suspend fun getLiveListKeyboards() : LiveData<List<Resource>?>? {
-        return resourceDao.getAllLiveByType(Resource.Type.KEYBOARD)
+        return resourceDao.getAllLiveByType(Resource.Type.KEYBOARD.name)
     }
 
 
@@ -46,6 +47,5 @@ class AACRepository(db: AppDatabase) {
         return resourceDao.listAllByType(Resource.Type.KEYBOARD.name)
             .also { Log.d(TAG, "listKeyboards: ${it.joinToString()}")}
     }
-
 
 }

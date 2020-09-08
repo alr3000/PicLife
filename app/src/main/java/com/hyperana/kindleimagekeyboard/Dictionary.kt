@@ -115,7 +115,7 @@ interface ResourceDao {
     fun getAllLiveById(ids: IntArray): LiveData<List<Resource>?>?
 
     @Query("SELECT * FROM resource WHERE resource_type = :type")
-    fun getAllLiveByType(type: Resource.Type): LiveData<List<Resource>?>?
+    fun getAllLiveByType(type: String): LiveData<List<Resource>?>?
 
     @Query("SELECT * FROM resource WHERE resource_type=:type AND uid IN (:ids)")
     fun getAllTypeById(type: String, ids: IntArray): List<Resource>?
