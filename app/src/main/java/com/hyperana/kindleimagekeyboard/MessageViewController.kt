@@ -1,16 +1,14 @@
 package com.hyperana.kindleimagekeyboard
 
-import android.app.Activity
-import android.content.Context
+import android.graphics.Rect
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
-import android.widget.AdapterView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.RecyclerView
+import java.lang.Math.min
 
 interface MessageViewManager {
     var messageActions: List<AACAction>
@@ -24,11 +22,14 @@ interface MessageViewManager {
     fun updateMessage(list: List<IconData>)
 }
 
+
+// ime uses inputter, main activity uses iconListModel(which is also a WordInputter)
+// todo: break this out into input controller and message view holder
 class MessageViewController (
     val app: App,
     val lifecycleOwner: LifecycleOwner,
-    val model: IconListModel? = null,
-    val inputter: WordInputter?,
+    val inputter: WordInputter? = null,
+    val iconListModel: IconListModel? = null,
     val overlay: ViewGroup,
     val backspaceView: View? = null,
     val forwardDeleteView: View? = null,
@@ -37,8 +38,14 @@ class MessageViewController (
     val messageViewContainer: View? = null
 ) : IconListener, MessageViewManager
 {
-    val TAG = "InputViewController"
+    val TAG = "MessageViewController"
 
+    val iconListView: ViewGroup? = messageViewContainer?.findViewById<ViewGroup>(R.id.message_iconlist)
+    val actionListView: ViewGroup? = messageViewContainer?.findViewById(R.id.message_action_container)
+
+    var selectedIndex = 0
+
+    // match icon list to message model:
     val messageObserver = object: Observer<List<IconData>> {
         override fun onChanged(t: List<IconData>?) {
             try {
@@ -48,7 +55,8 @@ class MessageViewController (
                     highlightActionButton(isNotEmpty)
                 }
 
-                //updateMessageView(t)
+                updateMessage(t ?: emptyList())
+
 
             } catch (e: Exception) {
                 Log.w(TAG, "failed done button highlight", e)
@@ -56,17 +64,20 @@ class MessageViewController (
         }
     }
 
+    // update cursor position:
     val messageCursorObserver = object: Observer<Int> {
         override fun onChanged(t: Int?) {
             Log.d(TAG, "cursor at: $t")
+            val i = t?.let { (it - 1).coerceAtLeast(0) } ?: 0
+            selectedIndex = i
         }
     }
 
     val messageActionObserver = object: Observer<AACAction?> {
         override fun onChanged(t: AACAction?) {
             when (t) {
-                MESSAGE_CLEAR -> inputter?.clear()
-                MESSAGE_SPEAK -> inputter?.action()
+                MESSAGE_CLEAR -> iconListModel?.clear()
+                MESSAGE_SPEAK -> iconListModel?.action()
             }
         }
     }
@@ -76,27 +87,34 @@ class MessageViewController (
     init {
         // todo: these are aacActions:
         backspaceView?.setOnClickListener {
-            inputter?.backwardDelete()
+            iconListModel?.backwardDelete()
         }
         forwardDeleteView?.setOnClickListener {
-            inputter?.forwardDelete()
+            iconListModel?.forwardDelete()
         }
         inputActionView?.setOnClickListener {
-            inputter?.action()
+            iconListModel?.action()
         }
-        model?.icons?.observe(lifecycleOwner, messageObserver)
-        model?.index?.observe(lifecycleOwner, messageCursorObserver)
-        model?.event?.observe(lifecycleOwner, messageActionObserver)
+        iconListModel?.icons?.observe(lifecycleOwner, messageObserver)
+        iconListModel?.index?.observe(lifecycleOwner, messageCursorObserver)
+        iconListModel?.event?.observe(lifecycleOwner, messageActionObserver)
 
         updateMessageActions(actions)
 
-
+        // keep selected icon (cursor position ) in view:
+        iconListView?.viewTreeObserver?.addOnGlobalLayoutListener {
+            val rect = Rect()
+            iconListView.getChildAt(selectedIndex)?.also { icon ->
+                icon.getLocalVisibleRect(rect)
+                Log.d(TAG, "focusing rect $rect")
+                icon.requestRectangleOnScreen(rect)
+            }
+        }
     }
+
 
     // message interface:
 
-    val iconListView: ViewGroup? = messageViewContainer?.findViewById<ViewGroup>(R.id.message_iconlist)
-    val actionListView: ViewGroup? = messageViewContainer?.findViewById(R.id.message_action_container)
 
     override var messageActions: List<AACAction> = listOf()
         set(value) {
@@ -114,6 +132,8 @@ class MessageViewController (
         set(value) {}
 
     override fun updateMessage(list: List<IconData>) {
+        Log.d(TAG, "update message view (${list.map { it.text }.joinToString("-")}")
+
         iconListView?.also { container ->
             container.removeAllViews()
             list.forEach {
@@ -159,10 +179,11 @@ class MessageViewController (
             if ((icon?.linkToPageId != null) && (!typeLinks)) {
                 return
             }
-            if (icon?.text == null) {
+            if (icon == null) {
                 return
             }
-            inputter?.input(icon.text!!)
+            iconListModel!!.input(icon)
+
         } catch(e: Exception) {
             Log.e(TAG, "problem with icon input", e)
         }
@@ -199,6 +220,7 @@ class MessageViewController (
         }
 
     }
+
 
 
 }

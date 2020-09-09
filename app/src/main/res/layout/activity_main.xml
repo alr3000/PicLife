@@ -21,28 +21,28 @@
     <LinearLayout
         android:id="@+id/message_container"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/thumbnail_size"
+        android:layout_height="@android:dimen/notification_large_icon_height"
         android:orientation="horizontal">
 
         <HorizontalScrollView
+            android:id="@+id/message_scrollview"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="match_parent"
-            android:id="@+id/message_scrollview">
+            android:layout_weight="1">
 
             <LinearLayout
+                android:id="@+id/message_iconlist"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:orientation="horizontal"
-                android:id="@+id/message_iconlist"/>
+                android:orientation="horizontal" />
 
         </HorizontalScrollView>
 
         <LinearLayout
+            android:id="@+id/message_action_container"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:id="@+id/message_action_container"/>
+            android:orientation="horizontal" />
 
 
     </LinearLayout>

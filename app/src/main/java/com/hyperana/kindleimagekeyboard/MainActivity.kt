@@ -10,15 +10,10 @@ import android.view.*
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.preference.PreferenceManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 
 class MainActivity :  AppCompatActivity() {
 
@@ -52,6 +47,7 @@ class MainActivity :  AppCompatActivity() {
                 savedInstanceState,
                 PreferenceManager.getDefaultSharedPreferences(applicationContext)
             )
+
 
 
             setContentView(R.layout.activity_main)
@@ -117,7 +113,7 @@ class MainActivity :  AppCompatActivity() {
             MessageViewController(
                 app = app,
                 lifecycleOwner = this,
-                inputter = messageViewModel,
+                iconListModel = messageViewModel,
                 overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
                 backspaceView = findViewById(R.id.backspace_button),
                 forwardDeleteView = findViewById(R.id.forwarddel_button),

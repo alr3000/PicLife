@@ -12,44 +12,43 @@ import kotlin.math.min
 open class IconListModel: ViewModel(), WordInputter {
     open val TAG = "IconListModel"
 
-    //todo: make a factory to create this from given text
-
     // icons value is always non-null. Set iconsLiveData, get icons.
     private val iconsLiveData = MutableLiveData<List<IconData>>(listOf())
     val icons = Transformations.map(iconsLiveData) {
         it ?: listOf()
-    }.apply { observeForever({}) }
+    }
 
     // index value returned is always non-null, in (0 .. icons.size)
     private val indexLiveData = MutableLiveData<Int>(0)
     val index = Transformations.map(indexLiveData) {
         val max = icons.value!!.size
         max(min(it ?: max, max), 0)
-    }.apply { observeForever({}) }
+    }
 
     private val eventLiveData = MutableLiveData<AACAction?>(null)
     val event: LiveData<AACAction?>
             get() = eventLiveData
 
     private fun appendIcon(icon: IconData) {
-        iconsLiveData.value = icons.value!!.plus(icon)
+        addIconAt(icon, iconsLiveData.value?.size ?: 0)
     }
-    private fun removeIconAt(index: Int) {
+    private fun removeIconAt(position: Int) {
         val length = icons.value!!.size
-        if (length > index)
-            iconsLiveData.value = icons.value!!.subList(0, index).plus(
-                icons.value!!.subList(min(length - 1, index + 1), length)
+        Log.d(TAG, "removeIconAt $position/$length")
+        if (position in 0 until length)
+
+        // use slice to copy icons before and after removed:
+            iconsLiveData.value = icons.value!!.slice(0 until position).plus(
+                if (position + 1 == length) emptyList() else
+                icons.value!!.slice(position + 1 until length)
             )
     }
     private fun addIconAt(icon: IconData, position: Int) {
+        Log.d(TAG, "addiconAt $position")
         val length = icons.value?.size ?: 0
-        if (position >= length) appendIcon(icon)
-        else {
-            iconsLiveData.value = icons.value!!.subList(0, position)
-                .plus(icon)
-                .plus(icons.value!!.subList(position, length))
-            if (position <= index.value!!) moveIndex(1)
-        }
+        iconsLiveData.value = icons.value!!.subList(0, position)
+            .plus(icon)
+            .plus(icons.value!!.subList(position, length))
     }
 
     fun getIconsText(list: List<IconData>) : String {
@@ -58,7 +57,9 @@ open class IconListModel: ViewModel(), WordInputter {
 
     // WordInputter Interface
     override fun setIndex(i: Int?) {
-        indexLiveData.value = i
+        Log.d(TAG, "setIndex $i")
+        val length = icons.value!!.size
+        indexLiveData.value = i?.coerceIn(0 .. length) ?: length
     }
     override fun moveIndex(num: Int) {
         setIndex(index.value?.plus(num))
@@ -77,11 +78,13 @@ open class IconListModel: ViewModel(), WordInputter {
         moveIndex(1)
     }
 
+    // removes icon ahead of cursor, if any
     override fun forwardDelete() {
         removeIconAt(index.value!!)
         //index doesn't change
     }
 
+    // removes icon behind cursor, if any
     override fun backwardDelete() {
         removeIconAt(index.value!! - 1)
         moveIndex(-1)
@@ -98,5 +101,6 @@ open class IconListModel: ViewModel(), WordInputter {
 
     override fun clear() {
         iconsLiveData.value = emptyList()
+        setIndex(0)
     }
 }
