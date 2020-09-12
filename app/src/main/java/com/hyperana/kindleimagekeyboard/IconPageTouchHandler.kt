@@ -9,10 +9,18 @@ import androidx.core.view.children
 import androidx.lifecycle.MutableLiveData
 
 
-class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
+class IconPageTouchHandler(val actionListener: ActionManager.ActionListener) {
     val TAG = "IconPageTouchHandler"
 
     var startTouchView: View? = null
+
+    fun preview(icon: IconData?, view: View?) {
+        icon?.also { actionListener.handleAction(AACAction.PREVIEW, listOf(it)) }
+        view?.also { actionListener.handleAction(AACAction.HIGHLIGHT, it) }
+    }
+    fun execute(icon: IconData?, view: View?) {
+        icon?.also { actionListener.handleAction(AACAction.EXECUTE, listOf(icon))}
+    }
 
     fun findIconCellByWindowCoordinate(views: List<View>, x: Float, y: Float) : View? {
         return views.find {
@@ -69,20 +77,8 @@ class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
                     if (icon != null) {
 
                         //do all
-                        liveIconEvent.postValue(
-                            IconEvent(
-                                icon,
-                                ICON_PREVIEW,
-                                iconView
-                            )
-                        )
-                        liveIconEvent.postValue(
-                            IconEvent(
-                                icon,
-                                ICON_EXECUTE,
-                                iconView
-                            )
-                        )
+                        preview(icon, iconView)
+                        execute(icon, iconView)
 
                         return true
                     }
@@ -95,13 +91,7 @@ class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
                 when (event?.action) {
                     MotionEvent.ACTION_DOWN -> {
                         if (icon != null) {
-                            liveIconEvent.postValue(
-                                IconEvent(
-                                    icon,
-                                    ICON_PREVIEW,
-                                    iconView
-                                )
-                            )
+                            preview(icon, iconView)
                         }
                         startTouchView = iconView
                     }
@@ -117,13 +107,7 @@ class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
                     }
                     MotionEvent.ACTION_UP -> {
                         if ((startTouchView != null) && isInView(windowX, windowY, startTouchView!!)) {
-                            liveIconEvent.postValue(
-                                IconEvent(
-                                    icon,
-                                    ICON_EXECUTE,
-                                    iconView
-                                )
-                            )
+                            execute(icon, iconView)
                         }
                         startTouchView = null
                     }
@@ -142,24 +126,14 @@ class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
                         startTouchView = iconView
-                        liveIconEvent.postValue(
-                            IconEvent(
-                                icon,
-                                ICON_PREVIEW,
-                                iconView
-                            )
-                        )
+                        preview(icon, iconView)
+
                         return true
                     }
                     MotionEvent.ACTION_MOVE -> {
                         if ((iconView != null) && (iconView != startTouchView)) {
-                            liveIconEvent.postValue(
-                                IconEvent(
-                                    icon,
-                                    ICON_PREVIEW,
-                                    iconView
-                                )
-                            )
+                            preview(icon, iconView)
+
                         }
                         startTouchView = iconView
                         return true
@@ -172,22 +146,9 @@ class IconPageTouchHandler(val liveIconEvent: MutableLiveData<IconEvent?>) {
                     }
                     MotionEvent.ACTION_UP -> {
                         if (iconView != null) {
-                            if (iconView != startTouchView) {
-                                liveIconEvent.postValue(
-                                    IconEvent(
-                                        icon,
-                                        ICON_PREVIEW,
-                                        iconView
-                                    )
-                                )
-                            }
-                            liveIconEvent.postValue(
-                                IconEvent(
-                                    icon,
-                                    ICON_EXECUTE,
-                                    iconView
-                                )
-                            )
+                            preview(icon, iconView)
+                            execute(icon, iconView)
+
                             startTouchView = null
                         }
                         return false

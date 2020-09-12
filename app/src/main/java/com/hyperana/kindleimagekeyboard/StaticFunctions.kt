@@ -11,9 +11,11 @@ import android.graphics.BitmapFactory
 import android.graphics.Rect
 import android.os.Handler
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.core.content.ContextCompat
 import java.io.File
 
 /*import com.google.android.gms.vision.Frame
@@ -40,37 +42,8 @@ val PREF_DROPBOX_ENABLED = "dropbox_enabled"
 val EXTRA_ICON_ID = "icon_id"
 val EXTRA_ICON_ACTION = "icon_action"
 
-open class AACAction {
-    open val id: String = "AACAction.Go"
-    open val displayString: String = "Go"
-    open fun createView(container: ViewGroup) : View {
-        return Button(container.context).apply {
-            text = displayString
-            tag = this@AACAction
-        }
-    }
-}
-
-object ICON_PREVIEW: AACAction() {
-    override val id: String = "AACAction.IconPreview"
-    override val displayString: String = "Preview"
-}
 
 
-object ICON_EXECUTE: AACAction() {
-    override val id: String = "AACAction.IconExecute"
-    override val displayString: String = "Input"
-}
-
-object MESSAGE_CLEAR: AACAction() {
-    override val id: String = "AACAction.MessageClear"
-    override val displayString: String = "Clear"
-}
-
-object MESSAGE_SPEAK: AACAction() {
-    override val id: String = "AACAction.MessageSpeak"
-    override val displayString: String = "Speak"
-}
 
 
 

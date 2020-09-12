@@ -80,6 +80,7 @@
 
         <!-- footer nav -->
         <RelativeLayout
+            android:id="@+id/imageinput_footer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="fill_horizontal">
@@ -115,8 +116,8 @@
                 style="@style/ime_btn_style"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
                 android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
                 android:layout_gravity="end"
                 android:background="@color/transparent"
                 android:contentDescription="@string/done_desc"

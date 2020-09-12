@@ -11,7 +11,9 @@ import android.view.View
 
 class AccessSettingsController(val requestSettingsView: View?,
                                val gotoSettingsView : View?,
-                               val overlay: View?) {
+                               val overlay: View?,
+                               val actionManager: ActionManager?
+) {
     val TAG = "AccessSettingsControllr"
 
     init {

@@ -2,25 +2,31 @@ package com.hyperana.kindleimagekeyboard
 
 import android.graphics.Rect
 import android.util.Log
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AlphaAnimation
-import android.view.animation.Animation
+import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
-import java.lang.Math.min
+import com.hyperana.kindleimagekeyboard.AACAction.Companion.BACKSPACE
+import com.hyperana.kindleimagekeyboard.AACAction.Companion.CLEAR
+import com.hyperana.kindleimagekeyboard.AACAction.Companion.HIDE
+import com.hyperana.kindleimagekeyboard.AACAction.Companion.SHOW
+import com.hyperana.kindleimagekeyboard.AACAction.Companion.SPEAK
+import com.hyperana.kindleimagekeyboard.AACAction.Companion.TOGGLE
+
+/*
 
 interface MessageViewManager {
-    var messageActions: List<AACAction>
     var messageText: String?
     var showMessage: Boolean
     var expandMessage: Boolean
     fun highlightMessage()
     fun scanMessage()
-    fun speakMessage()
-
     fun updateMessage(list: List<IconData>)
 }
+*/
+
 
 
 // ime uses inputter, main activity uses iconListModel(which is also a WordInputter)
@@ -33,28 +39,41 @@ class MessageViewController (
     val overlay: ViewGroup,
     val backspaceView: View? = null,
     val forwardDeleteView: View? = null,
-    val inputActionView: View? = null,
-    val actions: List<AACAction> = emptyList(),
-    val messageViewContainer: View? = null
-) : IconListener, MessageViewManager
+    val messageViewContainer: View? = null,
+    val actionManager: ActionManager
+) : ActionManager.ActionListener, Toolbar.OnMenuItemClickListener
 {
     val TAG = "MessageViewController"
 
-    val iconListView: ViewGroup? = messageViewContainer?.findViewById<ViewGroup>(R.id.message_iconlist)
-    val actionListView: ViewGroup? = messageViewContainer?.findViewById(R.id.message_action_container)
+
+    val TITLE: AACAction
+        get() = AACAction("title", iconListModel?.getAllText() ?: "")
+    val activeActions: List<AACAction>
+        get() = listOf(
+            AACAction.TOGGLE(false), SPEAK
+        )
+    val inactiveActions: List<AACAction>
+        get() = listOf(
+            TITLE, TOGGLE(true), SPEAK
+        )
+
+    //todo: separate logic for messageviewcontroller with wordinputter vs. iconlistmodel or always use iconlistmodel
+    val inputActions: List<AACAction>
+        get() = iconListModel?.let { actionManager.getActionsByListener(it)} ?: listOf(
+            BACKSPACE, CLEAR
+        )
 
     var selectedIndex = 0
+    val iconListView: ViewGroup? = messageViewContainer?.findViewById<ViewGroup>(R.id.message_iconlist)
+    val messageToolbar: Toolbar? = messageViewContainer?.findViewById(R.id.message_action_toolbar)
+
 
     // match icon list to message model:
     val messageObserver = object: Observer<List<IconData>> {
         override fun onChanged(t: List<IconData>?) {
             try {
-                val isNotEmpty = t?.isNotEmpty() ?: false
-                // highlight done button if text not empty
-                if (app.get("doActionHighlight")?.toString()?.toBoolean() ?: true) {
-                    highlightActionButton(isNotEmpty)
-                }
 
+                //todo: highlight action if not empty?
                 updateMessage(t ?: emptyList())
 
 
@@ -73,36 +92,23 @@ class MessageViewController (
         }
     }
 
-    val messageActionObserver = object: Observer<AACAction?> {
-        override fun onChanged(t: AACAction?) {
-            when (t) {
-                MESSAGE_CLEAR -> iconListModel?.clear()
-                MESSAGE_SPEAK -> iconListModel?.action()
-            }
-        }
-    }
-
 
 
     init {
-        // todo: these are aacActions:
-        backspaceView?.setOnClickListener {
-            iconListModel?.backwardDelete()
-        }
-        forwardDeleteView?.setOnClickListener {
-            iconListModel?.forwardDelete()
-        }
-        inputActionView?.setOnClickListener {
-            iconListModel?.action()
-        }
+
+        // observe message model:
         iconListModel?.icons?.observe(lifecycleOwner, messageObserver)
         iconListModel?.index?.observe(lifecycleOwner, messageCursorObserver)
-        iconListModel?.event?.observe(lifecycleOwner, messageActionObserver)
 
-        updateMessageActions(actions)
 
-        // keep selected icon (cursor position ) in view:
+        // observe layout:
         iconListView?.viewTreeObserver?.addOnGlobalLayoutListener {
+
+            // update actionview when hidden/shown:
+            updateMessageActions(if (iconListView.visibility == View.VISIBLE)
+                activeActions else inactiveActions)
+
+            // keep selected icon (cursor position ) in view:
             val rect = Rect()
             iconListView.getChildAt(selectedIndex)?.also { icon ->
                 icon.getLocalVisibleRect(rect)
@@ -110,28 +116,18 @@ class MessageViewController (
                 icon.requestRectangleOnScreen(rect)
             }
         }
+
+        // add action views:
+        messageToolbar?.apply {
+            setOnMenuItemClickListener(this@MessageViewController)
+        }
+        updateMessageActions(activeActions)
+
     }
 
 
     // message interface:
-
-
-    override var messageActions: List<AACAction> = listOf()
-        set(value) {
-            field = value
-            updateMessageActions(value)
-        }
-    override var messageText: String?
-        get() = TODO("Not yet implemented")
-        set(value) {}
-    override var showMessage: Boolean
-        get() = TODO("Not yet implemented")
-        set(value) {}
-    override var expandMessage: Boolean
-        get() = TODO("Not yet implemented")
-        set(value) {}
-
-    override fun updateMessage(list: List<IconData>) {
+    fun updateMessage(list: List<IconData>) {
         Log.d(TAG, "update message view (${list.map { it.text }.joinToString("-")}")
 
         iconListView?.also { container ->
@@ -144,83 +140,45 @@ class MessageViewController (
         }
     }
 
-    override fun highlightMessage() {
-        TODO("Not yet implemented")
+
+    override fun onMenuItemClick(item: MenuItem?): Boolean {
+        item ?: return false
+        return activeActions.plus(inactiveActions).find { it.menuId == item.itemId }
+            ?.let { handleAction(it, null) }
+            ?: false
     }
 
-    override fun scanMessage() {
-        TODO("Not yet implemented")
+    override fun handleAction(action: AACAction, data: Any?): Boolean {
+        when (action) {
+            HIDE -> toggleView(false)
+            SHOW -> toggleView(true)
+            AACAction.CLEAR -> {
+                iconListModel?.clear()
+                return true
+            }
+            SPEAK -> actionManager.handleAction(action, iconListModel?.getAllText())
+        }
+        return false
     }
 
-    override fun speakMessage() {
-        TODO("Not yet implemented")
+    override fun getActionTag(): Int {
+        return TAG.hashCode()
+    }
+
+    // action handler methods:
+    fun toggleView(show: Boolean) {
+        iconListView?.visibility = if (show) View.VISIBLE else View.GONE
     }
 
     fun updateMessageActions(actions: List<AACAction>) {
-        actionListView?.also { container ->
+        messageToolbar?.menu?.apply {
+            removeGroup(getActionTag())
             actions.forEach {
-                it.createView( container)
+                add(getActionTag(), it.menuId, 0, it.displayString).apply {
+                    setActionView(it.createView(messageToolbar.context))
+                    setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+                }
             }
         }
     }
-
-    // icon interface:
-    override fun onIconEvent(icon: IconData?, action: AACAction?, view: View?) {
-        when (action) {
-            ICON_EXECUTE -> execute(icon, view)
-            else -> {}
-        }
-    }
-
-    fun execute(icon: IconData?, v: View?) {
-        Log.d(TAG, "execute: " + icon?.text)
-        try {
-            val typeLinks = app.get("doTypeLinks")?.toString()?.toBoolean() ?: false
-            if ((icon?.linkToPageId != null) && (!typeLinks)) {
-                return
-            }
-            if (icon == null) {
-                return
-            }
-            iconListModel!!.input(icon)
-
-        } catch(e: Exception) {
-            Log.e(TAG, "problem with icon input", e)
-        }
-    }
-
-    fun highlightActionButton(start: Boolean) {
-        val VIEW_TAG = "actionHighlight"
-        val v = overlay?.findViewWithTag(VIEW_TAG) as? View
-        Log.d(TAG, "highlightActionButton: " + start + " v=" + v.toString())
-
-        if (start && (v == null) && inputActionView != null) {
-            val highlight = HighlightView(inputActionView, null, app)
-            highlight.tag = VIEW_TAG
-            overlay?.addView(highlight)
-
-            val fadeIn = AlphaAnimation(0.0f, 1.0f)
-            val fadeOut = AlphaAnimation(1.0f, 0.0f)
-            fadeIn.duration = 500
-            fadeOut.duration = 600
-            fadeOut.startOffset = 600 + fadeIn.startOffset + 600
-            fadeIn.repeatCount = Animation.INFINITE
-            fadeOut.repeatCount = Animation.INFINITE
-
-            highlight.startAnimation(fadeIn)
-            highlight.startAnimation(fadeOut)
-        }
-        else if (!start && (v != null)) {
-            v.clearAnimation()
-            (v.parent as? ViewGroup)?.removeView(v)
-            assert(
-                (overlay?.findViewWithTag<View>(VIEW_TAG) == null),
-                {"highlight view remaining. " + v.toString()}
-            )
-        }
-
-    }
-
-
-
 }

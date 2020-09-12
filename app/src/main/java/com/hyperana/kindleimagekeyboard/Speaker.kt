@@ -9,7 +9,7 @@ import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.Observer
 import java.util.*
 
-class Speaker(val app: App): LifecycleObserver, IconListener {
+class Speaker(val app: App): LifecycleObserver, IconListener, ActionManager.ActionListener {
 
     var TTS: TextToSpeech? = null
 
@@ -57,8 +57,8 @@ class Speaker(val app: App): LifecycleObserver, IconListener {
     // Icon interface:
     override fun onIconEvent(icon: IconData?, action: AACAction?, view: View?) {
         when (action) {
-            ICON_EXECUTE -> execute(icon, view)
-            ICON_PREVIEW -> preview(icon, view)
+            EXECUTE -> execute(icon, view)
+            PREVIEW -> preview(icon, view)
         }
     }
 
@@ -72,6 +72,15 @@ class Speaker(val app: App): LifecycleObserver, IconListener {
         if (icon != null && app.get("speakWords").toString() == "speakIconTouch") {
             speakIcon(icon)
         }
+    }
+
+    // ActionInterface:
+    override fun handleAction(action: AACAction, data: Any?): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun getActionTag(): Int {
+        return toString().hashCode()
     }
 
     // IconList interface:

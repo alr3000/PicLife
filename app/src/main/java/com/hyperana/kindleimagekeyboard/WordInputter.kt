@@ -20,7 +20,6 @@ interface WordInputter {
 
     abstract fun getAllText() : String
 
-    abstract fun action()
 
     abstract fun setIndex(i: Int?)
     abstract fun moveIndex(num: Int)

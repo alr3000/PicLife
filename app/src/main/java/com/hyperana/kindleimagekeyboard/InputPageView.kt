@@ -73,7 +73,7 @@ open class IconAdapter(val context: Context, val icons: List<IconData>) : BaseAd
 
 
 class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
-    LinearLayout(context, attributeSet) {
+    LinearLayout(context, attributeSet), ActionManager.ActionListener {
 
     //todo: attach to view holder with model
     var page: PageData = PageData().apply { name = "Empty page" }
@@ -102,18 +102,19 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
     // views are frames for icons, may not be immediate children of this view:
     var views: List<ViewGroup> = listOf()
 
-    val touchHandler = IconPageTouchHandler(app.iconEventLiveData)
+    var touchHandler: IconPageTouchHandler? = null
     val touchAction = app.get("touchAction") as? String
+    var actionManager: ActionManager? = null
 
-    interface PageListener {
-        fun preview(icon: IconData?, view: View?)
-        fun execute(icon: IconData?, view: View?)
-    }
 
     init {
         orientation = LinearLayout.VERTICAL
         layoutParams = LayoutParams(MATCH_PARENT, MATCH_PARENT)
         //setStyle()
+
+        actionManager = (context as? MainActivity)?.actionManager
+        touchHandler = IconPageTouchHandler(this)
+
     }
 
 
@@ -175,14 +176,21 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         try {
-        return touchHandler.onTouchEvent(this, views, event, touchAction)
+        return touchHandler!!.onTouchEvent(this, views, event, touchAction)
         } catch (e: Exception) {
             Log.e(TAG, "problem with icon touch handler: ", e)
             return false
         }
     }
 
+    // action handler: receives actions from touch, passes through to owner:
+    override fun handleAction(action: AACAction, data: Any?): Boolean {
+        return actionManager?.handleAction(action, data) ?: false
+    }
 
+    override fun getActionTag(): Int {
+        return hashCode()
+    }
 
     // depending on selected icon activation type,
     // returns whether event is of interested in future events

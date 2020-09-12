@@ -9,7 +9,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 //todo: word inputter contains iconlistmodel and implements interface as below
-open class IconListModel: ViewModel(), WordInputter {
+open class IconListModel: ViewModel(), WordInputter, ActionManager.ActionListener {
     open val TAG = "IconListModel"
 
     // icons value is always non-null. Set iconsLiveData, get icons.
@@ -55,6 +55,22 @@ open class IconListModel: ViewModel(), WordInputter {
         return list.map { it.text }.joinToString (" ")
     }
 
+
+    override fun handleAction(action: AACAction, data: Any?): Boolean {
+        when (action) {
+            AACAction.CLEAR -> clear()
+            AACAction.BACKSPACE -> backwardDelete()
+            AACAction.EXECUTE -> (data as? List<*>)?.forEach {
+                (it as? IconData)?.also { input(it) }
+            }
+        }
+        return true
+    }
+
+    override fun getActionTag(): Int {
+        return hashCode()
+    }
+
     // WordInputter Interface
     override fun setIndex(i: Int?) {
         Log.d(TAG, "setIndex $i")
@@ -94,10 +110,7 @@ open class IconListModel: ViewModel(), WordInputter {
         return getIconsText(icons.value!!)
     }
 
-    // todo: handle aacaction
-    override fun action() {
-        // I don't know what to do here
-    }
+
 
     override fun clear() {
         iconsLiveData.value = emptyList()

@@ -10,25 +10,33 @@ import android.view.*
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.preference.PreferenceManager
 
-class MainActivity :  AppCompatActivity() {
+class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
+    ActionManager.ActionListener {
 
     val TAG = "MainActivity"
     val context = this
+    val app = App.getInstance(this.applicationContext)
 
     val REQUEST_STARTUP = 1
 
     // create here to share with message controller and tools, etc
     val messageViewModel: IconListModel by viewModels()
 
+    // add action items here that the main activity will respond to:
+    val MAIN_ACTION_TAG = 0
+
     lateinit var aacViewModel: AACViewModel
+    lateinit var messageToolbar: Toolbar
 
+    // create actionmanager that lives within this lifecycle:
+    var actionManager: ActionManager = ActionManager(lifecycle)
 
-    var iconListeners: List<IconListener> = listOf()
 
     var preferenceCheckTime = 0L
 
@@ -48,22 +56,33 @@ class MainActivity :  AppCompatActivity() {
                 PreferenceManager.getDefaultSharedPreferences(applicationContext)
             )
 
-
+            actionManager.registerActionListener(messageViewModel, listOf(
+                AACAction.BACKSPACE, AACAction.CLEAR, AACAction.EXECUTE
+            ))
+            // this activity will decide what to do with "preview" action:
+            actionManager.registerActionListener(this, listOf(AACAction.PREVIEW))
 
             setContentView(R.layout.activity_main)
 
+            // initialize speech and other activity-based action listeners:
+            Speaker(app).also {
+                lifecycle.addObserver(it)
+                actionManager.registerActionListener(it, listOf(AACAction.SPEAK))
+            }
+            findViewById<ViewGroup>(R.id.imageinput_overlay)?.also {
+                actionManager.registerActionListener(Highlighter(app, it), listOf(AACAction.HIGHLIGHT))
+            }
 
-            // attach viewcontrollers to livedata here because this is the relevant lifecycle
-            // todo: remove view reference from livedata?
-            App.getInstance(applicationContext)
-                .iconEventLiveData.observe(this@MainActivity, object: Observer<IconEvent?> {
-                override fun onChanged(t: IconEvent?) {
-                    Log.d(TAG, "iconEvent: $t")
-                    iconListeners.forEach {
-                        it.onIconEvent(t?.icon, t?.action, t?.view)
-                    }
-                }
-            })
+
+            // initialize settings controller:
+            AccessSettingsController(
+                requestSettingsView = findViewById(R.id.preferences_button),
+                gotoSettingsView = findViewById(R.id.settings_button),
+                overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
+                actionManager
+            )
+
+
 
       //      startActivityForResult(Intent(this, LaunchActivity::class.java), REQUEST_STARTUP)
 
@@ -100,16 +119,18 @@ class MainActivity :  AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
 
-        App.getInstance(applicationContext).iconEventLiveData.removeObservers(this)
     }
 
+    // this activity consists of an aac keyboard for input, provided with
+    // app for preferences and settings, global static action listener
+    // main action listener for speech, sharing, etc, outputs
+    // message iconListModel and message view to hold and display message state
     fun initializeAAC() {
         Log.d(TAG, "initializeAAC")
         val app = App.getInstance(applicationContext)
-        iconListeners = listOf(
-            Speaker(App.getInstance(this.applicationContext)).also {
-                lifecycle.addObserver(it)
-            },
+
+
+
             MessageViewController(
                 app = app,
                 lifecycleOwner = this,
@@ -117,24 +138,19 @@ class MainActivity :  AppCompatActivity() {
                 overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
                 backspaceView = findViewById(R.id.backspace_button),
                 forwardDeleteView = findViewById(R.id.forwarddel_button),
-                inputActionView = findViewById(R.id.done_button),
-                actions = listOf(MESSAGE_CLEAR, MESSAGE_SPEAK),
-                messageViewContainer = findViewById(R.id.message_container)
-            ),
+                messageViewContainer = findViewById(R.id.message_container),
+                actionManager = actionManager
+            )
+
             AACManager(
                 app = app,
                 overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
                 aacViewModel = aacViewModel,
                 gotoHomeView = findViewById(R.id.home_button),
-                titleView = findViewById<TextView>(R.id.inputpage_name)
+                titleView = findViewById<TextView>(R.id.inputpage_name),
+                actionManager = actionManager
             )
-        )
 
-        AccessSettingsController(
-            requestSettingsView = findViewById(R.id.preferences_button),
-            gotoSettingsView = findViewById(R.id.settings_button),
-            overlay = findViewById<ViewGroup>(R.id.imageinput_overlay)
-        )
 
     }
 
@@ -164,9 +180,6 @@ class MainActivity :  AppCompatActivity() {
             }
     }
 
-    override fun onCreateNavigateUpTaskStack(builder: TaskStackBuilder?) {
-        super.onCreateNavigateUpTaskStack(builder)
-    }
 
     //no context menu
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -181,6 +194,23 @@ class MainActivity :  AppCompatActivity() {
         }
     }
 
+
+    // handle Action menuitems:
+    override fun onMenuItemClick(item: MenuItem?): Boolean {
+       return item?.itemId?.let {id -> actionManager.handleActionMenuId(id, null) }
+           ?: false
+    }
+    override fun getActionTag(): Int {
+        return MAIN_ACTION_TAG
+    }
+
+    // menu action being called from live event or other communication come with data to perform task:
+    override fun handleAction(action: AACAction, data: Any?): Boolean {
+        Log.i(TAG, "handleAction: $action, $data")
+        if (action == AACAction.PREVIEW)
+            return actionManager.handleAction(AACAction.SPEAK, data)
+        return false
+    }
 
 
 

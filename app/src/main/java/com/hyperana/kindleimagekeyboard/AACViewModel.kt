@@ -1,6 +1,7 @@
 package com.hyperana.kindleimagekeyboard
 
 import android.app.Application
+import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.os.Bundle
@@ -41,6 +42,9 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
     val repository = AACRepository(AppDatabase.getDatabase(application.applicationContext)!!)
 
     // page map for navigation:
+
+    //todo: could be a live transformation of the keyboard
+    //todo: use transformations to observe data on other model layers
     private var aacPageList : List<PageData> = listOf()
     set(value) {
         field = value
@@ -93,6 +97,7 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
             field?.observeForever(keyboardObserver)
         }
     }
+
     private var currentPageLiveData = MutableLiveData(PageData())
     var liveCurrentPage: LiveData<PageData> = currentPageLiveData
 
@@ -255,4 +260,5 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
 
         return kotlin.math.round(cols.toDouble() * rToC).toInt()
     }
+
 }

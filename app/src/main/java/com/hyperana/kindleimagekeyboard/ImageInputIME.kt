@@ -243,8 +243,7 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
                 inputter = wordInputter,
                 overlay = view!!.findViewById<ViewGroup>(R.id.imageinput_overlay),
                 backspaceView = view!!.findViewById(R.id.backspace_button),
-                forwardDeleteView = view!!.findViewById(R.id.forwarddel_button),
-                inputActionView = view!!.findViewById(R.id.done_button)
+                forwardDeleteView = view!!.findViewById(R.id.forwarddel_button)
             ),
             AACManager(
                 app = app,

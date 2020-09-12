@@ -15,9 +15,10 @@ class AACManager (
     val overlay: ViewGroup?,
     val aacViewModel: AACViewModel,
     val gotoHomeView: View?,
-    val titleView: TextView?
+    val titleView: TextView?,
+    val actionManager: ActionManager
 )
-    :   IconListener
+    :   IconListener, ActionManager.ActionListener
 {
 
     val TAG = "AACManager"
@@ -38,6 +39,8 @@ class AACManager (
 
             setOnClickListener { v -> doClickHome(v) }
         }
+
+        actionManager.registerActionListener(this, listOf(AACAction.PREVIEW, AACAction.EXECUTE))
     }
 
 
@@ -48,14 +51,32 @@ class AACManager (
     }
 
 
-
     //************************************* ICON HANDLERS ***************************************
     // icon interface:
+    override fun handleAction(action: AACAction, data: Any?): Boolean {
+        return when (action) {
+            AACAction.PREVIEW -> (data as? List<IconData>)
+                ?. also { preview(it)}
+                .let { true }
+
+            else -> false
+        }
+    }
+
+    override fun getActionTag(): Int {
+        TODO("Not yet implemented")
+    }
+
     override fun onIconEvent(icon: IconData?, action: AACAction?, view: View?) {
         when (action) {
-            ICON_PREVIEW -> preview(icon, view)
+        //    PREVIEW -> preview(icon, view)
       //      ICON_EXECUTE -> execute(icon, view)
         }
+    }
+
+    // todo: action queueing
+    fun preview(list: List<IconData>) {
+        list.forEach { preview(it, null)}
     }
 
     fun preview(icon: IconData?, v: View?) {
