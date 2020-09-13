@@ -190,7 +190,7 @@ class IMEWordInputter (val ime: InputMethodService)
         }
     }
 
-    override fun action() {
+    fun doAction() {
         Log.d(TAG, "call performEditorAction "+ editorActionId+" on DONE")
 
         //currentEditorInfo?.imeOptions?.and(EditorInfo.IME_FLAG_NO_ENTER_ACTION)

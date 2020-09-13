@@ -21,7 +21,6 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
 
     val TAG = "MainActivity"
     val context = this
-    val app = App.getInstance(this.applicationContext)
 
     val REQUEST_STARTUP = 1
 
@@ -31,6 +30,7 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
     // add action items here that the main activity will respond to:
     val MAIN_ACTION_TAG = 0
 
+    lateinit var app: App
     lateinit var aacViewModel: AACViewModel
     lateinit var messageToolbar: Toolbar
 
@@ -47,6 +47,8 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
         try {
             super.onCreate(savedInstanceState)
 
+            app = App.getInstance(context)
+            
             // load default settings -- false means this will not execute twice
             PreferenceManager.setDefaultValues(this, R.xml.settings, false)
 

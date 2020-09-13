@@ -42,9 +42,13 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
 
     // views:
     var view: ViewGroup? = null
-    var iconListeners: List<IconListener> = listOf()
+    var iconListeners: List<ActionManager.ActionListener> = listOf()
 
     lateinit var aacViewModel: AACViewModel
+
+    // create actionmanager that lives within this lifecycle:
+    var actionManager: ActionManager = ActionManager(lifecycle)
+
 
 
     val wordInputter: WordInputter = IMEWordInputter(this)
@@ -141,15 +145,15 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
         Log.d(TAG, "onCreate")
         super.onCreate()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
-        App.getInstance(applicationContext).iconEventLiveData.observe(this, object: Observer<IconEvent?> {
+       /* App.getInstance(applicationContext).iconEventLiveData.observe(this, object: Observer<IconEvent?> {
             init { Log.d(TAG, "observe IconEvent...")}
             override fun onChanged(t: IconEvent?) {
                 Log.d(TAG, "iconEvent::onChange ${t?.icon?.text} -- ${t?.action}")
                 iconListeners.forEach {
-                    it.onIconEvent(t?.icon, t?.action, t?.view)
+                    it.handleAction(t?.icon, t?.action, t?.view)
                 }
             }
-        })
+        })*/
 
         aacViewModel = ViewModelProvider(applicationContext as ViewModelStoreOwner)[AACViewModel::class.java]
 
@@ -229,7 +233,8 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
         AccessSettingsController(
             requestSettingsView = view!!.findViewById(R.id.preferences_button),
             gotoSettingsView = view!!.findViewById(R.id.settings_button),
-            overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay)
+            overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay),
+            actionManager
         )
 
         //todo: -?- register speaker and inputview for icon localbroadcasts
@@ -243,7 +248,8 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
                 inputter = wordInputter,
                 overlay = view!!.findViewById<ViewGroup>(R.id.imageinput_overlay),
                 backspaceView = view!!.findViewById(R.id.backspace_button),
-                forwardDeleteView = view!!.findViewById(R.id.forwarddel_button)
+                forwardDeleteView = view!!.findViewById(R.id.forwarddel_button),
+                actionManager = actionManager
             ),
             AACManager(
                 app = app,
@@ -251,7 +257,8 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
                 //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
                 aacViewModel = aacViewModel,
                 gotoHomeView = view!!.findViewById(R.id.home_button),
-                titleView = view!!.findViewById<TextView>(R.id.inputpage_name)
+                titleView = view!!.findViewById<TextView>(R.id.inputpage_name),
+                actionManager = actionManager
             )
         )
 
