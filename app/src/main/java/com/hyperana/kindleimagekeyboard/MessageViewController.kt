@@ -6,8 +6,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.Observer
+import androidx.lifecycle.*
 import com.hyperana.kindleimagekeyboard.AACAction.Companion.BACKSPACE
 import com.hyperana.kindleimagekeyboard.AACAction.Companion.CLEAR
 import com.hyperana.kindleimagekeyboard.AACAction.Companion.HIDE
@@ -46,11 +45,13 @@ class MessageViewController (
     val TAG = "MessageViewController"
 
 
-    val TITLE: AACAction
-        get() = AACAction("title", iconListModel?.getAllText() ?: "")
+    //todo: use create view to get actionView and apply click listener (don't use menu click)
+    val TITLE: AACAction = object: AACAction("title", "") {
+
+    }
     val activeActions: List<AACAction>
         get() = listOf(
-            AACAction.TOGGLE(false), SPEAK
+            AACAction.TOGGLE(false), SPEAK, CLEAR
         )
     val inactiveActions: List<AACAction>
         get() = listOf(
@@ -103,10 +104,8 @@ class MessageViewController (
 
         // observe layout:
         iconListView?.viewTreeObserver?.addOnGlobalLayoutListener {
+            Log.d(TAG, "layout listener")
 
-            // update actionview when hidden/shown:
-            updateMessageActions(if (iconListView.visibility == View.VISIBLE)
-                activeActions else inactiveActions)
 
             // keep selected icon (cursor position ) in view:
             val rect = Rect()
@@ -121,7 +120,16 @@ class MessageViewController (
         messageToolbar?.apply {
             setOnMenuItemClickListener(this@MessageViewController)
         }
-        updateMessageActions(activeActions)
+        lifecycleOwner.lifecycle.addObserver(object: LifecycleObserver {
+            @OnLifecycleEvent(value = Lifecycle.Event.ON_START)
+            fun onStart() {
+
+                Log.d(TAG, "onStart")
+              //  messageToolbar?.inflateMenu(R.menu.menu_main)
+                updateMessageActions(if (iconListView?.visibility == View.VISIBLE)
+                activeActions else inactiveActions)
+            }
+        })
 
     }
 
@@ -141,6 +149,7 @@ class MessageViewController (
     }
 
 
+
     override fun onMenuItemClick(item: MenuItem?): Boolean {
         item ?: return false
         return activeActions.plus(inactiveActions).find { it.menuId == item.itemId }
@@ -149,6 +158,7 @@ class MessageViewController (
     }
 
     override fun handleAction(action: AACAction, data: Any?): Boolean {
+        Log.i(TAG, "handle action: $action, $data")
         when (action) {
             HIDE -> toggleView(false)
             SHOW -> toggleView(true)
@@ -168,14 +178,20 @@ class MessageViewController (
     // action handler methods:
     fun toggleView(show: Boolean) {
         iconListView?.visibility = if (show) View.VISIBLE else View.GONE
+
+        // update actionview when hidden/shown:
+        updateMessageActions(if (show) activeActions else inactiveActions)
     }
 
+    // must do after drawing toolbar
     fun updateMessageActions(actions: List<AACAction>) {
+
+        Log.d(TAG, "adding message actions: ${actions.joinToString()} to ${messageToolbar?.menu}")
         messageToolbar?.menu?.apply {
             removeGroup(getActionTag())
             actions.forEach {
-                add(getActionTag(), it.menuId, 0, it.displayString).apply {
-                    setActionView(it.createView(messageToolbar.context))
+                this.add(getActionTag(), it.menuId, 0, it.displayString).apply {
+                    it.drawableId?.also { setIcon(it) }
                     setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
                 }
             }

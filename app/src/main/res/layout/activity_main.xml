@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-
-<LinearLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -18,39 +20,64 @@
         android:orientation="vertical"
         android:id="@+id/loading_fragment_view"/>
 
-    <LinearLayout
-        android:id="@+id/message_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+<LinearLayout
+    android:id="@+id/message_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/message_action_toolbar"
             android:layout_width="match_parent"
+            android:background="@android:color/darker_gray"
             android:layout_height="@android:dimen/notification_large_icon_height"
             android:orientation="horizontal" />
 
         <HorizontalScrollView
-            android:id="@+id/message_scrollview"
             android:layout_width="match_parent"
-            android:layout_height="?attr/listPreferredItemHeight"
-            android:layout_weight="1">
+            android:layout_height="wrap_content">
 
             <LinearLayout
                 android:id="@+id/message_iconlist"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:layout_height="?attr/listPreferredItemHeight"
                 android:orientation="horizontal" />
 
         </HorizontalScrollView>
-
-
-    </LinearLayout>
-
-
-
-
-
-    <include layout="@layout/input_method_main" android:layout_height="0dp" android:layout_width="match_parent" android:layout_weight="1"/>
 </LinearLayout>
 
+        <!-- input page view container -->
+        <com.hyperana.kindleimagekeyboard.SwipePagerView
+            android:id="@+id/pager"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@color/colorNeutralDark"
+            android:clipChildren="true"
+            android:isScrollContainer="false"
+            android:orientation="horizontal"
+            android:tag="pager"/>
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/input_action_toolbar"
+            android:layout_width="match_parent"
+            android:background="@android:color/darker_gray"
+            android:layout_height="@android:dimen/notification_large_icon_height"
+            android:orientation="horizontal" />
+
+
+
+
+
+
+
+
+   <!-- <include layout="@layout/input_method_main" android:layout_height="0dp" android:layout_width="match_parent" android:layout_weight="1"/>-->
+</LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/imageinput_overlay"/>
+
+</FrameLayout>

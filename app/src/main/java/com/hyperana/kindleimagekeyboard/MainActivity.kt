@@ -48,7 +48,7 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
             super.onCreate(savedInstanceState)
 
             app = App.getInstance(context)
-            
+
             // load default settings -- false means this will not execute twice
             PreferenceManager.setDefaultValues(this, R.xml.settings, false)
 

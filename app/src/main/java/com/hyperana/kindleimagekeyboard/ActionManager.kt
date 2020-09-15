@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageButton
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
@@ -69,12 +70,16 @@ open class AACAction(
 
     open fun createView(context: Context) : View {
         return Button(context).apply {
-            tag = this@AACAction
-            drawableId?.let { ContextCompat.getDrawable(context, it) }
-                ?.also { background = it }
-                ?: run { text = displayString}
-        }
+                drawableId
+                    ?.also {
+                        setBackgroundResource(it)
+                        contentDescription = displayString
+                    }
+                    ?: run {text = displayString}
+                tag = this@AACAction
+            }
     }
+
 
     override fun toString(): String {
         return super.toString() + ": $displayString"
@@ -99,7 +104,7 @@ open class AACAction(
         val OPEN_SETTINGS = AACAction("open_settings", "Settings", R.drawable.preferences)
         val EDIT = AACAction("edit","Edit")
         val HOME = AACAction("home", "Home", R.drawable.homebutton)
-        fun TOGGLE(isHidden: Boolean) = if (isHidden) HIDE else SHOW
+        fun TOGGLE(isHidden: Boolean) = if (isHidden) SHOW else HIDE
     }
 }
 
