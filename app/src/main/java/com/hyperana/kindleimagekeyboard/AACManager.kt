@@ -18,7 +18,7 @@ class AACManager (
     val titleView: TextView?,
     val actionManager: ActionManager
 )
-    :   IconListener, ActionManager.ActionListener
+    :   IconListener, ActionListener
 {
 
     val TAG = "AACManager"
@@ -40,7 +40,7 @@ class AACManager (
             setOnClickListener { v -> doClickHome(v) }
         }
 
-        actionManager.registerActionListener(this, listOf(AACAction.PREVIEW, AACAction.EXECUTE))
+        actionManager.registerActionListener(this, listOf(AACAction.PREVIEW, AACAction.EXECUTE, AACAction.HIGHLIGHT))
     }
 
 
@@ -52,13 +52,13 @@ class AACManager (
 
 
     //************************************* ICON HANDLERS ***************************************
-    // icon interface:
+    // handles view-based actions for all aac views (inputpageviews, etc)
     override fun handleAction(action: AACAction, data: Any?): Boolean {
+        Log.d(TAG, "handleAction: $action, $data")
         return when (action) {
-            AACAction.PREVIEW -> (data as? List<IconData>)
-                ?. also { preview(it)}
+             AACAction.HIGHLIGHT -> (data as? View)
+                ?.also { highlightIcon( it, it.tag as? IconData)}
                 .let { true }
-
             else -> false
         }
     }
@@ -93,9 +93,9 @@ class AACManager (
 
 
 
-    fun highlightIcon(iconView: View, icon: IconData) {
+    fun highlightIcon(iconView: View, icon: IconData?) {
         // use textview if path is null - todo -L-
-        val img = icon.thumbUri
+        val img = (icon ?: IconData()).thumbUri
             ?.let {uri ->
                 ImageView(iconView.context)
                     .also { App.asyncSetImageBitmap(it, uri)}

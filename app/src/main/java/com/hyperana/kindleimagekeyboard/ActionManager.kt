@@ -10,8 +10,13 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import com.google.common.collect.HashMultimap
-//todo: this could be cascading linked list type thing with parents/children
-class ActionManager(val lifecycle: Lifecycle) {
+
+interface ActionListener {
+    fun handleAction(action: AACAction, data: Any?) : Boolean
+    fun getActionTag() : Int
+}
+//todo: make channels for instant action, queued actions
+class ActionManager(val lifecycle: Lifecycle): ActionListener {
 
     val TAG = "ActionManager"
     private val actions: HashMultimap<AACAction, ActionListener> = HashMultimap.create()
@@ -40,7 +45,8 @@ class ActionManager(val lifecycle: Lifecycle) {
             ?: false
     }
 
-    fun handleAction(action: AACAction, data: Any?) : Boolean {
+    override fun handleAction(action: AACAction, data: Any?) : Boolean {
+        Log.i(TAG, "handleActions: $action, $data")
         if (lifecycle.currentState != Lifecycle.State.RESUMED) {
             Log.w(TAG, "action requested while activity state = ${lifecycle.currentState}")
             return false
@@ -52,9 +58,8 @@ class ActionManager(val lifecycle: Lifecycle) {
         return true
     }
 
-    interface ActionListener {
-        fun handleAction(action: AACAction, data: Any?) : Boolean
-        fun getActionTag() : Int
+    override fun getActionTag(): Int {
+        return hashCode()
     }
 }
 
@@ -87,6 +92,7 @@ open class AACAction(
     companion object {
         // data is view:
         val HIGHLIGHT = AACAction("highlight", "Highlight")
+        val FLASH = AACAction("Flash", "Flash")
 
         // data is list of IconData:
         val PREVIEW = AACAction("AACAction.IconPreview", "Preview")

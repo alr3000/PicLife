@@ -42,7 +42,7 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
 
     // views:
     var view: ViewGroup? = null
-    var iconListeners: List<ActionManager.ActionListener> = listOf()
+    var iconListeners: List<ActionListener> = listOf()
 
     lateinit var aacViewModel: AACViewModel
 

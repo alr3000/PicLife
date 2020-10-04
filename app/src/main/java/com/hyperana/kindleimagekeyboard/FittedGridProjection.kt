@@ -18,53 +18,70 @@ import android.util.Log
  * todo: insert pages to hold leftover icons in small grids -- related ids
  *
  */
-class FittedGridProjection(val cols: Int, val rows: Int, var margins: Int? = 10) : KeyboardProjection() {
-    val TAG = "FixedKeyboardProjection"
+class FittedGridProjection(val cols: Int, val rows: Int, var margins: Int?) : KeyboardProjection() {
 
 
 
     override fun project(pages: List<PageData>): List<PageData> {
-        pages.onEach {
-            it.set("rows", rows.toString())
-            it.set("cols", cols.toString())
-            it.set("margins", margins.toString())
-            mapPageIcons(it.icons, rows * cols)
-        }
         return pages
+            .flatMap {
+                mapToPages(it, rows, cols, margins ?: 10)
+            }
+            .also { Log.i(TAG, "projected ${it.size} pages ($cols X $rows)")}
     }
 
-    //todo: bug - when grid is full, first remainder icon is set to index icons.count()
-    fun mapPageIcons(icons: List<IconData>, gridCount: Int) {
+    companion object {
+        val TAG = "FixedKeyboardProjection"
 
-        // Sets to null values that are not parsable or are duplicated upstream. Returns unique values.
-        fun findUniqueIndices(list: List<IconData>) : MutableList<Int> {
-            val used: MutableList<Int> = mutableListOf()
-            list.onEach {
-                val index: Int? = it.index?.toIntOrNull()
-                if ((index != null)  && (!used.contains(index))) {
-                    used.add(index)
+
+        fun mapToPages(original: PageData, rows: Int, cols: Int, margins: Int): List<PageData> {
+
+            Log.d(TAG, "${original.name} with ${original.icons.size} ordered icons")
+            return orderPageIcons(original.icons)
+                .chunked(rows * cols)
+                .mapIndexed { index, list ->
+                    PageData().apply {
+                        icons = list.toMutableList()
+                        name = original.name + " ${index + 1}"
+                        id = original.id + "_${index}"
+                        set("rows", rows.toString())
+                        set("cols", cols.toString())
+                        set("margins", margins.toString())
+                    }
                 }
-            }
-            return used
         }
 
-        // sort used indices ascending
-        val taken = findUniqueIndices(icons).sorted().toMutableList()
-        Log.d(TAG, "resolving indices: found " + taken.joinToString(", "))
+        //todo: bug - when grid is full, first remainder icon is set to index icons.count()
+        fun orderPageIcons(icons: List<IconData>): List<IconData> {
 
-        // take first (lowest)
-        var reserved = if (taken.isEmpty()) -1 else taken.removeAt(0)
-        var next = 0
+            // Sets to null values that are not parsable or are duplicated upstream. Returns unique values.
+            fun findUniqueIndices(list: List<IconData>): MutableList<Int> {
+                val used: MutableList<Int> = mutableListOf()
+                list.onEach {
+                    val index: Int? = it.index?.toIntOrNull()
+                    if ((index != null) && (!used.contains(index))) {
+                        used.add(index)
+                    }
+                }
+                return used
+            }
 
-        icons.onEach{
-            try {
-                it.set("indexAdjusted",it.index)
+            // sort used indices ascending
+            val taken = findUniqueIndices(icons).sorted().toMutableList()
+            Log.d(TAG, "resolving indices: found " + taken.joinToString(", "))
 
-                val i = it.index?.toIntOrNull()
+            // take first (lowest)
+            var reserved = if (taken.isEmpty()) -1 else taken.removeAt(0)
+            var next = 0
 
-                // reassign icons with null or out-of-bounds indices, cut off remainder
-                if ((i == null) || (i >= gridCount)) {
-                    if (next < gridCount) { // else no more room, so icon is left out
+            return icons.onEach {
+                try {
+                    it.set("indexAdjusted", it.index)
+
+                    val i = it.index?.toIntOrNull()
+
+                    // reassign icons with null or out-of-bounds indices, cut off remainder
+                    if (i == null) {
                         // jump over taken indices
                         while (next == reserved) {
                             next++
@@ -76,21 +93,20 @@ class FittedGridProjection(val cols: Int, val rows: Int, var margins: Int? = 10)
                         Log.d(TAG, "Set icon " + i + " to index " + next)
                         it.set("indexAdjusted", next.toString())
                         next++
-                    }
-                    else {
-                        it.set("indexAdjusted", null)
-                    }
-                }
 
-                // pass through appropriately indexed icons unchanged
- /*               if (it.index != null) {
+                    }
+
+                    // pass through appropriately indexed icons unchanged
+                    /*               if (it.index != null) {
                     it.set("row", (it.index!!.toInt() / cols).toString())
                     it.set("col", (it.index!!.toInt() % cols).toString())
                 }
- */           }
-            catch (e: Exception) {
-                Log.e(TAG, "failed to map icon", e)
-            }
+ */
+                } catch (e: Exception) {
+                    Log.e(TAG, "failed to map icon", e)
+                }
+
+            }.sortedBy { it.get("indexAdjusted")?.toIntOrNull() }
 
         }
     }

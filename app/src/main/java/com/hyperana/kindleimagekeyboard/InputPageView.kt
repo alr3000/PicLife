@@ -73,7 +73,7 @@ open class IconAdapter(val context: Context, val icons: List<IconData>) : BaseAd
 
 
 class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
-    LinearLayout(context, attributeSet), ActionManager.ActionListener {
+    LinearLayout(context, attributeSet) {
 
     //todo: attach to view holder with model
     var page: PageData = PageData().apply { name = "Empty page" }
@@ -113,7 +113,7 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
         //setStyle()
 
         actionManager = (context as? MainActivity)?.actionManager
-        touchHandler = IconPageTouchHandler(this)
+        touchHandler = IconPageTouchHandler(actionManager)
 
     }
 
@@ -176,20 +176,11 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         try {
-        return touchHandler!!.onTouchEvent(this, views, event, touchAction)
+            return touchHandler!!.onTouchEvent(this, views, event, touchAction)
         } catch (e: Exception) {
             Log.e(TAG, "problem with icon touch handler: ", e)
             return false
         }
-    }
-
-    // action handler: receives actions from touch, passes through to owner:
-    override fun handleAction(action: AACAction, data: Any?): Boolean {
-        return actionManager?.handleAction(action, data) ?: false
-    }
-
-    override fun getActionTag(): Int {
-        return hashCode()
     }
 
     // depending on selected icon activation type,

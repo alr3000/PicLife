@@ -6,10 +6,7 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.DisposableHandle
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -36,38 +33,31 @@ open class PageData(var id: String = createPageId(),
 
     // live page resources are fetched in batch, does this even reduce the hits on database? Who knows.
     // Otherwise, maybe just give it the id and let it bind to the query here.
-    constructor(repository: AACRepository, livePageResource: LiveData<Resource?>) : this () {
 
-        live = livePageResource.apply {
-            observeForever { pageRes ->
+    constructor(resource: Resource?) : this (resource?.uid?.toString() ?: createPageId()) {
 
-                CoroutineScope(Dispatchers.IO).launch {
-                    // build icons:
-                    icons = pageRes
-                        ?.let { repository.getLiveChildResources(it) }
-                        ?.filterNotNull()
-                        ?.map { IconData(repository, it).apply { parentPageId = id } }
-                        ?.toMutableList()
-                        ?: mutableListOf()
-                }
+     // set data:
+        name = resource?.title ?: "Untitled"
 
-                // set data:
-                pageRes?.uid?.let { id = it.toString() }
-                name = pageRes?.title ?: "Untitled"
-                Log.d(TAG, "onChanged")
-
-            }
-        }
-        Log.d(TAG, "init")
     }
 
     val TAG : String
     get() = "PageData($name)"
 
+    val baseId = id.substringBeforeLast("_", id)
+
     //todo: -?- not mutable, just use plus
-    var icons: MutableList<IconData> = mutableListOf()
-
-
+    var icons: List<IconData> = mutableListOf()
+    set(value) {
+        val temp = field.size
+        field = value
+        if (field.size != temp)
+            onContentsChangedListener?.onContentsChanged(this)
+    }
+    interface ContentsListener {
+        fun onContentsChanged(page: PageData)
+    }
+    var onContentsChangedListener: ContentsListener? = null
 
     var mData: HashMap<String, String?> = hashMapOf()
 
@@ -78,10 +68,6 @@ open class PageData(var id: String = createPageId(),
     fun get(key: String) : String? {
         return mData.get(key)
     }
-
-
-    var live: LiveData<Resource?>? = null
-
 
     //TODO -L- add page title? for editable name
 

@@ -44,7 +44,8 @@ class IconData(var id: String = createIconId(),
     //protected var bmp: Bitmap? = null
 
     // todo: add link, style from data
-    constructor(repository: AACRepository, liveIconResource: LiveData<Resource?>) : this () {
+    constructor(repository: AACRepository, liveIconResource: LiveData<Resource?>, parentPage: PageData) : this () {
+        fPageId = parentPage.id
         CoroutineScope(Dispatchers.Main).launch {
             liveIconResource.observeForever {
                 text = it?.title

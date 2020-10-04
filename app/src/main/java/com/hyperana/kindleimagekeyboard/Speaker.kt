@@ -9,7 +9,7 @@ import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.Observer
 import java.util.*
 
-class Speaker(val app: App): LifecycleObserver, ActionManager.ActionListener {
+class Speaker(val app: App): LifecycleObserver, ActionListener {
 
     var TTS: TextToSpeech? = null
 

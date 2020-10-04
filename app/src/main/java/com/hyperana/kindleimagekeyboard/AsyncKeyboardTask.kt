@@ -209,7 +209,7 @@ open class AsyncKeyboardTask: AsyncTask<AsyncKeyboardParams, Int, String?>() {
                     copyImageTo(it, iconFile)
 
 
-                    page.icons.add(icon)
+                    page.icons = page.icons.plus(icon)
                 }
             }
             catch(e: Exception) {

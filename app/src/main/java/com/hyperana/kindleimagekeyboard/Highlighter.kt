@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
 
-class Highlighter(val app: App, val overlay: ViewGroup): ActionManager.ActionListener {
+class Highlighter(val app: App, val overlay: ViewGroup): ActionListener {
     val TAG = "Highlighter"
 
     override fun handleAction(action: AACAction, data: Any?): Boolean {

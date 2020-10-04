@@ -17,7 +17,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.preference.PreferenceManager
 
 class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
-    ActionManager.ActionListener {
+    ActionListener {
 
     val TAG = "MainActivity"
     val context = this
@@ -32,15 +32,9 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
 
     lateinit var app: App
     lateinit var aacViewModel: AACViewModel
-    lateinit var messageToolbar: Toolbar
 
     // create actionmanager that lives within this lifecycle:
     var actionManager: ActionManager = ActionManager(lifecycle)
-
-
-    var preferenceCheckTime = 0L
-
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate")
@@ -72,7 +66,7 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
                 actionManager.registerActionListener(it, listOf(AACAction.SPEAK))
             }
             findViewById<ViewGroup>(R.id.imageinput_overlay)?.also {
-                actionManager.registerActionListener(Highlighter(app, it), listOf(AACAction.HIGHLIGHT))
+                actionManager.registerActionListener(Highlighter(app, it), listOf(AACAction.FLASH))
             }
 
 

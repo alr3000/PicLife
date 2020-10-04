@@ -40,7 +40,7 @@ class MessageViewController (
     val forwardDeleteView: View? = null,
     val messageViewContainer: View? = null,
     val actionManager: ActionManager
-) : ActionManager.ActionListener, Toolbar.OnMenuItemClickListener
+) : ActionListener, Toolbar.OnMenuItemClickListener
 {
     val TAG = "MessageViewController"
 

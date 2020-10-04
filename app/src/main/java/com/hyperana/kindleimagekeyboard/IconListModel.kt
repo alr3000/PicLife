@@ -9,7 +9,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 //todo: word inputter contains iconlistmodel and implements interface as below
-open class IconListModel: ViewModel(), WordInputter, ActionManager.ActionListener {
+open class IconListModel: ViewModel(), WordInputter, ActionListener {
     open val TAG = "IconListModel"
 
     // icons value is always non-null. Set iconsLiveData, get icons.

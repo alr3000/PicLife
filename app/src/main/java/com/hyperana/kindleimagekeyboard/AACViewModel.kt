@@ -9,10 +9,8 @@ import android.os.PersistableBundle
 import android.util.Log
 import androidx.lifecycle.*
 import androidx.preference.PreferenceManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import java.lang.Math.min
 
 interface PageNavigator {
     fun goUp(num: Int = 1)
@@ -27,10 +25,11 @@ interface PageNavigator {
 }
 
 
+
 // todo: make a factory to add projection, defaults, keyboard, recents, tools
 // This model holds the keyboard, aac pages, recents pages, and tools pages,
 // it handles the logic of the AAC page/keyboard navigation and "exports" the page currently being requested/viewed:
-class AACViewModel(application: Application) : AndroidViewModel(application), PageNavigator {
+class AACViewModel(application: Application) : AndroidViewModel(application), PageNavigator, Observer<Resource?> {
 
     val TAG = "AACViewModel${hashCode()}"
 
@@ -46,10 +45,12 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
     //todo: could be a live transformation of the keyboard
     //todo: use transformations to observe data on other model layers
     private var aacPageList : List<PageData> = listOf()
-    set(value) {
-        field = value
-        Log.i(TAG, "setAACPageList with ${value.size} pages")
-    }
+        set(value) {
+            field = value
+            Log.i(TAG, "setAACPageList with ${value.size} pages")
+        }
+    //get() { return getProjectedPages(field) }
+
     private var upList = (0 .. 4).map { RecentsPage(repository, it)}
     private var downList = (0..2).map { ToolsPage(repository, it) }
     // position between up and down list where aac pages "show through"
@@ -62,41 +63,93 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
 
     // State:
     // create projected pages (and within them, icons) from the keyboard's child list:
-    val keyboardObserver = object: Observer<Resource?> {
-        override fun onChanged(t: Resource?) {
-            Log.i(TAG, "live keyboard change")
+    override fun onChanged(t: Resource?) {
+        Log.i(TAG, "live resource change: ${t?.resourceType}")
 
-            // access database in background:
-            CoroutineScope(Dispatchers.IO).launch {
-                aacPageList = async { (t
-                    ?.let { repository.getLiveChildResources(it) }
-                    ?.filterNotNull())
-                }.await()
-                    .let {
 
-                        // create models in main
-                        CoroutineScope(Dispatchers.Main).async {
-                            it?.map { PageData(repository, it) }
-                                ?: listOf(PageData())
-                        }.await()
-                    }
 
-                    // create indices for icons, overflow pages, etc!
-                    .let { getProjectedPages(it) }
+        // if the keyboard or page contents change, the affected models will be replaced here.
+        when (t?.resourceType) {
+
+            Resource.Type.KEYBOARD.name -> {
+                // access database in background to get child pages, observe them here:
+                CoroutineScope(Dispatchers.IO).launch {
+
+                    t
+                        .let { repository.getLiveChildResources(it) }
+                        .filterNotNull()
+
+                        .mapIndexed { index, liveData ->
+                            CoroutineScope(Dispatchers.Main).async {
+                                liveData.observeForever(this@AACViewModel)
+                            }
+                        }
+                }
+
+                // set pagelist with stubs:
+                aacPageList = repository
+                    .getChildIds(t)
+                    .map { PageData(it.toString()) }
 
                 // get default page
                 gotoHome()
             }
+
+            Resource.Type.PAGE.name ->
+                if (aacPageList.any { it.baseId == t.uid.toString()}) {
+
+                        val newPage = PageData(t)
+
+                        // icons observe their own models:
+                        CoroutineScope(Dispatchers.IO).launch {
+
+                            repository
+                                .getLiveChildResources(t)
+                                .filterNotNull()
+                                .map {
+                                    CoroutineScope(Dispatchers.Main).async {
+                                        IconData(repository, it, newPage)
+                                    }
+                                }
+                                .awaitAll()
+                                .also {
+                                    Log.i(TAG, "setting ${it.size} icon stubs for page ${newPage.name}")
+                                    newPage.icons = it
+                                    refreshPage(newPage)
+                                }
+                        }
+                    }
         }
     }
+
+
+    fun refreshPage(new: PageData) {
+        Log.d(TAG, "find page ${new.baseId} in ${aacPageList.map { it.baseId }}")
+        val start = aacPageList.indexOfFirst{ it.baseId == new.baseId }
+        val end = aacPageList.indexOfLast { it.baseId == new.baseId}
+        if (start >= 0 && end >= 0)
+        aacPageList = aacPageList
+            .slice(0 until start)
+            .plus (getProjectedPages(listOf(new)))
+            .plus (
+                aacPageList.slice( min(end + 1, aacPageList.size) until aacPageList.size)
+            )
+            .also { Log.i(TAG, "page ${new.name} refreshed")}
+        else Log.i(TAG, "requested page not found in list")
+    }
+
+
+
+
     private var liveKeyboardResource: LiveData<Resource?>? = null
-    set(value) {
-        CoroutineScope(Dispatchers.Main).launch {
-            field?.removeObserver(keyboardObserver)
-            field = value
-            field?.observeForever(keyboardObserver)
+        set(value) {
+            Log.i(TAG, "setLiveKeyboard: $value")
+            CoroutineScope(Dispatchers.Main).launch {
+                field?.removeObserver(this@AACViewModel)
+                field = value
+                field?.observeForever(this@AACViewModel)
+            }
         }
-    }
 
     private var currentPageLiveData = MutableLiveData(PageData())
     var liveCurrentPage: LiveData<PageData> = currentPageLiveData
@@ -153,7 +206,7 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
     override fun goUp(num: Int) {
         val newPos = getIndexFixed(upList.size + 1 + downList.size, currentPosition.second + num)
         //if (newPos != currentPosition.first)
-            setPosition(Pair(currentPosition.first, newPos))
+        setPosition(Pair(currentPosition.first, newPos))
     }
     override fun goDown(num: Int) { goUp( num * -1 ) }
 
@@ -162,7 +215,7 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
         if (shouldShowAlt) return
         val newPos = getIndexLooping(aacPageList.size, currentPosition.first + num)
         //if (newPos != currentPosition.first)
-            setPosition(Pair(newPos, currentPosition.second))
+        setPosition(Pair(newPos, currentPosition.second))
     }
     override fun goRight(num: Int) { goLeft(num * -1) }
 
@@ -199,7 +252,7 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
 
 
     fun getIndexLooping(length: Int, pos: Int) : Int {
-        return (pos + length)%length
+        return if (length == 0) 0 else (pos + length)%length
     }
 
     fun getIndexFixed(length: Int, pos: Int) : Int {
@@ -236,12 +289,12 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
     fun getProjectedPages(original: List<PageData>) : List<PageData> {
         val app = App.getInstance(getApplication<Application>().applicationContext)
         return original
-            .let {
+            /*.let {
                 RemoveBlanksProjection("icon").project(it)
             }
             .let {
                 LinkedPagesProjection(app.get("createLinks").toString()).project(it)
-            }
+            }*/
             .let {
                 val cols = app.get("columns").toString().toInt()
                 val rows = resolveRows(cols, app.appContext.resources.getConfiguration().orientation)
@@ -260,5 +313,6 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
 
         return kotlin.math.round(cols.toDouble() * rToC).toInt()
     }
+
 
 }

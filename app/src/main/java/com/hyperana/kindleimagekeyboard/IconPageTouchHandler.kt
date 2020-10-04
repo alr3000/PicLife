@@ -9,17 +9,17 @@ import androidx.core.view.children
 import androidx.lifecycle.MutableLiveData
 
 
-class IconPageTouchHandler(val actionListener: ActionManager.ActionListener) {
+class IconPageTouchHandler(val actionListener: ActionListener?) {
     val TAG = "IconPageTouchHandler"
 
     var startTouchView: View? = null
 
     fun preview(icon: IconData?, view: View?) {
-        icon?.also { actionListener.handleAction(AACAction.PREVIEW, listOf(it)) }
-        view?.also { actionListener.handleAction(AACAction.HIGHLIGHT, it) }
+        icon?.also { actionListener?.handleAction(AACAction.PREVIEW, listOf(it)) }
+        view?.also { actionListener?.handleAction(AACAction.HIGHLIGHT, it) }
     }
     fun execute(icon: IconData?, view: View?) {
-        icon?.also { actionListener.handleAction(AACAction.EXECUTE, listOf(icon))}
+        icon?.also { actionListener?.handleAction(AACAction.EXECUTE, listOf(icon))}
     }
 
     fun findIconCellByWindowCoordinate(views: List<View>, x: Float, y: Float) : View? {

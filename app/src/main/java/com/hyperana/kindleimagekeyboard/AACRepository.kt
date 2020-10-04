@@ -35,7 +35,6 @@ class AACRepository(db: AppDatabase) {
         return resourceDao.getAllLiveByType(Resource.Type.KEYBOARD.name)
     }
 
-
     // lists:
     fun getChildIds(res: Resource) : List<Int> {
         return res.children.split(AppDatabase.DELIMITER)
@@ -47,5 +46,6 @@ class AACRepository(db: AppDatabase) {
         return resourceDao.listAllByType(Resource.Type.KEYBOARD.name)
             .also { Log.d(TAG, "listKeyboards: ${it.joinToString()}")}
     }
+
 
 }
