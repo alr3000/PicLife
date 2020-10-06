@@ -40,12 +40,10 @@ class AACViewController (
 
     fun updateToolbar() {
         aacToolbar?.replaceActions(this,
-            listOf(
-                title,
-                if (app.get("doHomeButton")?.toString()?.toBoolean() ?: true) home else null
-            )
-                .filterNotNull()
+            listOf(title, settings)
         )
+        if (app.get("doHomeButton")?.toString()?.toBoolean() ?: true)
+            aacToolbar?.setLeftCornerAction(this, home)
     }
 
 

@@ -48,18 +48,12 @@ class MessageViewController (
     // actions shown while message iconlistview is visible:
     val activeActions: List<AACAction>
         get() = listOf(
-            AACAction.TOGGLE(false), SPEAK, CLEAR
+            SPEAK, CLEAR
         )
     // actions shown when message view is collapsed:
     val inactiveActions: List<AACAction>
         get() = listOf(
-            TITLE, TOGGLE(true), SPEAK
-        )
-
-    //todo: separate logic for messageviewcontroller with wordinputter vs. iconlistmodel or always use iconlistmodel
-    val inputActions: List<AACAction>
-        get() = iconListModel?.let { actionManager.getActionsByListener(it)} ?: listOf(
-            BACKSPACE, CLEAR
+            TITLE, SPEAK
         )
 
     var selectedIndex = 0
@@ -122,6 +116,8 @@ class MessageViewController (
     fun updateToolbar() {
         messageToolbar?.replaceActions(this, if (iconListView?.visibility == View.VISIBLE)
             activeActions else inactiveActions)
+        messageToolbar
+            ?.setLeftCornerAction(this, AACAction.TOGGLE(iconListView?.visibility != View.VISIBLE))
     }
 
 
