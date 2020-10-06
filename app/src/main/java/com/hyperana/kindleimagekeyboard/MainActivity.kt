@@ -1,6 +1,5 @@
 package com.hyperana.kindleimagekeyboard
 
-import android.app.TaskStackBuilder
 import android.content.Intent
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.os.Bundle
@@ -11,7 +10,6 @@ import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.preference.PreferenceManager
@@ -35,6 +33,7 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
 
     // create actionmanager that lives within this lifecycle:
     var actionManager: ActionManager = ActionManager(lifecycle)
+    var aacToolbar: ActionToolbar? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate")
@@ -46,20 +45,22 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
             // load default settings -- false means this will not execute twice
             PreferenceManager.setDefaultValues(this, R.xml.settings, false)
 
+            setContentView(R.layout.activity_main)
+            findViewById<View>(R.id.loading_fragment_view)?.visibility = View.GONE
+
             aacViewModel = ViewModelProvider(context as ViewModelStoreOwner)[AACViewModel::class.java]
             aacViewModel.onRestoreInstanceState(
                 savedInstanceState,
                 PreferenceManager.getDefaultSharedPreferences(applicationContext)
             )
 
-            actionManager.registerActionListener(messageViewModel, listOf(
-                AACAction.BACKSPACE, AACAction.CLEAR, AACAction.EXECUTE
-            ))
+
+            // register main activity-controlled actions:
             // this activity will decide what to do with "preview" action:
             actionManager.registerActionListener(this, listOf(AACAction.PREVIEW))
 
-            setContentView(R.layout.activity_main)
-            findViewById<View>(R.id.loading_fragment_view)?.visibility = View.GONE
+            // set message model to receive "executed" icons from anywhere in this activity:
+            actionManager.registerActionListener(messageViewModel, listOf(AACAction.EXECUTE))
 
             // initialize speech and other activity-based action listeners:
             Speaker(app).also {
@@ -69,18 +70,12 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
             findViewById<ViewGroup>(R.id.imageinput_overlay)?.also {
                 actionManager.registerActionListener(Highlighter(app, it), listOf(AACAction.FLASH))
             }
+            AccessSettingsController(gotoSettingsView = findViewById(R.id.settings_button))
+                .also { actionManager.registerActionListener(it, listOf(AACAction.OPEN_SETTINGS))}
 
-            // initialize settings controller:
-            AccessSettingsController(
-                requestSettingsView = findViewById(R.id.preferences_button),
-                gotoSettingsView = findViewById(R.id.settings_button),
-                overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
-                actionManager
-            )
+            // wrap aac options toolbar for use with actions:
+            aacToolbar = findViewById<Toolbar>(R.id.input_action_toolbar)?.let { ActionToolbar(it) }
 
-
-
-      //      startActivityForResult(Intent(this, LaunchActivity::class.java), REQUEST_STARTUP)
 
         }catch (e: Exception) {
             displayError("failed to create activity", e)
@@ -127,25 +122,22 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
 
 
 
-            MessageViewController(
-                app = app,
-                lifecycleOwner = this,
-                iconListModel = messageViewModel,
-                overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
-                backspaceView = findViewById(R.id.backspace_button),
-                forwardDeleteView = findViewById(R.id.forwarddel_button),
-                messageViewContainer = findViewById(R.id.message_container),
-                actionManager = actionManager
-            )
+        MessageViewController(
+            app = app,
+            lifecycleOwner = this,
+            iconListModel = messageViewModel,
+            messageViewContainer = findViewById(R.id.message_container),
+            actionManager = actionManager
+        )
 
-            AACManager(
-                app = app,
-                overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
-                aacViewModel = aacViewModel,
-                gotoHomeView = findViewById(R.id.home_button),
-                titleView = findViewById<TextView>(R.id.inputpage_name),
-                actionManager = actionManager
-            )
+        AACViewController(
+            app = app,
+            overlay = findViewById<ViewGroup>(R.id.imageinput_overlay),
+            lifecycleOwner = this,
+            aacViewModel = aacViewModel,
+            aacToolbar = aacToolbar,
+            actionManager = actionManager
+        )
 
 
     }

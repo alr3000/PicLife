@@ -5,49 +5,47 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.TextView
 import androidx.lifecycle.*
 
 // handles aac icon actions, such as deep links (not swipe paging) and overlay graphics
 // handles view updates outside of the pager (title, back)
-class AACManager (
+class AACViewController (
     val app: App,
     val overlay: ViewGroup?,
+    val lifecycleOwner: LifecycleOwner,
     val aacViewModel: AACViewModel,
-    val gotoHomeView: View?,
-    val titleView: TextView?,
+    val aacToolbar: ActionToolbar?,
     val actionManager: ActionManager
 )
     :   IconListener, ActionListener
 {
 
     val TAG = "AACManager"
-
+    var title = AACAction("AACPageTitle", "")
+    val back = AACAction("AACBack", "Back", android.R.drawable.ic_media_previous)
+    val home = AACAction.HOME
+    val settings = AACAction.OPEN_SETTINGS
 
     init {
 
-        titleView?.also { title ->
-            aacViewModel.liveCurrentPage.observe(title.context as LifecycleOwner) {
-                title.text = it.name
+        // set aac context actions in toolbar:
+            aacViewModel.liveCurrentPage.observe(lifecycleOwner) {
+                title = AACAction("AACPageTitle", it.name ?: "")
+               updateToolbar()
             }
-        }
 
-        gotoHomeView?.apply {
-            visibility =
-                if (app.get("doHomeButton")?.toString()?.toBoolean() ?: true) View.VISIBLE
-                else View.INVISIBLE
-
-            setOnClickListener { v -> doClickHome(v) }
-        }
-
-        actionManager.registerActionListener(this, listOf(AACAction.PREVIEW, AACAction.EXECUTE, AACAction.HIGHLIGHT))
+        // register for actions generated elsewhere:
+        actionManager.registerActionListener(this, listOf(AACAction.HIGHLIGHT))
     }
 
-
-    fun doClickHome(view: View): Boolean {
-        Log.d(TAG, "doClickHome")
-        aacViewModel.gotoHome()
-        return true
+    fun updateToolbar() {
+        aacToolbar?.replaceActions(this,
+            listOf(
+                title,
+                if (app.get("doHomeButton")?.toString()?.toBoolean() ?: true) home else null
+            )
+                .filterNotNull()
+        )
     }
 
 
@@ -56,15 +54,16 @@ class AACManager (
     override fun handleAction(action: AACAction, data: Any?): Boolean {
         Log.d(TAG, "handleAction: $action, $data")
         return when (action) {
-             AACAction.HIGHLIGHT -> (data as? View)
+            AACAction.HOME -> aacViewModel.gotoHome().let { true }
+            AACAction.HIGHLIGHT -> (data as? View)
                 ?.also { highlightIcon( it, it.tag as? IconData)}
                 .let { true }
-            else -> false
+            else -> actionManager.handleAction(action, data)
         }
     }
 
     override fun getActionTag(): Int {
-        TODO("Not yet implemented")
+        return TAG.hashCode()
     }
 
     override fun onIconEvent(icon: IconData?, action: AACAction?, view: View?) {

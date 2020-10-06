@@ -74,7 +74,19 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/imageinput_overlay"/>
+        android:id="@+id/imageinput_overlay">
+
+        <Button
+            android:id="@+id/settings_button"
+            style="@style/settings_btn_style"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_gravity="center"
+            android:contentDescription="@string/settings_2_desc"
+            android:text="@string/button_goto_settings"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <LinearLayout
         android:id="@+id/loading_fragment_view"

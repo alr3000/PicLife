@@ -9,34 +9,40 @@ import android.util.Log
 import android.view.View
 
 
-class AccessSettingsController(val requestSettingsView: View?,
-                               val gotoSettingsView : View?,
-                               val overlay: View?,
-                               val actionManager: ActionManager?
-) {
+// Settings access ui that shows a centered button to open settings as well
+// as volume control on overlay, on OPEN_SETTINGS action. Hides both after timeout.
+
+class AccessSettingsController(val gotoSettingsView : View) : ActionListener {
     val TAG = "AccessSettingsControllr"
 
     init {
-        requestSettingsView?.setOnClickListener { v: View -> doClickPreferences(v) }
-        gotoSettingsView?.setOnClickListener { v: View -> doClickGotoSettings(v) }
+        gotoSettingsView.setOnClickListener { v: View -> doClickGotoSettings(v) }
     }
 
-    fun doClickPreferences(v: View) : Boolean {
+    override fun handleAction(action: AACAction, data: Any?): Boolean {
+        return if (action == AACAction.OPEN_SETTINGS) doClickPreferences() else false
+    }
+
+    override fun getActionTag(): Int {
+        return TAG.hashCode()
+    }
+
+    fun doClickPreferences() : Boolean {
         try {
             Log.d(TAG, "doClickPreferences")
             val SETTINGS_BUTTON_TIME = 2000L
 
             // show volume control for music stream
             val stream = AudioManager.STREAM_MUSIC
-            val am = v.context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val am = gotoSettingsView.context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
             am.adjustStreamVolume(stream, AudioManager.ADJUST_SAME, AudioManager.FLAG_SHOW_UI)
 
             // show settings link
-            gotoSettingsView?.visibility = View.VISIBLE
+            gotoSettingsView.visibility = View.VISIBLE
             Handler().postDelayed(
                 {
                     try {
-                        gotoSettingsView?.visibility = View.GONE
+                        gotoSettingsView.visibility = View.GONE
                     } catch (e: Exception) {
                         Log.e(TAG, "settings button timer code problem: ", e)
                     }

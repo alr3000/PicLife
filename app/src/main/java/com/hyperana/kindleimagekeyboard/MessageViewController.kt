@@ -33,11 +33,7 @@ interface MessageViewManager {
 class MessageViewController (
     val app: App,
     val lifecycleOwner: LifecycleOwner,
-    val inputter: WordInputter? = null,
     val iconListModel: IconListModel? = null,
-    val overlay: ViewGroup,
-    val backspaceView: View? = null,
-    val forwardDeleteView: View? = null,
     val messageViewContainer: View? = null,
     val actionManager: ActionManager
 ) : ActionListener, Toolbar.OnMenuItemClickListener
@@ -46,13 +42,15 @@ class MessageViewController (
 
 
     //todo: use create view to get actionView and apply click listener (don't use menu click)
-    val TITLE: AACAction = object: AACAction("title", "") {
+    val TITLE: AACAction = object: AACAction("messageText", "") {
 
     }
+    // actions shown while message iconlistview is visible:
     val activeActions: List<AACAction>
         get() = listOf(
             AACAction.TOGGLE(false), SPEAK, CLEAR
         )
+    // actions shown when message view is collapsed:
     val inactiveActions: List<AACAction>
         get() = listOf(
             TITLE, TOGGLE(true), SPEAK
@@ -66,7 +64,8 @@ class MessageViewController (
 
     var selectedIndex = 0
     val iconListView: ViewGroup? = messageViewContainer?.findViewById<ViewGroup>(R.id.message_iconlist)
-    val messageToolbar: Toolbar? = messageViewContainer?.findViewById(R.id.message_action_toolbar)
+    val messageToolbar: ActionToolbar? = messageViewContainer?.findViewById<Toolbar>(R.id.message_action_toolbar)
+        ?.let { ActionToolbar(it) }
 
 
     // match icon list to message model:
@@ -117,21 +116,14 @@ class MessageViewController (
         }
 
         // add action views:
-        messageToolbar?.apply {
-            setOnMenuItemClickListener(this@MessageViewController)
-        }
-        lifecycleOwner.lifecycle.addObserver(object: LifecycleObserver {
-            @OnLifecycleEvent(value = Lifecycle.Event.ON_START)
-            fun onStart() {
-
-                Log.d(TAG, "onStart")
-              //  messageToolbar?.inflateMenu(R.menu.menu_main)
-                updateMessageActions(if (iconListView?.visibility == View.VISIBLE)
-                activeActions else inactiveActions)
-            }
-        })
-
+        updateToolbar()
     }
+
+    fun updateToolbar() {
+        messageToolbar?.replaceActions(this, if (iconListView?.visibility == View.VISIBLE)
+            activeActions else inactiveActions)
+    }
+
 
 
     // message interface:
@@ -162,10 +154,7 @@ class MessageViewController (
         when (action) {
             HIDE -> toggleView(false)
             SHOW -> toggleView(true)
-            AACAction.CLEAR -> {
-                iconListModel?.clear()
-                return true
-            }
+            CLEAR -> iconListModel?.handleAction(action, null)
             SPEAK -> actionManager.handleAction(action, iconListModel?.getAllText())
         }
         return false
@@ -180,21 +169,7 @@ class MessageViewController (
         iconListView?.visibility = if (show) View.VISIBLE else View.GONE
 
         // update actionview when hidden/shown:
-        updateMessageActions(if (show) activeActions else inactiveActions)
+        updateToolbar()
     }
 
-    // must do after drawing toolbar
-    fun updateMessageActions(actions: List<AACAction>) {
-
-        Log.d(TAG, "adding message actions: ${actions.joinToString()} to ${messageToolbar?.menu}")
-        messageToolbar?.menu?.apply {
-            removeGroup(getActionTag())
-            actions.forEach {
-                this.add(getActionTag(), it.menuId, 0, it.displayString).apply {
-                    it.drawableId?.also { setIcon(it) }
-                    setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
-                }
-            }
-        }
-    }
 }

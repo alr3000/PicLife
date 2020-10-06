@@ -18,7 +18,6 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodSubtype
 import android.widget.TextView
 import androidx.lifecycle.*
-import androidx.lifecycle.Observer
 import java.util.*
 
 //todo: -?- settings could be accessed through notification instead while service is running
@@ -230,12 +229,7 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
 
         val app = App.getInstance(applicationContext)
 
-        AccessSettingsController(
-            requestSettingsView = view!!.findViewById(R.id.preferences_button),
-            gotoSettingsView = view!!.findViewById(R.id.settings_button),
-            overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay),
-            actionManager
-        )
+        AccessSettingsController(gotoSettingsView = view!!.findViewById(R.id.settings_button))
 
         //todo: -?- register speaker and inputview for icon localbroadcasts
         iconListeners = listOf(
@@ -245,20 +239,16 @@ class ImageInputIME(): InputMethodService(), LifecycleOwner {
             MessageViewController(
                 app = app,
                 lifecycleOwner = this,
-                inputter = wordInputter,
-                overlay = view!!.findViewById<ViewGroup>(R.id.imageinput_overlay),
-                backspaceView = view!!.findViewById(R.id.backspace_button),
-                forwardDeleteView = view!!.findViewById(R.id.forwarddel_button),
                 actionManager = actionManager
             ),
-            AACManager(
+            AACViewController(
                 app = app,
                 overlay = view?.findViewById<ViewGroup>(R.id.imageinput_overlay),
                 //todo: -L- pager type determined by preferences: one-at-a-time or momentum scroller, etc
                 aacViewModel = aacViewModel,
-                gotoHomeView = view!!.findViewById(R.id.home_button),
-                titleView = view!!.findViewById<TextView>(R.id.inputpage_name),
-                actionManager = actionManager
+                aacToolbar = null,
+                actionManager = actionManager,
+                lifecycleOwner = this
             )
         )
 

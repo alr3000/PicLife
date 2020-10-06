@@ -46,6 +46,7 @@ class AACRepository(db: AppDatabase) {
             .also { Log.d(TAG, "listKeyboards: ${it.joinToString()}")}
     }
 
+    // this can't be a local function inside asyncBuildKeyboard due to Kotlin compiler issue:
     suspend fun requestPagesRecursive(parent: Resource): List<PageData> {
         return supervisorScope {
 

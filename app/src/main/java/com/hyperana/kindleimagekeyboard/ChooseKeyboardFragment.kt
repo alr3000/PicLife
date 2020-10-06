@@ -75,6 +75,12 @@ class ChooseKeyboardFragment internal constructor(): Fragment(), AdapterView.OnI
 
     fun onSetKeyboards() {
 
+        // don't present list if there is no choice:
+        if (keyboards.size <= 1) {
+            fragmentListener?.closeFragment(this)
+            return
+        }
+
         // set current selection before setting selection listener:
         val selected = androidx.preference.PreferenceManager.getDefaultSharedPreferences(requireActivity().applicationContext)
             .getString(PREF_KEYBOARD_ID, null)
