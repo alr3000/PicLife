@@ -102,8 +102,8 @@ interface ResourceDao {
     fun getAllUriContains(text: String): Cursor?
 
     // todo: paging
-    @Query("SELECT * FROM resource WHERE resource_type IN (:types)")
-    fun getAllByType(types: Array<String>): Cursor?
+    @Query("SELECT * FROM resource WHERE resource_type IN (:types) LIMIT :limit")
+    fun getAllByType(types: Array<String>, limit: Int = 10): Cursor?
 
     @Query("SELECT * FROM resource WHERE uid IN (:ids)")
     fun getLiveById(ids: IntArray): List<Resource>?
@@ -122,6 +122,9 @@ interface ResourceDao {
 
     @Query("SELECT * FROM resource WHERE uid=:id LIMIT 1")
     fun get(id: Int): Cursor?
+
+    @Query("SELECT * FROM resource WHERE uid=:id LIMIT 1")
+    fun find(id: Int): Resource?
 
     /**
      * UPSERT following https://stackoverflow.com/a/50736568/7439163

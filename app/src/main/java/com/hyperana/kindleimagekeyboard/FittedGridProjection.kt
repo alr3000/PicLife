@@ -31,7 +31,7 @@ class FittedGridProjection(val cols: Int, val rows: Int, var margins: Int?) : Ke
     }
 
     companion object {
-        val TAG = "FixedKeyboardProjection"
+        val TAG = "FittedGridProjection"
 
 
         fun mapToPages(original: PageData, rows: Int, cols: Int, margins: Int): List<PageData> {

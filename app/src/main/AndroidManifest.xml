@@ -51,9 +51,7 @@
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings"
             android:launchMode="singleTask">
-            <intent-filter>
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+
         </activity> <!-- todo: -L- share-image activity inserts as icon in selected page with text -->
         <activity
             android:name=".CreateKeyboardActivity"

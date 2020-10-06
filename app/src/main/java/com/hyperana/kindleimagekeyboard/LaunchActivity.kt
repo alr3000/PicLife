@@ -26,7 +26,10 @@ class LaunchActivity : AppCompatActivity() {
             if (!nextFragment()) cb()
         }
 
+        // remove fragment from pending list and show it until list is empty:
         private fun nextFragment() : Boolean{
+            Log.d("FragmentChain", "nextFragment/${fragments.size}")
+
             if (fragments.isNotEmpty())
                 fragments.removeAt(0).also {
                     manager.beginTransaction()
@@ -38,19 +41,22 @@ class LaunchActivity : AppCompatActivity() {
         }
 
         override fun closeFragment(fragment: Fragment) {
+            Log.d("FragmentChain", "closeFragment")
             try {
+                // replace with next:
                 if (!nextFragment()) {
+
+                    // or simply remove and report done:
                     manager.beginTransaction()
                         .remove(fragment)
                         .commit()
+                    cb()
                 }
             }
             catch (e: Exception) {
                 Log.e("FragmentChainListener", "failed close chain fragment", e)
             }
-            finally {
-                cb()
-            }
+
         }
     }
 
@@ -71,6 +77,7 @@ class LaunchActivity : AppCompatActivity() {
             val startup = mutableListOf<Fragment>()
 
             startup.add(LoadAssetsFragment.create(chain))
+            startup.add(ChooseKeyboardFragment.create(chain))
 
             //todo: -?- add fragment to load images for current aac keyboard/page
             chain.start(startup)

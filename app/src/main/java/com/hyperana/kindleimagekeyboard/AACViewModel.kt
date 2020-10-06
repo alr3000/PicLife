@@ -48,6 +48,13 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
         set(value) {
             field = value
             Log.i(TAG, "setAACPageList with ${value.size} pages")
+
+            // nav to new position of current page:
+            liveCurrentPage.value?.baseId
+                ?.let { getPositionOfPageId(it)}
+                ?.also { Log.d(TAG, "found current page in new pages")}
+                ?.also { setPosition(it) }
+                ?: gotoHome()
         }
     //get() { return getProjectedPages(field) }
 
@@ -91,7 +98,7 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
                     .getChildIds(t)
                     .map { PageData(it.toString()) }
 
-                // get default page
+                // get default page (icons may not be there yet)
                 gotoHome()
             }
 
@@ -100,7 +107,7 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
 
                         val newPage = PageData(t)
 
-                        // icons observe their own models:
+                        // icons observe their own models for changes:
                         CoroutineScope(Dispatchers.IO).launch {
 
                             repository
@@ -134,7 +141,7 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
             .plus (
                 aacPageList.slice( min(end + 1, aacPageList.size) until aacPageList.size)
             )
-            .also { Log.i(TAG, "page ${new.name} refreshed")}
+            .also { Log.i(TAG, "page ${new.name}(${new.baseId}) refreshed")}
         else Log.i(TAG, "requested page not found in list")
     }
 
@@ -167,7 +174,7 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
         Log.d(TAG, "restore instance state")
         val prefId = prefs.getInt("currentKeyboardId", -1)
         savedInstanceState.also { saved ->
-            (saved?.getInt(EXTRA_KEYBOARD_ID, prefId) ?: prefId)
+            (saved?.getInt(PREF_KEYBOARD_ID, prefId) ?: prefId)
                 .also { id ->
                     if (id != liveKeyboardResource?.value?.uid)
                         replaceKeyboard(id)
@@ -225,7 +232,7 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
         Log.i(TAG, "setPosition: $newPos")
         val currentId = currentPageId.toString()
         getPageFromPosition(newPos)?.also { newPage ->
-            if (newPage.id == currentId) return
+           // if (newPage.id == currentId) return
             currentPosition = newPos
             currentPageLiveData.postValue(newPage)
         }
@@ -272,14 +279,20 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
     }
 
     fun getPositionOfPageId(id: String) : Position? {
+        fun compare(str: String, page: PageData) =
+            str == page.id || str == page.baseId
+
         // try up/down lists first:
         downList.plus (PageData()).plus(upList)
-            .indexOfFirst { it.id == id }
+            .indexOfFirst { compare(id, it) }
             .also { if (it != -1)
                 return Pair(currentPosition.first, it)
             }
 
-        aacPageList.indexOfFirst { it.id == id }.also {
+        aacPageList.indexOfFirst {
+            Log.d(TAG, "found id ${it.baseId}")
+            compare(id, it)
+        }.also {
             if (it != -1)
                 return Pair(it, currentPosition.second)
         }

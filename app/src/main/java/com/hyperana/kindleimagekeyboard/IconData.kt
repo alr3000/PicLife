@@ -55,6 +55,15 @@ class IconData(var id: String = createIconId(),
             }
         }
     }
+
+    constructor(iconResource: Resource, parentId: String)
+            : this(iconResource.uid.toString()) {
+        fPageId = parentId
+        text = iconResource.title
+        id = iconResource.uid.toString()
+        thumbUri = Uri.parse(iconResource.resourceUri)
+    }
+
     val TAG: String
         get() = "IconData($text)"
 

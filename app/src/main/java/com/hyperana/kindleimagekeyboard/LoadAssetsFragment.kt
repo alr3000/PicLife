@@ -54,11 +54,15 @@ class LoadAssetsFragment internal constructor(): Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+
+    }
+
+    override fun onResume() {
+        super.onResume()
         try {
             Log.d(TAG, "onViewCreated")
 
 
-            startProgress()
 
             //start asset move for each unloaded asset folder:
             loaders = getKeyboardsNotLoaded(requireActivity()).map {
@@ -77,7 +81,10 @@ class LoadAssetsFragment internal constructor(): Fragment() {
             }
 
             if (loaders.isEmpty()) endStartup()
-            else loadersStartCount = loaders.count()
+            else {
+                loadersStartCount = loaders.count()
+                startProgress()
+            }
 
             Log.d(TAG, "$loadersStartCount loaders started")
 
@@ -123,7 +130,7 @@ class LoadAssetsFragment internal constructor(): Fragment() {
             .count {
                 it.status == AsyncTask.Status.FINISHED
             }
-            .let {if (it == 0) 100 else (it * 100) / loadersStartCount }
+            .let { (it * 100) / loadersStartCount }
             .also {percentDone ->
                 Log.d(TAG, "update progress: $percentDone")
                 (view?.findViewById(R.id.progress_bar) as? ProgressBar)?.progress = percentDone

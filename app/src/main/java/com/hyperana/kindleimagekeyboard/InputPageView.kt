@@ -170,6 +170,10 @@ class InputPageView(context: Context, attributeSet: AttributeSet? = null) :
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 
+    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        super.onLayout(changed, l, t, r, b)
+        Log.d(TAG, "onLayout: ${iconAdapter?.count} icons")
+    }
 
     //************************************* TOUCH HANDLERS ***************************************
     // settings: touchAction (touchActionDown, touchActionUp, touchActionClick)

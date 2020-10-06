@@ -29,6 +29,8 @@ open class PageData(var id: String = createPageId(),
                 .map { IconData(it) }
                 .toMutableList()
 
+        Log.d(TAG, "Created from JSON")
+
     }
 
     // live page resources are fetched in batch, does this even reduce the hits on database? Who knows.
@@ -38,13 +40,16 @@ open class PageData(var id: String = createPageId(),
 
      // set data:
         name = resource?.title ?: "Untitled"
-
+        Log.d(TAG, "Created from resource")
     }
 
+    init {
+        Log.d(TAG, "init")
+    }
     val TAG : String
-    get() = "PageData($name)"
+    get() = "PageData($name/$id)"
 
-    val baseId = id.substringBeforeLast("_", id)
+    val baseId = id.split("_")[0]
 
     //todo: -?- not mutable, just use plus
     var icons: List<IconData> = mutableListOf()

@@ -3,7 +3,6 @@ package com.hyperana.kindleimagekeyboard
 import android.app.Application
 import android.content.Intent
 import android.content.SharedPreferences
-import android.preference.PreferenceManager
 import android.util.Log
 import java.util.*
 import android.app.ActivityManager
@@ -20,6 +19,7 @@ import android.util.Size
 import android.widget.ImageView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.preference.PreferenceManager
 
 
 /**

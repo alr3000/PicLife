@@ -6,12 +6,11 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 class AACRepository(db: AppDatabase) {
 
-    val TAG = "PageRepository"
+    val TAG = "AACRepository"
     private val resourceDao = db.resourceDao()
 
 
@@ -45,6 +44,47 @@ class AACRepository(db: AppDatabase) {
     suspend fun listKeyboards() : List<Resource>? {
         return resourceDao.listAllByType(Resource.Type.KEYBOARD.name)
             .also { Log.d(TAG, "listKeyboards: ${it.joinToString()}")}
+    }
+
+    suspend fun requestPagesRecursive(parent: Resource): List<PageData> {
+        return supervisorScope {
+
+            val pages = mutableListOf<PageData>()
+
+            // get child resources:
+            val children = resourceDao.listAllByIds(getChildIds(parent).toIntArray())
+
+            // add parent to pagelist if it is a page resource or has children:
+            if (parent.resourceType == Resource.Type.PAGE.name || children.count() > 0)
+                pages.add(PageData(parent))
+
+
+            // add all children of children recursively to pagelist:
+            children.map { async { requestPagesRecursive(it) } }
+                .awaitAll()
+                .also { pages.addAll(it.flatten()) }
+
+            // add children to this page as icons:
+            children.map { IconData(it, parent.uid.toString()) }
+
+
+            pages
+        }
+    }
+
+    suspend fun asyncBuildKeyboard(id: Int?) : Deferred<List<PageData>>? {
+        return supervisorScope {
+
+            // get requested keyboard, null if not found:
+             id
+                ?.let { resourceDao.find(it) }
+                ?.let {
+
+                    // request child resources:
+                    async { requestPagesRecursive(it) }
+
+                }
+        }
     }
 
 

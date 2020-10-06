@@ -42,7 +42,7 @@ val PREF_DROPBOX_ENABLED = "dropbox_enabled"
 val EXTRA_ICON_ID = "icon_id"
 val EXTRA_ICON_ACTION = "icon_action"
 
-
+val PREF_KEYBOARD_ID = "keyboard_id"
 
 
 

@@ -59,6 +59,7 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
             actionManager.registerActionListener(this, listOf(AACAction.PREVIEW))
 
             setContentView(R.layout.activity_main)
+            findViewById<View>(R.id.loading_fragment_view)?.visibility = View.GONE
 
             // initialize speech and other activity-based action listeners:
             Speaker(app).also {
@@ -68,7 +69,6 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
             findViewById<ViewGroup>(R.id.imageinput_overlay)?.also {
                 actionManager.registerActionListener(Highlighter(app, it), listOf(AACAction.FLASH))
             }
-
 
             // initialize settings controller:
             AccessSettingsController(
