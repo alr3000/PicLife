@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingTranslation">
+
+    <!-- Strings related to Settings -->
+    <string name="pref_cat_touch">Icon Activation</string>
+    <string name="pref_cat_colors">Colors</string>
+
+    <!-- Keyboard Content -->
+    <string name="pref_cat_directory">Keyboard Content</string>
+    <string name="pref_use_custom_directory">Use custom keyboard</string>
+    <string name="pref_add_directory_title">Manage custom keyboards</string>
+    <string name="pref_choose_directory">Change Keyboard</string>
+    <string name="default_keyboard_name">example</string>
+    <string name="pref_default_directory">default</string>
+    <string name="pref_create_links_title">Links to subpages are</string>
+    <string name="entry_create_links_matching">createLinksMatching</string>
+    <string-array name="pref_create_links_entries">
+        <item>icons with matching text</item>
+        <!--      <item>auto-generated links</item>
+        <item>auto-generated when matching icon is not found</item>-->
+        <item>none (navigate by swiping only)</item>
+    </string-array>
+    <string-array name="pref_create_links_values">
+        <item>@string/entry_create_links_matching</item>
+        <!--      <item>createLinksDuplicate</item>
+        <item>createLinksMissing</item>   -->
+        <item>@string/entry_never</item>
+    </string-array>
+
+    <!-- Layout settings -->
+    <string name="pref_cat_layout_title">Layout</string>
+    <string name="pref_grid_size_title">Grid size</string>
+    <string-array name="pref_grid_size_entries">
+        <item>3 x 2</item>
+        <item>5 x 3</item>
+        <item>9 x 5</item>
+        <item>12 x 7</item>
+    </string-array>
+    <string name="pref_grid_columns_title">Columns</string>
+    <string-array name="pref_grid_columns_entries">
+        <item>1 (single icon)</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+    </string-array>
+
+    <string name="pref_background_color_title">Background Color</string>
+    <string-array name="pref_background_color_entries">
+        <item>Black</item>
+        <item>Grey</item>
+        <item>White</item>
+        <item>Mocha</item>
+        <item>Steel</item>
+    </string-array>
+    <string-array name="pref_background_color_values">
+        <item>#000000</item>
+        <item>#50514F</item>
+        <item>#EDEEED</item>
+        <item>#CFC0BD</item>
+        <item>#8499B1</item>
+    </string-array>
+    <string name="pref_icon_density_title">Icon margins</string>
+    <string-array name="pref_icon_density_entries">
+        <item>Thin</item>
+        <item>Medium</item>
+        <item>Wide</item>
+    </string-array>
+    <string-array name="pref_icon_density_values">
+        <item>1</item>
+        <item>8</item>
+        <item>25</item>
+    </string-array>
+
+
+    <!-- Touch settings -->
+    <string name="pref_touch_action_title">Activate on</string>
+    <string name="entry_touch_click">touchActionClick</string>
+    <string name="entry_touch_down">touchActionDown</string>
+    <string name="entry_touch_up">touchActionUp</string>
+
+    <string-array name="pref_touch_action_entries">
+        <item>click</item>
+        <item>touch</item>
+        <item>release</item>
+    </string-array>
+    <string-array name="pref_touch_action_values">
+        <item>@string/entry_touch_click</item>
+        <item>@string/entry_touch_down</item>
+        <item>@string/entry_touch_up</item>
+    </string-array>
+
+
+    <string name="pref_cat_icon_feedback">Icon Feedback</string>
+
+    <!-- Speak settings -->
+    <string name="key_speech_enabled">doSpeak</string>
+    <string name="pref_cat_speech">Speech</string>
+    <string name="pref_speak_title">Enable speech</string>
+    <string name="key_speak_links">speakLinks</string>
+    <string name="key_speak_icons">speakWords</string>
+    <string name="key_speak_text">speakText</string>
+    <string name="pref_speak_words_title">Speak Words</string>
+    <string name="entry_speak_touch">when icon is touched</string>
+    <string name="entry_speak_enter">when icon is entered</string>
+    <string name="entry_never">never</string>
+    <string-array name="pref_speak_words_entries">
+        <item>@string/entry_speak_touch</item>
+        <item>@string/entry_speak_enter</item>
+        <item>@string/entry_never</item>
+    </string-array>
+
+
+    <string name="pref_speak_text_title">Speak Whole Message</string>
+    <string name="entry_speak_message_action">when action button is clicked</string>
+    <string name="entry_speak_message_each">after each word is entered</string>
+    <string-array name="pref_speak_text_entries">
+        <item>@string/entry_speak_message_action</item>
+        <item>@string/entry_speak_message_each</item>
+        <item>@string/entry_never</item>
+    </string-array>
+    <string-array name="pref_speak_text_values">
+        <item>@string/entry_speak_message_action</item>
+        <item>@string/entry_speak_message_each</item>
+        <item>@string/entry_never</item>
+    </string-array>
+
+    <string name="pref_cat_paging_title">Page Navigation</string>
+    <string name="pref_home_button_title">Show Home button</string>
+
+    <!-- Link Settings -->
+    <string name="pref_speak_links_title">Speak link text</string>
+    <string name="pref_type_links_title">Add link text to message</string>
+
+
+    <!-- Swipe settings -->
+    <string name="pref_swipe_title">Swipe to change page</string>
+    <string name="pref_swipe_description">If set, scroll through pages of icons by swiping left or right.</string>
+    <string name="pref_swipe_type_title">Swipe Difficulty</string>
+    <string-array name="pref_swipe_type_entries">
+        <item>Hard</item>
+        <item>Medium</item>
+        <item>Easy</item>
+    </string-array>
+    <string-array name="pref_swipe_type_values">
+        <item>hard</item>
+        <item>medium</item>
+        <item>easy</item>
+    </string-array>
+    <string name="pref_swipe_type_default">swipeLong</string>
+
+    <string name="pref_cat_visual_title">Visual Effects</string>
+
+    <!-- Highlight settings -->
+    <string name="pref_icon_highlight_title">Highlight the selected icon</string>
+    <string name="pref_action_highlight_title">Highlight the action button</string>
+    <string name="pref_action_highlight_desc">When selected, action button is highlighted when text is not empty.</string>
+    <string name="pref_icon_highlight_place">Highlighted icon displays</string>
+    <string-array name="pref_icon_highlight_place">
+        <item>in place</item>
+        <item>in center</item>
+        <item>above key</item>
+    </string-array>
+    <string name="pref_icon_highlight_color_title">Highlight border color</string>
+    <string-array name="pref_icon_highlight_color_entries">
+        <item>Yellow</item>
+        <item>Grey</item>
+        <item>Red</item>
+        <item>Pink</item>
+        <item>Blue</item>
+        <item>Cyan</item>
+    </string-array>
+    <string-array name="pref_icon_highlight_color_values">
+        <item>#FFFF00</item>
+        <item>#BBBBBB</item>
+        <item>#FF2200</item>
+        <item>#FF66DD</item>
+        <item>#2266FF</item>
+        <item>#00FFFF</item>
+        <!-- <item>@color/yellow</item>
+        <item>@color/grey</item>
+        <item>@color/red</item>
+        <item>@color/pink</item>
+        <item>@color/blue</item>
+        <item>@color/cyan</item>-->
+    </string-array>
+    <string name="pref_icon_highlight_time">Highlight fade time (seconds)</string>
+    <string-array name="pref_icon_highlight_time_entries">
+        <item>0.2</item>
+        <item>0.5</item>
+        <item>1</item>
+        <item>3</item>
+    </string-array>
+    <string-array name="pref_icon_highlight_time_values">
+        <item>200</item>
+        <item>500</item>
+        <item>1000</item>
+        <item>3000</item>
+    </string-array>
+    <string name="pref_icon_highlight_zoom">Highlight zoom percent</string>
+    <string-array name="pref_icon_highlight_zoom">
+        <item>100</item>
+        <item>150</item>
+        <item>200</item>
+        <item>300</item>
+    </string-array>
+
+
+</resources>

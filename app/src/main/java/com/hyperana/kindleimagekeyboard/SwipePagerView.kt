@@ -34,6 +34,7 @@ class SwipePagerView : FrameLayout {
     var trails: TrailTouchListener? = null
 
     var aacViewModel: AACViewModel
+    var actionManager = (context as? MainActivity)?.actionManager
 
     // keep this as possible convert view when page changes:
     var currentView: InputPageView? = null
@@ -127,7 +128,9 @@ class SwipePagerView : FrameLayout {
 
             //consume to keep events away from children (icons) once a swipe is happening
             //from now on events come to this.onTouchEvent below
-            if (swiper?.isSwiping == true) return true
+            if (swiper?.isSwiping == true) {
+                return true
+            }
         }
 
         // check for vertical swipe last:
@@ -152,7 +155,7 @@ class SwipePagerView : FrameLayout {
         }
 
         // must return true as long as swipe is interested in it
-        swiper?.also { if (isSwipeOn && it.isSwiping) return it.onTouch(this, event) }
+        swiper?.also { if ( isSwipeOn &&  it.isSwiping) return it.onTouch(this, event) }
         verticalSwiper?.also { if (it.isSwiping) return it.onTouch(this, event) }
 
         // return true to DOWNs that children (icons) have passed so you get the MOVES that follow

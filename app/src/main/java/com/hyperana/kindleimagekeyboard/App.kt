@@ -77,7 +77,7 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
         return sharedPreferences?.all?.get(key) ?: mData?.get(key)
     }
     fun put(key: String, value: Any?){
-        mData?.put(key, value)
+         mData?.put(key, value)
     }
 
    fun getPageList() : List<PageData> {

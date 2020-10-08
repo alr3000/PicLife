@@ -145,12 +145,13 @@ class IconPageTouchHandler(val actionListener: ActionListener?) {
                         return true
                     }
                     MotionEvent.ACTION_UP -> {
-                        if (iconView != null) {
+                        if (iconView != null && (iconView != startTouchView))
                             preview(icon, iconView)
+                        if (iconView != null)
                             execute(icon, iconView)
 
                             startTouchView = null
-                        }
+
                         return false
                     }
                 }

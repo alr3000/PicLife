@@ -10,16 +10,20 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import com.google.common.collect.HashMultimap
+import kotlinx.coroutines.channels.Channel
+import kotlin.coroutines.cancellation.CancellationException
 
 interface ActionListener {
     fun handleAction(action: AACAction, data: Any?) : Boolean
-    fun getActionTag() : Int
+     fun getActionTag() : Int
 }
-//todo: make channels for instant action, queued actions
+
 class ActionManager(val lifecycle: Lifecycle): ActionListener {
 
     val TAG = "ActionManager"
     private val actions: HashMultimap<AACAction, ActionListener> = HashMultimap.create()
+
+    private var channel: Channel<Pair<AACAction, Any?>> = Channel(10)
 
     fun registerActionListener(l: ActionListener, list: List<AACAction>) {
         list.forEach { action ->
@@ -96,7 +100,7 @@ open class AACAction(
 
         // data is list of IconData:
         val PREVIEW = AACAction("AACAction.IconPreview", "Preview")
-        val EXECUTE = AACAction("AACAction.IconExecute", "Input")
+        val EXECUTE = AACAction("AACAction.IconExecute", "Execute")
 
         // data is String:
         val SPEAK = AACAction("AACAction.MessageSpeak", "Speak")

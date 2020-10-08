@@ -79,7 +79,9 @@ class IconData(var id: String = createIconId(),
     }
 
 
-
+    override fun toString(): String {
+        return super.toString() + "($index) [$text] -> $thumbUri"
+    }
 
     // put/retrieve all data as strings to preserve nulls
     fun toJSONObject(): JSONObject {
@@ -118,5 +120,9 @@ class IconData(var id: String = createIconId(),
 }
 
 class IconViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
+
+}
+
+class IconEditViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
 }

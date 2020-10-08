@@ -96,9 +96,8 @@ class MessageViewController (
 
 
         // observe layout:
-        iconListView?.viewTreeObserver?.addOnGlobalLayoutListener {
+        iconListView?.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             Log.d(TAG, "layout listener")
-
 
             // keep selected icon (cursor position ) in view:
             val rect = Rect()

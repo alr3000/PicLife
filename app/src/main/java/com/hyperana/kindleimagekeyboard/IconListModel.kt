@@ -52,7 +52,7 @@ open class IconListModel: ViewModel(), WordInputter, ActionListener {
     }
 
     fun getIconsText(list: List<IconData>) : String {
-        return list.map { it.text }.joinToString (" ")
+        return list.map { it.text }.filterNot { it == DEFAULT_ICON_TEXT }.joinToString (" ")
     }
 
 

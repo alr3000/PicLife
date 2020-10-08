@@ -42,8 +42,6 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
 
             app = App.getInstance(context)
 
-            // load default settings -- false means this will not execute twice
-            PreferenceManager.setDefaultValues(this, R.xml.settings, false)
 
             setContentView(R.layout.activity_main)
             findViewById<View>(R.id.loading_fragment_view)?.visibility = View.GONE
@@ -54,18 +52,13 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
                 PreferenceManager.getDefaultSharedPreferences(applicationContext)
             )
 
-
-            // register main activity-controlled actions:
-            // this activity will decide what to do with "preview" action:
-            actionManager.registerActionListener(this, listOf(AACAction.PREVIEW))
-
             // set message model to receive "executed" icons from anywhere in this activity:
             actionManager.registerActionListener(messageViewModel, listOf(AACAction.EXECUTE))
 
             // initialize speech and other activity-based action listeners:
             Speaker(app).also {
                 lifecycle.addObserver(it)
-                actionManager.registerActionListener(it, listOf(AACAction.SPEAK))
+                actionManager.registerActionListener(it, listOf(AACAction.SPEAK, AACAction.PREVIEW, AACAction.EXECUTE))
             }
             findViewById<ViewGroup>(R.id.imageinput_overlay)?.also {
                 actionManager.registerActionListener(Highlighter(app, it), listOf(AACAction.FLASH))
@@ -195,8 +188,7 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
     // menu action being called from live event or other communication come with data to perform task:
     override fun handleAction(action: AACAction, data: Any?): Boolean {
         Log.i(TAG, "handleAction: $action, $data")
-        if (action == AACAction.PREVIEW)
-            return actionManager.handleAction(AACAction.SPEAK, data)
+// doesn't handle any actions yet
         return false
     }
 

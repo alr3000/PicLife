@@ -17,10 +17,10 @@ class AACViewController (
     val aacToolbar: ActionToolbar?,
     val actionManager: ActionManager
 )
-    :   IconListener, ActionListener
+    :    ActionListener
 {
 
-    val TAG = "AACManager"
+    val TAG = "AACViewController"
     var title = AACAction("AACPageTitle", "")
     val back = AACAction("AACBack", "Back", android.R.drawable.ic_media_previous)
     val home = AACAction.HOME
@@ -64,12 +64,7 @@ class AACViewController (
         return TAG.hashCode()
     }
 
-    override fun onIconEvent(icon: IconData?, action: AACAction?, view: View?) {
-        when (action) {
-        //    PREVIEW -> preview(icon, view)
-      //      ICON_EXECUTE -> execute(icon, view)
-        }
-    }
+
 
     // todo: action queueing
     fun preview(list: List<IconData>) {

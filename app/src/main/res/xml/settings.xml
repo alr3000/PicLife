@@ -162,30 +162,30 @@
         android:key="pref_cat_speech" >
 
         <androidx.preference.CheckBoxPreference
-            android:key="doSpeak"
+            android:key="@string/key_speech_enabled"
             android:title="@string/pref_speak_title"
             android:defaultValue="true"/>
         <androidx.preference.ListPreference
-            android:key="speakWords"
-            android:dependency="doSpeak"
+            android:key="@string/key_speak_icons"
+            android:dependency="@string/key_speech_enabled"
             android:title="@string/pref_speak_words_title"
             android:summary="%s"
             android:entries="@array/pref_speak_words_entries"
-            android:entryValues="@array/pref_speak_words_values"
-            android:defaultValue="speakWordEntry" />
+            android:entryValues="@array/pref_speak_words_entries"
+            android:defaultValue="@string/entry_speak_enter" />
         <androidx.preference.CheckBoxPreference
-            android:key="speakLinks"
-            android:dependency="doSpeak"
+            android:key="@string/key_speak_links"
+            android:dependency="@string/key_speech_enabled"
             android:title="@string/pref_speak_links_title"
             android:defaultValue="true" />
         <androidx.preference.ListPreference
-            android:key="speakText"
-            android:dependency="doSpeak"
+            android:key="@string/key_speak_text"
+            android:dependency="@string/key_speech_enabled"
             android:title="@string/pref_speak_text_title"
             android:summary="%s"
             android:entries="@array/pref_speak_text_entries"
             android:entryValues="@array/pref_speak_text_values"
-            android:defaultValue="speakTextAction" />
+            android:defaultValue="@string/entry_speak_message_action" />
 
     </androidx.preference.PreferenceCategory>
 
