@@ -36,6 +36,7 @@ val DEFAULT_HOMEDIR = "keyboards"
 val APP_KEYBOARD_PATH = "Keyboards"
 
 val DEFAULT_ICON_TEXT = "icon" // todo: -L- change this to be less probable
+val DEFAULT_KEYBOARD_ID = 0
 
 val MAX_ICON_INCH = 1.5 // inches wide
 val PREF_DROPBOX_ENABLED = "dropbox_enabled"
@@ -44,7 +45,10 @@ val EXTRA_ICON_ACTION = "icon_action"
 
 val PREF_KEYBOARD_ID = "keyboard_id"
 
-
+//******************************* PREFERENCES ****************************************************
+fun shouldRefreshKeyboardOnChange(key: String) : Boolean {
+    return (key in listOf( PREF_KEYBOARD_ID))
+}
 
 
 

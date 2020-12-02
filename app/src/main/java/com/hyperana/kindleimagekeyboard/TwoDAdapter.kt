@@ -13,11 +13,6 @@ import android.widget.ListView
 import androidx.recyclerview.widget.RecyclerView
 
 
-//positions are Pair<Int, Int>.
-// when alt axis position == altRestingPosition, main axis page is shown
-// position is (main, alt)
-typealias Position = Pair<Int,Int>
-
 // items stacked like negativelist[] - [placeholder] - positivelist[]
 class WingsAdapter(val positiveList: List<PageData>, val negativeList: List<PageData>) : PageAdapter(listOf()) {
     override val TAG: String = "WingsAdapter"

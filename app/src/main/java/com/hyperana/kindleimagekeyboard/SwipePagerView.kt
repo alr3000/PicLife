@@ -45,9 +45,12 @@ class SwipePagerView : FrameLayout {
         val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
         // observe model's current page:
+        // todo: who fetches the resource??
         aacViewModel = ViewModelProvider(context as ViewModelStoreOwner)[AACViewModel::class.java]
-        aacViewModel.liveCurrentPage.observe(context as LifecycleOwner) {
-            it?.also { setPageView(it, currentView) }
+        aacViewModel.observeCurrentPage((context as LifecycleOwner).lifecycle ) {
+            it
+                ?.let { PageData(it) }
+                ?.also { setPageView(it, currentView) }
         }
 
         // navigate on horizontal swipe:
@@ -58,8 +61,8 @@ class SwipePagerView : FrameLayout {
         ) {
             override fun doSwipe(forward: Boolean) {
                 Log.d(TAG, "swipe horizontal: right?$forward")
-                if (forward) { aacViewModel.goRight(1) }
-                else aacViewModel.goLeft(1)
+                if (forward) { aacViewModel.model.go(Direction.RIGHT) }
+                else aacViewModel.model.go(Direction.LEFT)
             }
         }
 
@@ -71,8 +74,8 @@ class SwipePagerView : FrameLayout {
         ) {
             override fun doSwipe(forward: Boolean) {
                 Log.d(TAG, "swipe vertical: down?$forward")
-                if (forward) { aacViewModel.goUp(1) }
-                else aacViewModel.goDown(1)
+                if (forward) { aacViewModel.model.go(Direction.UP) }
+                else aacViewModel.model.go(Direction.DOWN)
             }
         }
 

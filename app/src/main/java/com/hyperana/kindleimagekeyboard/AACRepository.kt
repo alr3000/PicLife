@@ -34,11 +34,16 @@ class AACRepository(db: AppDatabase) {
         return resourceDao.getAllLiveByType(Resource.Type.KEYBOARD.name)
     }
 
+
     // lists:
     fun getChildIds(res: Resource) : List<Int> {
         return res.children.split(AppDatabase.DELIMITER)
             .map { it.toIntOrNull() }
             .filterNotNull()
+    }
+
+    fun getAllById(ids: IntArray) : List<Resource> {
+        return resourceDao.listAllByIds(ids)
     }
 
     suspend fun listKeyboards() : List<Resource>? {
@@ -73,6 +78,8 @@ class AACRepository(db: AppDatabase) {
         }
     }
 
+
+
     suspend fun asyncBuildKeyboard(id: Int?) : Deferred<List<PageData>>? {
         return supervisorScope {
 
@@ -87,6 +94,7 @@ class AACRepository(db: AppDatabase) {
                 }
         }
     }
+
 
 
 }

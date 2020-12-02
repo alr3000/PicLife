@@ -37,7 +37,6 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
     var sharedPreferences: SharedPreferences? = null
      var preferenceChangeTime: Long = 1
 
-    var liveKeyboard: LiveData<Keyboard?>? = null
     val iconEventLiveData = MutableLiveData<IconEvent?>(null)
 
     init {
@@ -129,7 +128,7 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
     companion object : SingletonHolder<App, Context>(::App) {
         val bmpCache: LruCache<String, Bitmap> = LruCache(400) // max bitmaps in memory
 
-
+//todo: use coroutines to assure ui thread for view changes:
         fun asyncSetImageBitmap(img: ImageView, uri: Uri) {
             val bmp = bmpCache.get(uri.toString())
             if (bmp != null) {

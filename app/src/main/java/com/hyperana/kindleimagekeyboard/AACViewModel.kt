@@ -1,35 +1,81 @@
 package com.hyperana.kindleimagekeyboard
 
 import android.app.Application
-import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.util.Log
 import androidx.lifecycle.*
 import androidx.preference.PreferenceManager
 import kotlinx.coroutines.*
-import java.lang.Math.min
 
-interface PageNavigator {
-    fun goUp(num: Int = 1)
-    fun goDown(num: Int = 1)
-    fun goLeft(num: Int = 1)
-    fun goRight(num: Int = 1)
-    fun gotoPageId(id: String)
-    fun gotoHome()
-    fun gotoAACPages()
-    fun goBack()
-    fun goForward()
+typealias PageId = Int
+enum class Direction {
+    LEFT, RIGHT, UP, DOWN, FORWARD, BACK
 }
 
+interface PageNavigator : ObservableNavigationState {
+    fun nextIndexOrNull(d: Direction): Int?
+    fun go(d: Direction): PageId?
+    fun peek(d: Direction): PageId?
+    fun goToIndex(i: Int): PageId?
+    fun goToId(id: PageId): PageId?
+    fun getPageAt(i: Int): PageId?
+    fun getCurrentIndex(): Int
+    fun getCurrentPage(): PageId?
+}
 
+interface PageHistory {
+    fun addPage(pageId: PageId)
+    fun getCurrentPage(): PageId?
+    fun getPreviousPage(): PageId?
+    fun getNextPage(): PageId?
+    fun gotoNext(): PageId?
+    fun gotoPrevious(): PageId?
+}
 
-// todo: make a factory to add projection, defaults, keyboard, recents, tools
-// This model holds the keyboard, aac pages, recents pages, and tools pages,
-// it handles the logic of the AAC page/keyboard navigation and "exports" the page currently being requested/viewed:
-class AACViewModel(application: Application) : AndroidViewModel(application), PageNavigator, Observer<Resource?> {
+interface ObservableNavigationState {
+    fun observeReady(lifecycle: Lifecycle, observer:(Boolean) -> Unit)
+    fun observeCurrentPage(lifecycle: Lifecycle, observer: (PageId?) -> Unit)
+    fun updateCurrentPage(id: PageId?)
+    fun updateReady(isReady: Boolean)
+}
+
+class LiveDataNavigationState : ObservableNavigationState {
+    private val currentPageLiveData = MutableLiveData<PageId?>()
+    private val readyLiveData = MutableLiveData<Boolean>()
+
+    override fun observeCurrentPage(lifecycle: Lifecycle, observer: (PageId?) -> Unit) {
+        currentPageLiveData.observe({lifecycle}, observer)
+    }
+
+    override fun observeReady(lifecycle: Lifecycle, observer: (Boolean) -> Unit) {
+        readyLiveData.observe({lifecycle}, observer)
+    }
+
+    override fun updateReady(isReady: Boolean) {
+        readyLiveData.postValue(isReady)
+    }
+
+    override fun updateCurrentPage(id: PageId?) {
+        currentPageLiveData.postValue(id)
+    }
+}
+
+// This class Android-izes the AACModel and sets up livedata observation:
+
+// This model holds the keyboard, aac pages, recents pages, and tools pages AS IDs,
+// it handles the logic of the AAC page/keyboard navigation and "exports" the page
+// currently being requested/viewed:
+// todo: repository built with cache
+class AACViewModel private constructor (application: Application, val state: ObservableNavigationState)
+    : AndroidViewModel(application),
+    SharedPreferences.OnSharedPreferenceChangeListener,
+    ObservableNavigationState by state
+{
+
+    // single-param constructor for viewmodelprovider:
+    constructor(application: Application) : this(application, LiveDataNavigationState())
 
     val TAG = "AACViewModel${hashCode()}"
 
@@ -37,267 +83,129 @@ class AACViewModel(application: Application) : AndroidViewModel(application), Pa
     val EXTRA_KEYBOARD_ID = "keyboard_id"
     val EXTRA_PAGE_ID = "page_id"
 
+    val RECENTS_PAGE_ID = 1003
+    val TOOLS_PAGE_ID = 1004
+
+    // structural vars for creating AACModel and Navigation:
     val app = App.getInstance(application.applicationContext)
     val repository = AACRepository(AppDatabase.getDatabase(application.applicationContext)!!)
+    val context = application.applicationContext
 
-    // page map for navigation:
+    // state vars:
+    lateinit var model: AACModel
 
-    //todo: could be a live transformation of the keyboard
-    //todo: use transformations to observe data on other model layers
-    private var aacPageList : List<PageData> = listOf()
-        set(value) {
-            field = value
-            Log.i(TAG, "setAACPageList with ${value.size} pages")
-
-            // nav to new position of current page:
-            liveCurrentPage.value?.baseId
-                ?.let { getPositionOfPageId(it)}
-                ?.also { Log.d(TAG, "found current page in new pages")}
-                ?.also { setPosition(it) }
-                ?: gotoHome()
-        }
-    //get() { return getProjectedPages(field) }
-
-    private var upList = (0 .. 4).map { RecentsPage(repository, it)}
-    private var downList = (0..2).map { ToolsPage(repository, it) }
-    // position between up and down list where aac pages "show through"
-    private val rest: Int
-        get() = downList.size
-
-    //todo: this could be recents, back/forward buttons most likely shown in recents page
-    val backList: MutableList<String> = mutableListOf()
-
-
-    // State:
-    // create projected pages (and within them, icons) from the keyboard's child list:
-    override fun onChanged(t: Resource?) {
-        Log.i(TAG, "live resource change: ${t?.resourceType}")
-
-
-
-        // if the keyboard or page contents change, the affected models will be replaced here.
-        when (t?.resourceType) {
-
-            Resource.Type.KEYBOARD.name -> {
-                // access database in background to get child pages, observe them here:
-                CoroutineScope(Dispatchers.IO).launch {
-
-                    t
-                        .let { repository.getLiveChildResources(it) }
-                        .filterNotNull()
-
-                        .mapIndexed { index, liveData ->
-                            CoroutineScope(Dispatchers.Main).async {
-                                liveData.observeForever(this@AACViewModel)
-                            }
-                        }
-                }
-
-                // set pagelist with stubs:
-                aacPageList = repository
-                    .getChildIds(t)
-                    .map { PageData(it.toString()) }
-
-                // get default page (icons may not be there yet)
-                gotoHome()
-            }
-
-            Resource.Type.PAGE.name ->
-                if (aacPageList.any { it.baseId == t.uid.toString()}) {
-
-                        val newPage = PageData(t)
-
-                        // icons observe their own models for changes:
-                        CoroutineScope(Dispatchers.IO).launch {
-
-                            repository
-                                .getLiveChildResources(t)
-                                .filterNotNull()
-                                .map {
-                                    CoroutineScope(Dispatchers.Main).async {
-                                        IconData(repository, it, newPage)
-                                    }
-                                }
-                                .awaitAll()
-                                .also {
-                                    Log.i(TAG, "setting ${it.size} icon stubs for page ${newPage.name}")
-                                    newPage.icons = it
-                                    refreshPage(newPage)
-                                }
-                        }
-                    }
-        }
-    }
-
-
-    fun refreshPage(new: PageData) {
-        Log.d(TAG, "find page ${new.baseId} in ${aacPageList.map { it.baseId }}")
-        val start = aacPageList.indexOfFirst{ it.baseId == new.baseId }
-        val end = aacPageList.indexOfLast { it.baseId == new.baseId}
-        if (start >= 0 && end >= 0)
-        aacPageList = aacPageList
-            .slice(0 until start)
-            .plus (getProjectedPages(listOf(new)))
-            .plus (
-                aacPageList.slice( min(end + 1, aacPageList.size) until aacPageList.size)
-            )
-            .also { Log.i(TAG, "page ${new.name}(${new.baseId}) refreshed")}
-        else Log.i(TAG, "requested page not found in list")
+    init {
+      loadModelData()
     }
 
 
 
+/*
+// todo handled by recents page back and forward button?
 
-    private var liveKeyboardResource: LiveData<Resource?>? = null
-        set(value) {
-            Log.i(TAG, "setLiveKeyboard: $value")
-            CoroutineScope(Dispatchers.Main).launch {
-                field?.removeObserver(this@AACViewModel)
-                field = value
-                field?.observeForever(this@AACViewModel)
-            }
+    val history: PageHistory = object : PageHistory {
+
+        var list: List<PageId> = listOf()
+        var index = -1
+
+        override fun addPage(pageId: com.hyperana.kindleimagekeyboard.PageId) {
+            list = list.take(index + 1).plus(pageId)
+            index++
         }
 
-    private var currentPageLiveData = MutableLiveData(PageData())
-    var liveCurrentPage: LiveData<PageData> = currentPageLiveData
+        override fun getCurrentPage(): com.hyperana.kindleimagekeyboard.PageId? {
+            return list.getOrNull(index)
+        }
 
-    private var currentPosition: Position = Pair(0,0)
-    private val shouldShowAlt: Boolean
-        get() = (currentPosition.second != rest)
+        override fun getPreviousPage(): com.hyperana.kindleimagekeyboard.PageId? {
+            return list.getOrNull(index - 1)
+        }
 
-    private val currentPageId: Int?
-        get() = currentPageLiveData.value?.id?.toIntOrNull()
+        override fun getNextPage(): com.hyperana.kindleimagekeyboard.PageId? {
+            return list.getOrNull(index + 1)
+        }
+
+        override fun gotoNext(): com.hyperana.kindleimagekeyboard.PageId? {
+            return getNextPage()?.also { index++ }
+        }
+
+        override fun gotoPrevious(): com.hyperana.kindleimagekeyboard.PageId? {
+            return getPreviousPage()?.also { index-- }
+        }
+    }
+
+*/
+
+    init {
+        PreferenceManager.getDefaultSharedPreferences(application.applicationContext)
+            .registerOnSharedPreferenceChangeListener(this)
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+        Log.i(TAG, "onPreferenceChanged: $key")
+
+        key ?: return
+
+        if (shouldRefreshKeyboardOnChange(key)) {
+            onRestoreInstanceState(null, sharedPreferences!!)
+        }
+
+    }
+
 
 
     // set keyboard and current page from saved or preferences if out-of-whack
     fun onRestoreInstanceState(savedInstanceState: Bundle?, prefs: SharedPreferences) {
-        Log.d(TAG, "restore instance state")
-        val prefId = prefs.getInt("currentKeyboardId", -1)
-        savedInstanceState.also { saved ->
-            (saved?.getInt(PREF_KEYBOARD_ID, prefId) ?: prefId)
-                .also { id ->
-                    if (id != liveKeyboardResource?.value?.uid)
-                        replaceKeyboard(id)
-                }
-            saved?.getInt(EXTRA_PAGE_ID, -1)?.also { if (it != -1 && it != currentPageId) gotoPageId(it.toString()) }
-        }
+        Log.d(TAG, "restore instance state: $savedInstanceState")
+        val NOT_AVAIL = -1
+
+        var kid = savedInstanceState
+            ?.getInt(EXTRA_KEYBOARD_ID, NOT_AVAIL)
+            ?.let { if (it == NOT_AVAIL) null else it }
+            ?.also { Log.d(TAG, "saved id: $it") }
+            ?: prefs.getInt("currentKeyboardId", DEFAULT_KEYBOARD_ID)
+
+        // assure current keyboard is correct, update model if nec.:
+        if (kid != model.keyboard?.id)
+            loadModelData()
+
     }
 
-    // set keyboard by id, or if not found, default:
-    fun replaceKeyboard(id: Int)  {
-        CoroutineScope(Dispatchers.IO).launch {
-            Log.d(TAG, "replace keyboard")
-            liveKeyboardResource = repository.getLiveResource(id)
-                ?.let { if (it.value != null) it else null }
-                ?: repository.getLiveDefault(Resource.Type.KEYBOARD)
-        }
-    }
 
-    // store current keyboard id, page id
+
+    // store current keyboard id, page id:
     fun onSaveInstanceState(outState: Bundle?) : Bundle {
         return (outState ?: Bundle()).also { saved ->
-            (liveKeyboardResource?.value?.uid ?: -1).also { saved.putInt(EXTRA_KEYBOARD_ID, it)  }
-            (currentPageLiveData.value?.id?.toIntOrNull() ?: -1).also { saved.putInt(EXTRA_PAGE_ID, it)}
+            (model?.keyboard?.id ?: -1).also { saved.putInt(EXTRA_KEYBOARD_ID, it)  }
+            (model?.getCurrentPage() ?: -1)
+                .also { saved.putInt(EXTRA_PAGE_ID, it)}
         }
     }
 
-    // Page Navigation:
-    override fun goBack() {
+    fun loadModelData() {
+        state.updateReady(false)
 
-    }
+        CoroutineScope(Dispatchers.IO).launch {
 
-    override fun goForward() {
 
-    }
+            model = AACModel.Builder(repository).apply {
+                keyboardId =
+                    PreferenceManager.getDefaultSharedPreferences(context)
+                        .getInt(PREF_KEYBOARD_ID, DEFAULT_KEYBOARD_ID)
+                upList = listOf<PageId>(RECENTS_PAGE_ID)
+                downList = listOf(TOOLS_PAGE_ID)
+                projection = { list -> getProjectedPages(list) }
+                observableState = state
 
-    override fun goUp(num: Int) {
-        val newPos = getIndexFixed(upList.size + 1 + downList.size, currentPosition.second + num)
-        //if (newPos != currentPosition.first)
-        setPosition(Pair(currentPosition.first, newPos))
-    }
-    override fun goDown(num: Int) { goUp( num * -1 ) }
+            }.create()
 
-    // selects next view in main axis IFF alt is at rest:
-    override fun goLeft(num: Int) {
-        if (shouldShowAlt) return
-        val newPos = getIndexLooping(aacPageList.size, currentPosition.first + num)
-        //if (newPos != currentPosition.first)
-        setPosition(Pair(newPos, currentPosition.second))
-    }
-    override fun goRight(num: Int) { goLeft(num * -1) }
+            state.updateReady(true)
 
-    // set current page, notify observers:
-    // don't move if no page at that position or same page--
-    fun setPosition(newPos: Position) {
-        Log.i(TAG, "setPosition: $newPos")
-        val currentId = currentPageId.toString()
-        getPageFromPosition(newPos)?.also { newPage ->
-           // if (newPage.id == currentId) return
-            currentPosition = newPos
-            currentPageLiveData.postValue(newPage)
         }
-    }
 
-    // find position in keyboard
-    // add current page to backlist beforehand if required (if this is not a "backpress"):
-    //        backList.add(currentPageId.toString())
-    //
-    // as it is likely a jump (not paging scroll)
-    // todo: or, goto new keyboard:
-    override fun gotoPageId(id: String) {
-        getPositionOfPageId(id)?.also { setPosition(it) }
-            ?: Log.w(TAG, "requested page id: $id not found in current keyboard")
-    }
-
-    override fun gotoHome() {
-        setPosition(Pair(0, rest))
-    }
-
-    override fun gotoAACPages() {
-        setPosition(Pair(currentPosition.first, rest))
     }
 
 
-    fun getIndexLooping(length: Int, pos: Int) : Int {
-        return if (length == 0) 0 else (pos + length)%length
-    }
-
-    fun getIndexFixed(length: Int, pos: Int) : Int {
-        return pos.coerceIn(0, length)
-    }
-
-    fun getPageFromPosition(pos: Position) : PageData? {
-        return when {
-            // show aac page from pos.first:
-            (pos.second == rest) -> aacPageList.getOrNull(pos.first) ?: PageData()
-
-            // show up/down page from pos.second:
-            pos.second == rest -> null
-            pos.second < rest -> downList.getOrNull(Math.abs(pos.second - rest) - 1)
-            else -> upList.getOrNull((pos.second - rest) - 1)
-        }
-    }
-
-    fun getPositionOfPageId(id: String) : Position? {
-        fun compare(str: String, page: PageData) =
-            str == page.id || str == page.baseId
-
-        // try up/down lists first:
-        downList.plus (PageData()).plus(upList)
-            .indexOfFirst { compare(id, it) }
-            .also { if (it != -1)
-                return Pair(currentPosition.first, it)
-            }
-
-        aacPageList.indexOfFirst {
-            Log.d(TAG, "found id ${it.baseId}")
-            compare(id, it)
-        }.also {
-            if (it != -1)
-                return Pair(it, currentPosition.second)
-        }
-        return null
-    }
 
     fun getProjectedPages(original: List<PageData>) : List<PageData> {
         val app = App.getInstance(getApplication<Application>().applicationContext)
