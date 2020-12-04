@@ -46,19 +46,17 @@ class IconData(var id: String = createIconId(),
     // todo: add link, style from data
     constructor(repository: AACRepository, liveIconResource: LiveData<Resource?>, parentPage: PageData) : this () {
         fPageId = parentPage.id
-        CoroutineScope(Dispatchers.Main).launch {
             liveIconResource.observeForever {
                 text = it?.title
                 id = it?.uid.toString()
                 thumbUri = Uri.parse(it?.resourceUri)
                 Log.d(TAG, "onChanged")
             }
-        }
     }
 
-    constructor(iconResource: Resource, parentId: String)
+    constructor(iconResource: Resource, parent: PageData?)
             : this(iconResource.uid.toString()) {
-        fPageId = parentId
+        fPageId = parent?.id
         text = iconResource.title
         id = iconResource.uid.toString()
         thumbUri = Uri.parse(iconResource.resourceUri)
@@ -106,14 +104,16 @@ class IconData(var id: String = createIconId(),
                 it.text = icon.text
             }
             if (withImage) {
-                (icon.thumbUri)?.also {uri ->
-                    ImageView(context).also {
-                        cell.addView(it)
-                        App.asyncSetImageBitmap(it, uri)
-                        it.scaleType = ImageView.ScaleType.FIT_XY
-                    }
+                (icon.thumbUri)?.also { uri ->
+                    if (uri.path?.isNotBlank() == true)
+                        ImageView(context).also {
+                            cell.addView(it)
+                            App.asyncSetImageBitmap(it, uri)
+                            it.scaleType = ImageView.ScaleType.FIT_XY
+                        }
                 }
-            }
+                }
+
             return cell
         }
     }

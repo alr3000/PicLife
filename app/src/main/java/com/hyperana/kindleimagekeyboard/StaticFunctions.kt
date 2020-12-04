@@ -36,7 +36,7 @@ val DEFAULT_HOMEDIR = "keyboards"
 val APP_KEYBOARD_PATH = "Keyboards"
 
 val DEFAULT_ICON_TEXT = "icon" // todo: -L- change this to be less probable
-val DEFAULT_KEYBOARD_ID = 0
+val DEFAULT_KEYBOARD_ID = -1460951754
 
 val MAX_ICON_INCH = 1.5 // inches wide
 val PREF_DROPBOX_ENABLED = "dropbox_enabled"

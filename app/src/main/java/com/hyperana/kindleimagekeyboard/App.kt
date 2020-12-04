@@ -20,6 +20,9 @@ import android.widget.ImageView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.preference.PreferenceManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 /**
@@ -29,13 +32,13 @@ import androidx.preference.PreferenceManager
  * todo: create page from image
  * todo: export message icons or page to png.
  */
-class App private constructor(val appContext: Context): SharedPreferences.OnSharedPreferenceChangeListener{
+class App private constructor(val appContext: Context): SharedPreferences.OnSharedPreferenceChangeListener {
     val TAG = "App"
 
 
     var mData: MutableMap<String, Any?>? = null
     var sharedPreferences: SharedPreferences? = null
-     var preferenceChangeTime: Long = 1
+    var preferenceChangeTime: Long = 1
 
     val iconEventLiveData = MutableLiveData<IconEvent?>(null)
 
@@ -47,8 +50,13 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
             mData = hashMapOf()
 
             val mem = ActivityManager.MemoryInfo()
-            (appContext.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)?.getMemoryInfo(mem)
-            Log.d(TAG, "memory: available=" + mem.availMem + " threshold=" + mem.threshold + " low=" + mem.lowMemory)
+            (appContext.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)?.getMemoryInfo(
+                mem
+            )
+            Log.d(
+                TAG,
+                "memory: available=" + mem.availMem + " threshold=" + mem.threshold + " low=" + mem.lowMemory
+            )
 
             // load default settings -- false means this will not execute twice
             PreferenceManager.setDefaultValues(appContext, R.xml.settings, false)
@@ -56,38 +64,35 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(appContext)
 
             // register listeners
-           sharedPreferences!!.registerOnSharedPreferenceChangeListener(this)
+            sharedPreferences!!.registerOnSharedPreferenceChangeListener(this)
 
 
-          /*  // add in defaults
-            put("currentKeyboard", resources.getString(R.string.default_keyboard_name))
-            put("backgroundColor", "#FF00FF")*/
-        }
-        catch (e: Exception) {
+            /*  // add in defaults
+              put("currentKeyboard", resources.getString(R.string.default_keyboard_name))
+              put("backgroundColor", "#FF00FF")*/
+        } catch (e: Exception) {
             Log.e(TAG, "failed create app", e)
         }
     }
 
 
-
-
     // sharedPreferences is only altered through the proper channels, but values accessed here
-    fun get(key: String) : Any?{
+    fun get(key: String): Any? {
         return sharedPreferences?.all?.get(key) ?: mData?.get(key)
     }
-    fun put(key: String, value: Any?){
-         mData?.put(key, value)
+
+    fun put(key: String, value: Any?) {
+        mData?.put(key, value)
     }
 
-   fun getPageList() : List<PageData> {
+    fun getPageList(): List<PageData> {
         return get("pageList") as? List<PageData> ?: updatePageList()
     }
 
 
-
     // loads stored data
     //todo: -?- page list is map by id
-    fun updatePageList() : List<PageData> {
+    fun updatePageList(): List<PageData> {
 
         val keyboardName = get("currentKeyboard")!! as String
         Log.d(TAG, "updatePageList: " + keyboardName)
@@ -104,13 +109,11 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
 
             put("pageList", newPages)
             return newPages
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             Log.e(TAG, "failed load keyboard $keyboardName", e)
             return emptyList()
         }
     }
-
 
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
@@ -128,34 +131,35 @@ class App private constructor(val appContext: Context): SharedPreferences.OnShar
     companion object : SingletonHolder<App, Context>(::App) {
         val bmpCache: LruCache<String, Bitmap> = LruCache(400) // max bitmaps in memory
 
-//todo: use coroutines to assure ui thread for view changes:
-        fun asyncSetImageBitmap(img: ImageView, uri: Uri) {
-            val bmp = bmpCache.get(uri.toString())
-            if (bmp != null) {
-                img.setImageBitmap(bmp)
-                return
-            }
-            Log.d("IconData", "loading bitmap: " + uri.toString())
-            val uiHandler = Handler()
-            Thread(){
-                try {
-                    // loadThumbnail only on latest Android
-                    val bitmap = if (Build.VERSION.SDK_INT >= 28)
-                        img.context.contentResolver.loadThumbnail(uri, Size(600,600), null)
-                    else img.context.contentResolver.openInputStream(uri)
-                        ?.let { BitmapFactory.decodeStream(it)}
-                    uiHandler.post {
-                        Log.d("IconData", "bitmap loaded: " + uri.toString())
-                        img.setImageBitmap(bitmap)
-                        bmpCache.put(uri.toString(), bitmap)
-                    }
-                } catch (e: Exception) {
-                    Log.w("IconData", "set bitmap failed: " + uri.toString(), e)
+         fun asyncSetImageBitmap(img: ImageView, uri: Uri) {
+
+            if (Build.VERSION.SDK_INT >= 31)
+                CoroutineScope(Dispatchers.Main).launch {
+                    img.context.contentResolver.loadThumbnail(uri, Size(600, 600), null)
                 }
-            }.start()
+            else CoroutineScope(Dispatchers.IO).launch {
+                loadBmp(img.context, uri)?.also {
+                    CoroutineScope(Dispatchers.Main).launch {
+                        Log.d("IconData", "bitmap loaded: " + uri.toString())
+                        img.setImageBitmap(it)
+                    }
+                }
+            }
         }
 
 
-    }
+        suspend fun loadBmp(context: Context, uri: Uri): Bitmap? {
+            return try {
+                bmpCache.get(uri.toString()) ?: context.contentResolver.openInputStream(uri)
+                    ?.also { Log.d("IconData", "loading bitmap from file: " + uri.toString()) }
+                    ?.let { BitmapFactory.decodeStream(it) }
+                    ?.also { bmpCache.put(uri.toString(), it) }
 
+            } catch (e: Exception) {
+                Log.w("IconData", "set bitmap failed: " + uri.toString(), e)
+                null
+            }
+        }
+
+    }
 }

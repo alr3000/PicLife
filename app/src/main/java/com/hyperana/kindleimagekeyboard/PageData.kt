@@ -4,6 +4,7 @@ import android.util.Log
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.*
@@ -38,9 +39,7 @@ open class PageData(var id: String = createPageId(),
 
     constructor(resource: Resource?) : this (resource?.uid?.toString() ?: createPageId()) {
 
-     // set data:
-        name = resource?.title ?: "Untitled"
-        Log.d(TAG, "Created from resource")
+     updateFromResource(resource)
     }
 
     init {
@@ -72,6 +71,14 @@ open class PageData(var id: String = createPageId(),
 
     fun get(key: String) : String? {
         return mData.get(key)
+    }
+
+    fun updateFromResource(resource: Resource?) {
+        // set data:
+        name = resource?.title ?: "Untitled"
+
+
+        Log.d(TAG, "Created from resource")
     }
 
     //TODO -L- add page title? for editable name

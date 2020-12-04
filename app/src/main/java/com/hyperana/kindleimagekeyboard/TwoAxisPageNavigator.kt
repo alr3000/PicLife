@@ -1,5 +1,6 @@
 package com.hyperana.kindleimagekeyboard
 
+import android.util.Log
 import androidx.lifecycle.Lifecycle
 
 
@@ -9,13 +10,12 @@ open class PageListNavigator(
     val pageList: List<PageId> = listOf(),
     val state: ObservableNavigationState
 ): PageNavigator, ObservableNavigationState by state {
+    private val TAG = "PageListNavigator"
 
     private var currentIndex = 0
     set(value) {
-        val temp = field
         field = value
-        if (value != temp)
-            state?.updateCurrentPage(getPageAt(value))
+        state.updateCurrentPage(getPageAt(value))
     }
 
     var looping = false
@@ -56,8 +56,8 @@ open class PageListNavigator(
             ?.let { getPageAt(it) }
     }
 
-    override fun getPageAt(index: Int) : PageId? {
-        return pageList.getOrNull(index)
+    override fun getPageAt(i: Int) : PageId? {
+        return pageList.getOrNull(i)
     }
 
     override fun goToIndex(i: Int): PageId? {
@@ -68,34 +68,42 @@ open class PageListNavigator(
     }
 
     override fun goToId(id: PageId): PageId? {
+        Log.d(TAG, "gotoId: $id")
         return pageList.indexOf(id)
             .let { if (it < 0) null else it }
             ?.also {
                 currentIndex = it
             }
     }
-
-    override fun observeCurrentPage(lifecycle: Lifecycle, observer: (PageId?) -> Unit) {
-
-    }
 }
 
 // returns new pageId or null if movement not possible
 class TwoAxisPageNavigator(throughList: List<PageId>,
                             altList: List<PageId>,
-                           state: ObservableNavigationState,
-                           val throughIsHorizontal: Boolean = true) : PageListNavigator(throughList.plus(altList), state) {
+                           val state: ObservableNavigationState,
+                           val throughIsHorizontal: Boolean = true) : PageNavigator {
 
-    val TAG = "TwoAxisPageNavigator"
+    private val TAG = "TwoAxisPageNavigator"
 
-    val nullState = object: ObservableNavigationState {
-        override fun observeCurrentPage(lifecycle: Lifecycle, observer: (PageId?) -> Unit) {}
-        override fun updateCurrentPage(id: PageId?) {}
+    // don't let "sub-navigators" post any state:
+    object NullState : ObservableNavigationState {
+        override fun observeCurrentPage(lifecycle: Lifecycle, observer: (PageId?) -> Unit) {
+            throw Exception("don't observe secondary navigator")
+        }
+        override fun updateCurrentPage(id: PageId?) {
+           Log.w("NullState", "updating NullState")
+        }
+        override fun observeReady(lifecycle: Lifecycle, observer: (Boolean) -> Unit) {
+            throw Exception("don't observe secondary navigator")
+        }
+        override fun updateReady(isReady: Boolean) {
+            Log.w("NullState", "updating NullState")
+        }
     }
 
 
-    var throughNav = PageListNavigator(throughList, nullState).apply { looping = true }
-    var altNav = PageListNavigator(altList, nullState).apply {
+    var throughNav = PageListNavigator(throughList, NullState).apply { looping = true }
+    var altNav = PageListNavigator(altList, NullState).apply {
         looping = false
         goToId(NEUTRAL_PLACEHOLDER)
     }
@@ -122,7 +130,7 @@ class TwoAxisPageNavigator(throughList: List<PageId>,
     override fun nextIndexOrNull(d: Direction): Int? {
         return when(d) {
             Direction.FORWARD,
-            Direction.BACK -> super.nextIndexOrNull(d)
+            Direction.BACK -> null
             else -> convertDirection(d)?.let { getNav().nextIndexOrNull(it) }
         }
     }
@@ -131,23 +139,41 @@ class TwoAxisPageNavigator(throughList: List<PageId>,
         return convertDirection(d)?.let { getNav().peek(it) }
     }
 
+    // must call super.goToId() to post changes to observers:
     override fun go(d: Direction): PageId? {
        return when(d) {
            Direction.FORWARD,
-           Direction.BACK -> super.go(d)
+           Direction.BACK -> null
            else -> convertDirection(d)
                ?.let { getNav().go(it) }
-               ?.also {super.goToId(it) }
+               ?.also { goToId(it) }
        }
     }
 
-    // cannot request page by index as this is ambiguous
-    override fun goToIndex(i: Int): PageId? { throw Exception("Not Supported") }
-    override fun getPageAt(i: Int): PageId? { throw Exception("Not Supported") }
+    // Indexed requests assumed to refer to aac (throughNav):
+    // must post nav changes to observers here:
+    override fun goToIndex(i: Int): PageId? {
+        return throughNav.goToIndex(i)
+
+                // no nav if page is null!
+            ?.also {  state.updateCurrentPage(it) }
+    }
+    override fun getPageAt(i: Int): PageId? { return throughNav.getPageAt(i) }
+
+    override fun goToId(id: PageId): PageId? {
+        throughNav.goToId(id) ?: altNav.goToId(id)
+        return getCurrentPage()
+            .also { state.updateCurrentPage(id)}
+    }
+
+    override fun getCurrentPage(): PageId? {
+        return altNav.getCurrentPage()
+            .let { if (it == NEUTRAL_PLACEHOLDER) throughNav.getCurrentPage() else it }
+    }
 
     companion object {
         // put this in the alt list in the position where the throughlist should "show through":
-        val NEUTRAL_PLACEHOLDER: PageId = -1344
+        const val NEUTRAL_PLACEHOLDER: PageId = -1344
 
     }
 

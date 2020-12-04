@@ -11,13 +11,13 @@ class Keyboard()  {
 
     var id: PageId = -1
 
-    constructor(liveResource: LiveData<Resource?>?) : this() {
+    var pageList: List<PageData> = emptyList()
 
-        // auto-updated when underlying resource data is updated
-        liveResource?.observeForever {
-            Log.i(TAG, "onObserve keyboard (${it?.uid}")
-            update(it)
-        }
+    constructor(resource: Resource?) : this() {
+
+
+            Log.i(TAG, "init keyboard ($resource")
+            update(resource)
     }
     val TAG = "Keyboard"
 

@@ -12,6 +12,10 @@ import android.widget.FrameLayout
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.launch
 
 /**
  * Created by alr on 9/21/17.
@@ -48,9 +52,13 @@ class SwipePagerView : FrameLayout {
         // todo: who fetches the resource??
         aacViewModel = ViewModelProvider(context as ViewModelStoreOwner)[AACViewModel::class.java]
         aacViewModel.observeCurrentPage((context as LifecycleOwner).lifecycle ) {
-            it
-                ?.let { PageData(it) }
-                ?.also { setPageView(it, currentView) }
+            Log.d(TAG, "on page changed-> $it")
+
+            CoroutineScope(Dispatchers.IO).launch {
+                aacViewModel.inflatePageAsync(it)
+                    .await()
+                    .also { setPageView(it, currentView) }
+            }
         }
 
         // navigate on horizontal swipe:
@@ -61,8 +69,8 @@ class SwipePagerView : FrameLayout {
         ) {
             override fun doSwipe(forward: Boolean) {
                 Log.d(TAG, "swipe horizontal: right?$forward")
-                if (forward) { aacViewModel.model.go(Direction.RIGHT) }
-                else aacViewModel.model.go(Direction.LEFT)
+                if (forward) { aacViewModel.model?.go(Direction.RIGHT) }
+                else aacViewModel.model?.go(Direction.LEFT)
             }
         }
 
@@ -74,8 +82,8 @@ class SwipePagerView : FrameLayout {
         ) {
             override fun doSwipe(forward: Boolean) {
                 Log.d(TAG, "swipe vertical: down?$forward")
-                if (forward) { aacViewModel.model.go(Direction.UP) }
-                else aacViewModel.model.go(Direction.DOWN)
+                if (forward) { aacViewModel.model?.go(Direction.UP) }
+                else aacViewModel.model?.go(Direction.DOWN)
             }
         }
 
@@ -94,18 +102,23 @@ class SwipePagerView : FrameLayout {
 
 
     fun setPageView(data: PageData, view: InputPageView?) {
-        val convertVH = (view?.tag as? PageViewHolder)
-        Log.d(TAG, "setPageView(${data.name}) replacing ${convertVH?.page?.name} with ${data.icons.size} icons")
+        CoroutineScope(Main).launch {
+            val convertVH = (view?.tag as? PageViewHolder)
+            Log.d(
+                TAG,
+                "setPageView(${data.name}) replacing ${convertVH?.page?.name} with ${data.icons.size} icons"
+            )
 
-        convertVH
-            ?.apply { page = data }
+            convertVH
+                ?.apply { page = data }
 
-            ?: InputPageView(context)
-                .also {
-                    it.tag = PageViewHolder(it).apply { page = data}
-                    removeAllViews()
-                    addView(it)
-                }
+                ?: InputPageView(context)
+                    .also {
+                        it.tag = PageViewHolder(it).apply { page = data }
+                        removeAllViews()
+                        addView(it)
+                    }
+        }
     }
 
     override fun onWindowVisibilityChanged(visibility: Int) {

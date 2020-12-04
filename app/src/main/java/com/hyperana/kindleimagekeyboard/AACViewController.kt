@@ -29,8 +29,8 @@ class AACViewController (
     init {
 
         // set aac context actions in toolbar:
-            aacViewModel.liveCurrentPage.observe(lifecycleOwner) {
-                title = AACAction("AACPageTitle", it.name ?: "")
+            aacViewModel.observeCurrentPage(lifecycleOwner.lifecycle) {
+                title = AACAction("AACPageTitle", it?.toString() ?: "")
                updateToolbar()
             }
 
@@ -52,7 +52,7 @@ class AACViewController (
     override fun handleAction(action: AACAction, data: Any?): Boolean {
         Log.d(TAG, "handleAction: $action, $data")
         return when (action) {
-            AACAction.HOME -> aacViewModel.gotoHome().let { true }
+            AACAction.HOME -> aacViewModel.model?.goToHome().let { true }
             AACAction.HIGHLIGHT -> (data as? View)
                 ?.also { highlightIcon( it, it.tag as? IconData)}
                 .let { true }
@@ -80,7 +80,7 @@ class AACViewController (
 
     fun execute(icon: IconData?, v: View?) {
         Log.d(TAG, "execute icon link?")
-        icon?.linkToPageId?.also { aacViewModel.gotoPageId(it)}
+        icon?.linkToPageId?.also { aacViewModel.model?.goToId(it.toInt())}
     }
 
 

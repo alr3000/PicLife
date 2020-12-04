@@ -70,7 +70,8 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
             aacToolbar = findViewById<Toolbar>(R.id.input_action_toolbar)?.let { ActionToolbar(it) }
 
 
-        }catch (e: Exception) {
+        }
+        catch (e: Exception) {
             displayError("failed to create activity", e)
         }
     }

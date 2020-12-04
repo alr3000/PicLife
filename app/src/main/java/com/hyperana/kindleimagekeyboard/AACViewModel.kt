@@ -14,7 +14,7 @@ enum class Direction {
     LEFT, RIGHT, UP, DOWN, FORWARD, BACK
 }
 
-interface PageNavigator : ObservableNavigationState {
+interface PageNavigator  {
     fun nextIndexOrNull(d: Direction): Int?
     fun go(d: Direction): PageId?
     fun peek(d: Direction): PageId?
@@ -44,6 +44,7 @@ interface ObservableNavigationState {
 class LiveDataNavigationState : ObservableNavigationState {
     private val currentPageLiveData = MutableLiveData<PageId?>()
     private val readyLiveData = MutableLiveData<Boolean>()
+    val TAG = "LiveDataNavigationState"
 
     override fun observeCurrentPage(lifecycle: Lifecycle, observer: (PageId?) -> Unit) {
         currentPageLiveData.observe({lifecycle}, observer)
@@ -58,24 +59,31 @@ class LiveDataNavigationState : ObservableNavigationState {
     }
 
     override fun updateCurrentPage(id: PageId?) {
+        Log.d(TAG, "updateCurrentPage: $id")
         currentPageLiveData.postValue(id)
     }
 }
 
-// This class Android-izes the AACModel and sets up livedata observation:
+// This class Android-izes the AACModel and sets up livedata observation for views, informed by
+// SharedPreferences and RoomDatabase Respository
 
 // This model holds the keyboard, aac pages, recents pages, and tools pages AS IDs,
 // it handles the logic of the AAC page/keyboard navigation and "exports" the page
 // currently being requested/viewed:
 // todo: repository built with cache
-class AACViewModel private constructor (application: Application, val state: ObservableNavigationState)
+class AACViewModel private constructor (application: Application,
+                                        val state: ObservableNavigationState,
+                                        val repository: AACRepository
+                                        )
     : AndroidViewModel(application),
     SharedPreferences.OnSharedPreferenceChangeListener,
-    ObservableNavigationState by state
+    ObservableNavigationState by state,
+        ResourceInflater by repository
 {
 
     // single-param constructor for viewmodelprovider:
-    constructor(application: Application) : this(application, LiveDataNavigationState())
+    constructor(application: Application) :
+            this(application, LiveDataNavigationState(), AACRepository(AppDatabase.getDatabase(application.applicationContext)!!))
 
     val TAG = "AACViewModel${hashCode()}"
 
@@ -88,15 +96,12 @@ class AACViewModel private constructor (application: Application, val state: Obs
 
     // structural vars for creating AACModel and Navigation:
     val app = App.getInstance(application.applicationContext)
-    val repository = AACRepository(AppDatabase.getDatabase(application.applicationContext)!!)
     val context = application.applicationContext
 
     // state vars:
-    lateinit var model: AACModel
+    var model: AACModel? = null
+    var modelJob: Job? = null
 
-    init {
-      loadModelData()
-    }
 
 
 
@@ -138,7 +143,10 @@ class AACViewModel private constructor (application: Application, val state: Obs
 
     init {
         PreferenceManager.getDefaultSharedPreferences(application.applicationContext)
-            .registerOnSharedPreferenceChangeListener(this)
+            .also { prefs ->
+                prefs.registerOnSharedPreferenceChangeListener(this)
+              //  onRestoreInstanceState(null, prefs)
+            }
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
@@ -166,8 +174,18 @@ class AACViewModel private constructor (application: Application, val state: Obs
             ?: prefs.getInt("currentKeyboardId", DEFAULT_KEYBOARD_ID)
 
         // assure current keyboard is correct, update model if nec.:
-        if (kid != model.keyboard?.id)
-            loadModelData()
+        if (kid == model?.keyboard?.id) return
+
+        // cancel any currently active job:
+            if (modelJob?.isActive == true) {
+                Log.i(TAG, "cancelling active modelJob...")
+                modelJob?.cancel()
+            }
+        modelJob = loadModelData()
+        savedInstanceState?.getInt(EXTRA_PAGE_ID)
+            ?.also { pageId ->
+                modelJob!!.invokeOnCompletion { model?.goToId(pageId)}
+            }
 
     }
 
@@ -182,13 +200,13 @@ class AACViewModel private constructor (application: Application, val state: Obs
         }
     }
 
-    fun loadModelData() {
-        state.updateReady(false)
+    fun loadModelData() : Job {
+        return CoroutineScope(Dispatchers.IO).launch {
+            state.updateReady(false)
 
-        CoroutineScope(Dispatchers.IO).launch {
-
-
-            model = AACModel.Builder(repository).apply {
+            Log.i(TAG, "loadModelData")
+            model = AACModel.Builder().apply {
+                this.repository = this@AACViewModel.repository
                 keyboardId =
                     PreferenceManager.getDefaultSharedPreferences(context)
                         .getInt(PREF_KEYBOARD_ID, DEFAULT_KEYBOARD_ID)
