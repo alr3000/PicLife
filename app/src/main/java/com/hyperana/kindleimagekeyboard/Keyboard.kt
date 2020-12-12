@@ -12,6 +12,7 @@ class Keyboard()  {
     var id: PageId = -1
 
     var pageList: List<PageData> = emptyList()
+    var homepageId: PageId? = null
 
     constructor(resource: Resource?) : this() {
 
@@ -24,8 +25,15 @@ class Keyboard()  {
 
     fun update(res: Resource?) {
         id = res?.uid ?: -1
+
+        val data = res?.let { Resource.ExtractData(it.data) } ?: mapOf()
+        homepageId = data.get(KEY_HOMEPAGE)?.toInt()
     }
 
+
+    companion object {
+        const val KEY_HOMEPAGE = "homepage_id"
+    }
 
 
 }

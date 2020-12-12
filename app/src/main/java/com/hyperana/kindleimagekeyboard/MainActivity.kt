@@ -51,6 +51,8 @@ class MainActivity :  AppCompatActivity(), Toolbar.OnMenuItemClickListener,
                 savedInstanceState,
                 PreferenceManager.getDefaultSharedPreferences(applicationContext)
             )
+            // handle navigation actions and history entry:
+            actionManager.registerActionListener(aacViewModel, listOf(AACAction.EXECUTE))
 
             // set message model to receive "executed" icons from anywhere in this activity:
             actionManager.registerActionListener(messageViewModel, listOf(AACAction.EXECUTE))

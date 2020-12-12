@@ -6,6 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.lifecycle.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 // handles aac icon actions, such as deep links (not swipe paging) and overlay graphics
 // handles view updates outside of the pager (title, back)
@@ -30,8 +33,19 @@ class AACViewController (
 
         // set aac context actions in toolbar:
             aacViewModel.observeCurrentPage(lifecycleOwner.lifecycle) {
-                title = AACAction("AACPageTitle", it?.toString() ?: "")
-               updateToolbar()
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    it?.let { aacViewModel.inflateIconAsync(it) }
+                        ?.await()
+                        ?.also {
+                            title = AACAction.PREVIEW.apply {
+                                data = listOf(it)
+                                this.displayString = it.text ?: "Untitled Page"
+                            }
+                            updateToolbar()
+                        }
+                }
+
             }
 
         // register for actions generated elsewhere:
@@ -39,17 +53,20 @@ class AACViewController (
     }
 
     fun updateToolbar() {
-        aacToolbar?.replaceActions(this,
-            listOf(title, settings)
-        )
-        if (app.get("doHomeButton")?.toString()?.toBoolean() ?: true)
-            aacToolbar?.setLeftCornerAction(this, home)
+        CoroutineScope(Dispatchers.Main).launch {
+            aacToolbar?.replaceActions(
+                this@AACViewController,
+                listOf(title, settings)
+            )
+            if (app.get("doHomeButton")?.toString()?.toBoolean() ?: true)
+                aacToolbar?.setLeftCornerAction(this@AACViewController, home)
+        }
     }
 
 
     //************************************* ICON HANDLERS ***************************************
     // handles view-based actions for all aac views (inputpageviews, etc)
-    override fun handleAction(action: AACAction, data: Any?): Boolean {
+    override fun handleAction(action: AACAction<*>, data: Any?): Boolean {
         Log.d(TAG, "handleAction: $action, $data")
         return when (action) {
             AACAction.HOME -> aacViewModel.model?.goToHome().let { true }

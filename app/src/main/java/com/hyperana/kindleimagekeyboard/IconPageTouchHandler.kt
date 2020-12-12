@@ -15,11 +15,14 @@ class IconPageTouchHandler(val actionListener: ActionListener?) {
     var startTouchView: View? = null
 
     fun preview(icon: IconData?, view: View?) {
-        icon?.also { actionListener?.handleAction(AACAction.PREVIEW, listOf(it)) }
+        icon?.also { actionListener?.handleAction(AACAction.PREVIEW, listOf(it))}
         view?.also { actionListener?.handleAction(AACAction.HIGHLIGHT, it) }
     }
     fun execute(icon: IconData?, view: View?) {
-        icon?.also { actionListener?.handleAction(AACAction.EXECUTE, listOf(icon))}
+        icon?.also {
+            actionListener?.handleAction(AACAction.EXECUTE, listOf(icon))
+        }
+
     }
 
     fun findIconCellByWindowCoordinate(views: List<View>, x: Float, y: Float) : View? {

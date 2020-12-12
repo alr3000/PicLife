@@ -16,6 +16,7 @@ class LinkedPagesProjection(val linkMode: String): KeyboardProjection() {
     override fun project(pages: List<PageData>): List<PageData> {
         Log.d(TAG, "project: " + linkMode)
 
+
         pages.onEach{
             val to = it
             if (it.parentPageId != null) {

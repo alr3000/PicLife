@@ -76,6 +76,21 @@ data class Resource(
         IMAGE, VIDEO, PAGE, BUTTON, SOUND, KEYBOARD
     }
 
+    companion object {
+        const val PROP_DELIMITER = "&"
+        const val NAME_VAL_DELIMITER = "="
+        const val ARRAY_DELIMITER = ","
+        fun ExtractData(dataString: String) : Map<String, String?> {
+            return dataString
+                .split(PROP_DELIMITER)
+                .map { it.split(NAME_VAL_DELIMITER) }
+                .filter { it.firstOrNull()?.isNotBlank() == true }
+                .map { Pair (it.first(), it.getOrNull(1))}
+                .toMap()
+        }
+
+    }
+
 }
 
 @Dao

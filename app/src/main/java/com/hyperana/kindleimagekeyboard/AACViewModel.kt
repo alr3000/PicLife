@@ -5,8 +5,10 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
+import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.*
 import androidx.preference.PreferenceManager
+import com.hyperana.kindleimagekeyboard.AACAction.Companion.EXECUTE
 import kotlinx.coroutines.*
 
 typealias PageId = Int
@@ -78,7 +80,8 @@ class AACViewModel private constructor (application: Application,
     : AndroidViewModel(application),
     SharedPreferences.OnSharedPreferenceChangeListener,
     ObservableNavigationState by state,
-        ResourceInflater by repository
+        ResourceInflater by repository,
+        ActionListener
 {
 
     // single-param constructor for viewmodelprovider:
@@ -228,12 +231,12 @@ class AACViewModel private constructor (application: Application,
     fun getProjectedPages(original: List<PageData>) : List<PageData> {
         val app = App.getInstance(getApplication<Application>().applicationContext)
         return original
-            /*.let {
-                RemoveBlanksProjection("icon").project(it)
-            }
             .let {
                 LinkedPagesProjection(app.get("createLinks").toString()).project(it)
-            }*/
+            }
+            .let {
+                RemoveBlanksProjection("icon").project(it)
+            }
             .let {
                 val cols = app.get("columns").toString().toInt()
                 val rows = resolveRows(cols, app.appContext.resources.getConfiguration().orientation)
@@ -253,5 +256,18 @@ class AACViewModel private constructor (application: Application,
         return kotlin.math.round(cols.toDouble() * rToC).toInt()
     }
 
+    // Listen for Executes to navigate:
+    override fun handleAction(action: AACAction<*>, data: Any?): Boolean {
+        Log.i(TAG, "handleAction: $action, $data")
+        if (action == EXECUTE) {
+            EXECUTE.transformData(data)?.firstOrNull()
+                ?.also { if (it.hasChildren && it.id.isDigitsOnly()) model?.goToId(it.id.toInt()) }
+            return true
+        }
+        return false
+    }
 
+    override fun getActionTag(): Int {
+        TODO("Not yet implemented")
+    }
 }

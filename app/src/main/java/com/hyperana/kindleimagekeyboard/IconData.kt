@@ -10,9 +10,6 @@ import android.widget.TextView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 /**
@@ -47,19 +44,14 @@ class IconData(var id: String = createIconId(),
     constructor(repository: AACRepository, liveIconResource: LiveData<Resource?>, parentPage: PageData) : this () {
         fPageId = parentPage.id
             liveIconResource.observeForever {
-                text = it?.title
-                id = it?.uid.toString()
-                thumbUri = Uri.parse(it?.resourceUri)
-                Log.d(TAG, "onChanged")
+                updateFromResource(it)
             }
     }
 
     constructor(iconResource: Resource, parent: PageData?)
             : this(iconResource.uid.toString()) {
         fPageId = parent?.id
-        text = iconResource.title
-        id = iconResource.uid.toString()
-        thumbUri = Uri.parse(iconResource.resourceUri)
+        updateFromResource(iconResource)
     }
 
     val TAG: String
@@ -76,9 +68,18 @@ class IconData(var id: String = createIconId(),
         return mData.get(key)
     }
 
+    var hasChildren: Boolean = false
 
     override fun toString(): String {
         return super.toString() + "($index) [$text] -> $thumbUri"
+    }
+
+    fun updateFromResource(res: Resource?) {
+        text = res?.title
+        id = res?.uid.toString()
+        thumbUri = res?.let { Uri.parse(it.resourceUri) }
+        hasChildren = res?.children?.isNotEmpty() == true
+        Log.d(TAG, "onChanged")
     }
 
     // put/retrieve all data as strings to preserve nulls
